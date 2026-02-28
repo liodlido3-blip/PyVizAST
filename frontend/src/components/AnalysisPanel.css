@@ -1,0 +1,477 @@
+/* Analysis Panel Styles */
+.analysis-panel {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg-primary);
+}
+
+.panel-content {
+  padding: 20px;
+}
+
+.section {
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-description {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+/* Metrics Grid */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  text-align: center;
+}
+
+.metric-card.good {
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.metric-card.warning {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.metric-card.danger {
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.metric-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.metric-card.good .metric-value {
+  color: var(--success);
+}
+
+.metric-card.warning .metric-value {
+  color: var(--warning);
+}
+
+.metric-card.danger .metric-value {
+  color: var(--error);
+}
+
+.metric-title {
+  font-size: 14px;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+.metric-description {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* Detail List */
+.detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.detail-label {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.detail-value {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Issue List */
+.issue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.issue-item {
+  display: flex;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s;
+}
+
+.issue-item:hover {
+  border-color: var(--border-glow);
+}
+
+.issue-item.critical {
+  border-left: 3px solid var(--error);
+}
+
+.issue-item.error {
+  border-left: 3px solid var(--error);
+}
+
+.issue-item.warning {
+  border-left: 3px solid var(--warning);
+}
+
+.issue-item.info {
+  border-left: 3px solid var(--info);
+}
+
+.issue-severity {
+  display: flex;
+  align-items: flex-start;
+}
+
+.critical-icon { color: var(--error); }
+.error-icon { color: var(--error); }
+.warning-icon { color: var(--warning); }
+.info-icon { color: var(--info); }
+.success-icon { color: var(--success); }
+
+.issue-content {
+  flex: 1;
+}
+
+.issue-message {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.issue-location {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* Hotspot List */
+.hotspot-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hotspot-card {
+  background: var(--bg-card);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.hotspot-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.hotspot-type {
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.hotspot-complexity {
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.1);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.hotspot-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.hotspot-suggestion {
+  font-size: 13px;
+  color: var(--success);
+}
+
+.hotspot-location {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 8px;
+  display: block;
+}
+
+/* Security Summary */
+.security-summary {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.summary-item {
+  flex: 1;
+  text-align: center;
+  padding: 16px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.summary-item .count {
+  display: block;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.summary-item .label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.summary-item.critical .count { color: var(--error); }
+.summary-item.error .count { color: var(--error); }
+.summary-item.warning .count { color: var(--warning); }
+
+/* Suggestions */
+.suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.suggestion-category {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.category-count {
+  background: var(--accent-primary);
+  color: white;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 12px;
+}
+
+.category-items {
+  padding: 12px;
+}
+
+.suggestion-card {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.suggestion-card:last-child {
+  margin-bottom: 0;
+}
+
+.suggestion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.suggestion-header:hover {
+  background: var(--bg-hover);
+}
+
+.suggestion-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.auto-fix-badge {
+  font-size: 11px;
+  background: rgba(99, 102, 241, 0.2);
+  color: var(--accent-primary);
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.suggestion-body {
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+.code-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.code-block {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.code-label {
+  display: block;
+  padding: 8px 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: var(--bg-primary);
+}
+
+.code-block pre {
+  padding: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.improvement {
+  color: var(--success);
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state svg {
+  margin-bottom: 16px;
+}
+
+/* Learn Tips */
+.learn-tips {
+  display: grid;
+  gap: 12px;
+}
+
+.tip-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+.tip-card h4 {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: var(--accent-primary);
+}
+
+.tip-card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.tip-card code {
+  background: var(--bg-tertiary);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
+/* Challenges */
+.challenges-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.challenge-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+}
+
+.challenge-info h4 {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.difficulty {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.difficulty.easy {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success);
+}
+
+.difficulty.medium {
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warning);
+}
+
+.difficulty.hard {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--error);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .code-comparison {
+    grid-template-columns: 1fr;
+  }
+  
+  .security-summary {
+    flex-direction: column;
+  }
+}
