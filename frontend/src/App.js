@@ -1,8 +1,5 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, Suspense, lazy } from 'react';
 import CodeEditor from './components/CodeEditor';
-import ASTVisualizer from './components/ASTVisualizer';
-import ASTVisualizer3D from './components/ASTVisualizer3D';
-import AnalysisPanel from './components/AnalysisPanel';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import LoadingOverlay from './components/LoadingOverlay';
@@ -11,6 +8,19 @@ import { analyzeCode, checkServerHealth, getApiBaseUrl } from './api';
 import './App.css';
 import './components/components.css';
 import './components/AnalysisPanel.css';
+
+// Lazy load heavy components for code splitting
+const ASTVisualizer = lazy(() => import('./components/ASTVisualizer'));
+const ASTVisualizer3D = lazy(() => import('./components/ASTVisualizer3D'));
+const AnalysisPanel = lazy(() => import('./components/AnalysisPanel'));
+
+// Loading fallback for lazy components
+const ComponentLoader = () => (
+  <div className="component-loader">
+    <div className="loader-spinner"></div>
+    <span>Loading component...</span>
+  </div>
+);
 
 // Sample code for demo
 const SAMPLE_CODE = `# PyVizAST 示例代码
@@ -249,24 +259,28 @@ function App() {
             <ErrorBoundary>
               {analysisResult ? (
                 activeTab === 'ast' ? (
-                  viewMode === '3d' ? (
-                    <ASTVisualizer3D 
-                      graph={analysisResult.ast_graph}
-                      theme={theme}
-                    />
-                  ) : (
-                    <ASTVisualizer 
-                      graph={analysisResult.ast_graph}
-                      theme={theme}
-                    />
-                  )
+                  <Suspense fallback={<ComponentLoader />}>
+                    {viewMode === '3d' ? (
+                      <ASTVisualizer3D 
+                        graph={analysisResult.ast_graph}
+                        theme={theme}
+                      />
+                    ) : (
+                      <ASTVisualizer 
+                        graph={analysisResult.ast_graph}
+                        theme={theme}
+                      />
+                    )}
+                  </Suspense>
                 ) : (
-                  <AnalysisPanel 
-                    result={analysisResult}
-                    activeTab={activeTab}
-                    code={code}
-                    onApplyPatch={handleCodeChange}
-                  />
+                  <Suspense fallback={<ComponentLoader />}>
+                    <AnalysisPanel 
+                      result={analysisResult}
+                      activeTab={activeTab}
+                      code={code}
+                      onApplyPatch={handleCodeChange}
+                    />
+                  </Suspense>
                 )
               ) : (
                 <div className="placeholder">

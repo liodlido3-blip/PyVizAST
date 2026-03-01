@@ -198,6 +198,16 @@ function Node3D({ position, node, isSelected, isFocused, isDimmed, isSignal, onC
   const signalRef = useRef(0);
   const [signalIntensity, setSignalIntensity] = useState(0);
   
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    };
+  }, []);
+  
   const color = NODE_COLORS[node.type?.toLowerCase()] || NODE_COLORS.default;
   const category = TYPE_CATEGORIES[node.type?.toLowerCase()] || TYPE_CATEGORIES.default;
   
@@ -438,6 +448,7 @@ const Scene = forwardRef(({ nodes, edges, positions, selectedNode, focusedNode, 
   const targetPosition = useRef(new THREE.Vector3());
   const isAnimating = useRef(false);
   const keysPressed = useRef(new Set());
+  const resetAnimationRef = useRef(null); // Track reset camera animation frame
   
   // Calculate which nodes should be dimmed (when focused)
   const visibleNodeIds = useMemo(() => {
@@ -586,6 +597,12 @@ const Scene = forwardRef(({ nodes, edges, positions, selectedNode, focusedNode, 
   const resetCamera = useCallback(() => {
     if (!positions || positions.size === 0) return;
     
+    // Cancel any ongoing reset animation
+    if (resetAnimationRef.current) {
+      cancelAnimationFrame(resetAnimationRef.current);
+      resetAnimationRef.current = null;
+    }
+    
     // Calculate bounding box
     let minX = Infinity, maxX = -Infinity;
     let minY = Infinity, maxY = -Infinity;
@@ -626,12 +643,24 @@ const Scene = forwardRef(({ nodes, edges, positions, selectedNode, focusedNode, 
       }
       
       if (t < 1) {
-        requestAnimationFrame(animateReset);
+        resetAnimationRef.current = requestAnimationFrame(animateReset);
+      } else {
+        resetAnimationRef.current = null;
       }
     };
     
-    requestAnimationFrame(animateReset);
+    resetAnimationRef.current = requestAnimationFrame(animateReset);
   }, [positions, camera]);
+  
+  // Cleanup animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (resetAnimationRef.current) {
+        cancelAnimationFrame(resetAnimationRef.current);
+        resetAnimationRef.current = null;
+      }
+    };
+  }, []);
   
   // Expose resetCamera to parent component
   useImperativeHandle(ref, () => ({
@@ -730,6 +759,32 @@ function ASTVisualizer3D({ graph, theme }) {
   const [isLayoutReady, setIsLayoutReady] = useState(false);
   const particleIdRef = useRef(0);
   const sceneRef = useRef(null); // Ref to access Scene methods
+  
+  // Track timers and animation frames for cleanup
+  const timersRef = useRef(new Set());
+  const animationFramesRef = useRef(new Set());
+  const isMountedRef = useRef(true);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      
+      // Copy refs to local variables for cleanup
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const timers = timersRef.current;
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const animationFrames = animationFramesRef.current;
+      
+      // Clear all tracked timers
+      timers.forEach(id => clearTimeout(id));
+      timers.clear();
+      
+      // Clear all tracked animation frames
+      animationFrames.forEach(id => cancelAnimationFrame(id));
+      animationFrames.clear();
+    };
+  }, []);
   
   // Filter nodes based on detail level
   const filteredElements = useMemo(() => {
@@ -868,7 +923,10 @@ function ASTVisualizer3D({ graph, theme }) {
     
     // Create particles for each edge
     propagationQueue.forEach(({ sourceId, targetId, startPos, endPos, delay, edgeLength, targetNode }) => {
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
+        // Check if component is still mounted
+        if (!isMountedRef.current) return;
+        
         const particleId = particleIdRef.current++;
         const startTime = Date.now();
         // Duration based on edge length and constant speed
@@ -890,6 +948,9 @@ function ASTVisualizer3D({ graph, theme }) {
         
         // Animate particle
         const animateParticle = () => {
+          // Check if component is still mounted
+          if (!isMountedRef.current) return;
+          
           const elapsed = Date.now() - startTime;
           const progress = Math.min(elapsed / duration, 1);
           
@@ -897,15 +958,18 @@ function ASTVisualizer3D({ graph, theme }) {
             setSignalParticles(prev => 
               prev.map(p => p.id === particleId ? { ...p, progress } : p)
             );
-            requestAnimationFrame(animateParticle);
+            const frameId = requestAnimationFrame(animateParticle);
+            animationFramesRef.current.add(frameId);
           } else {
             // Remove particle when done
             setSignalParticles(prev => prev.filter(p => p.id !== particleId));
           }
         };
         
-        requestAnimationFrame(animateParticle);
+        const frameId = requestAnimationFrame(animateParticle);
+        animationFramesRef.current.add(frameId);
       }, delay);
+      timersRef.current.add(timerId);
     });
   }, [filteredElements.nodes]);
   

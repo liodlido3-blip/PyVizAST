@@ -176,6 +176,37 @@ Contributions are welcome. Please submit pull requests to the main repository.
 
 <details> <summary>Version History</summary>
 
+### v0.3.1 (2026-03-01)
+**Bug Fixes:**
+- Fixed mutable default arguments in Pydantic models (`schemas.py`)
+  - Changed `= {}` and `= []` to `Field(default_factory=dict/list)`
+  - Prevents shared state between model instances
+- Fixed potential `AttributeError` in security scanner (`security.py`)
+  - Added `isinstance(node.func, ast.Attribute)` check before accessing `.attr`
+- Fixed cyclomatic complexity calculation for elif branches (`complexity.py`)
+  - Removed duplicate counting of nested If nodes
+
+**Frontend Memory Leak Fixes:**
+- Fixed `requestAnimationFrame` not being cancelled on unmount (`ASTVisualizer.js`)
+- Fixed `setTimeout` not being cleared on unmount (`ASTVisualizer.js`, `ASTVisualizer3D.js`)
+- Added proper cleanup for event listeners and timers
+- Added `isMountedRef` to prevent state updates after unmount
+
+**Performance Optimizations:**
+- Added `React.memo` to panel components (`AnalysisPanel.js`)
+  - `ComplexityPanel`, `PerformancePanel`, `SecurityPanel`, `SuggestionsPanel`
+  - `MetricCard`, `DetailItem`, `IssueList`, `SuggestionCard`
+- Implemented code splitting with `React.lazy` (`App.js`)
+  - Lazy loading for `ASTVisualizer`, `ASTVisualizer3D`, `AnalysisPanel`
+  - Added loading fallback component
+
+**Error Handling Improvements:**
+- Enhanced `ErrorBoundary` component with error type classification
+  - Network errors, syntax errors, runtime errors, chunk load errors
+  - Different recovery suggestions based on error type
+- Added `LazyLoadErrorBoundary` for lazy-loaded components
+- Improved development mode error logging
+
 ### v0.3.0 (2026-03-01)
 **3D Visualization:**
 - Added 3D AST view with Three.js and React Three Fiber

@@ -227,7 +227,8 @@ class SecurityScanner:
                 
                 # os.system, os.popen
                 if func_full_name.startswith('os.'):
-                    if node.func.attr in os_functions:
+                    # 确保 node.func 是 ast.Attribute 类型才能访问 attr
+                    if isinstance(node.func, ast.Attribute) and node.func.attr in os_functions:
                         # 检查参数
                         if node.args:
                             arg = node.args[0]
@@ -243,7 +244,8 @@ class SecurityScanner:
                 
                 # subprocess with shell=True
                 elif func_full_name.startswith('subprocess.'):
-                    if node.func.attr in subprocess_functions:
+                    # 确保 node.func 是 ast.Attribute 类型才能访问 attr
+                    if isinstance(node.func, ast.Attribute) and node.func.attr in subprocess_functions:
                         for keyword in node.keywords:
                             if keyword.arg == 'shell':
                                 if isinstance(keyword.value, ast.Constant) and keyword.value.value == True:

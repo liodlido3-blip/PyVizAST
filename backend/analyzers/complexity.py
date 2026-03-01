@@ -97,6 +97,9 @@ class ComplexityAnalyzer:
         """
         计算圈复杂度
         CC = E - N + 2P (简化为分支计数 + 1)
+        
+        注意：elif 在 AST 中表示为 If 节点的 orelse 列表中的 If 节点，
+        每个 elif 本身就是一个独立的 If 节点，会被 ast.walk 遍历到。
         """
         complexity = 1  # 基础复杂度
         
@@ -106,20 +109,13 @@ class ComplexityAnalyzer:
             if node_type in self.BRANCHING_NODES:
                 complexity += self.BRANCHING_NODES[node_type]
             
-            # 处理布尔运算符
+            # 处理布尔运算符（每个 and/or 增加复杂度）
             elif isinstance(node, ast.BoolOp):
                 complexity += len(node.values) - 1
             
             # 处理条件表达式 (三元运算符)
             elif isinstance(node, ast.IfExp):
                 complexity += 1
-            
-            # 处理elif
-            elif isinstance(node, ast.If):
-                # 统计elif数量
-                for child in ast.walk(node):
-                    if isinstance(child, ast.If) and child is not node:
-                        complexity += 1
         
         return complexity
     

@@ -3,7 +3,7 @@ Pydantic models for PyVizAST API
 """
 from enum import Enum
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class SeverityLevel(str, Enum):
@@ -72,13 +72,13 @@ class ASTNode(BaseModel):
     explanation: str = ""
     
     # 子节点和关系
-    children: List[str] = []
+    children: List[str] = Field(default_factory=list)
     parent: Optional[str] = None
     
     # 详细信息
     docstring: Optional[str] = None
     source_code: Optional[str] = None
-    attributes: Dict[str, Any] = {}
+    attributes: Dict[str, Any] = Field(default_factory=dict)
 
 
 class ASTEdge(BaseModel):
@@ -94,7 +94,7 @@ class ASTGraph(BaseModel):
     """完整的AST图结构"""
     nodes: List[ASTNode]
     edges: List[ASTEdge]
-    metadata: Dict[str, Any] = {}
+    metadata: Dict[str, Any] = Field(default_factory=dict)
 
 
 class CodeIssue(BaseModel):
@@ -168,23 +168,23 @@ class AnalysisResult(BaseModel):
     complexity: ComplexityMetrics
     
     # 问题列表
-    issues: List[CodeIssue] = []
+    issues: List[CodeIssue] = Field(default_factory=list)
     
     # 性能热点
-    performance_hotspots: List[PerformanceHotspot] = []
+    performance_hotspots: List[PerformanceHotspot] = Field(default_factory=list)
     
     # 优化建议
-    suggestions: List[OptimizationSuggestion] = []
+    suggestions: List[OptimizationSuggestion] = Field(default_factory=list)
     
     # 统计信息
-    summary: Dict[str, Any] = {}
+    summary: Dict[str, Any] = Field(default_factory=dict)
 
 
 class CodeInput(BaseModel):
     """代码输入模型"""
     code: str
     filename: Optional[str] = None
-    options: Dict[str, Any] = {}
+    options: Dict[str, Any] = Field(default_factory=dict)
 
 
 class LearningModeResult(BaseModel):
@@ -192,8 +192,8 @@ class LearningModeResult(BaseModel):
     node_id: str
     explanation: str
     python_doc: Optional[str] = None
-    examples: List[str] = []
-    related_concepts: List[str] = []
+    examples: List[str] = Field(default_factory=list)
+    related_concepts: List[str] = Field(default_factory=list)
 
 
 class ChallengeResult(BaseModel):

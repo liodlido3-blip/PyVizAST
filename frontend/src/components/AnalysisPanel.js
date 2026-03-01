@@ -41,7 +41,7 @@ function AnalysisPanel({ result, activeTab, code, onApplyPatch }) {
   );
 }
 
-function ComplexityPanel({ result }) {
+const ComplexityPanel = React.memo(function ComplexityPanel({ result }) {
   const { complexity, issues } = result;
   const complexityIssues = issues?.filter(i => i.type === 'complexity') || [];
 
@@ -95,9 +95,9 @@ function ComplexityPanel({ result }) {
       )}
     </div>
   );
-}
+});
 
-function PerformancePanel({ result }) {
+const PerformancePanel = React.memo(function PerformancePanel({ result }) {
   const { performance_hotspots, issues } = result;
   const perfIssues = issues?.filter(i => i.type === 'performance') || [];
 
@@ -140,9 +140,9 @@ function PerformancePanel({ result }) {
       )}
     </div>
   );
-}
+});
 
-function SecurityPanel({ result }) {
+const SecurityPanel = React.memo(function SecurityPanel({ result }) {
   const securityIssues = result.issues?.filter(i => i.type === 'security') || [];
 
   return (
@@ -178,9 +178,9 @@ function SecurityPanel({ result }) {
       </div>
     </div>
   );
-}
+});
 
-function SuggestionsPanel({ result }) {
+const SuggestionsPanel = React.memo(function SuggestionsPanel({ result }) {
   const suggestions = result.suggestions || [];
   const byCategory = groupByCategory(suggestions);
 
@@ -214,7 +214,7 @@ function SuggestionsPanel({ result }) {
       </div>
     </div>
   );
-}
+});
 
 function LearnPanel({ result }) {
   return (
@@ -280,7 +280,7 @@ function ChallengesPanel() {
 }
 
 // Helper Components
-function MetricCard({ title, value, status, description, suffix = '' }) {
+const MetricCard = React.memo(function MetricCard({ title, value, status, description, suffix = '' }) {
   return (
     <div className={`metric-card ${status}`}>
       <div className="metric-value">
@@ -290,18 +290,18 @@ function MetricCard({ title, value, status, description, suffix = '' }) {
       <div className="metric-description">{description}</div>
     </div>
   );
-}
+});
 
-function DetailItem({ label, value }) {
+const DetailItem = React.memo(function DetailItem({ label, value }) {
   return (
     <div className="detail-item">
       <span className="detail-label">{label}</span>
       <span className="detail-value">{value}</span>
     </div>
   );
-}
+});
 
-function IssueList({ issues, showSeverity = true }) {
+const IssueList = React.memo(function IssueList({ issues, showSeverity = true }) {
   return (
     <div className="issue-list">
       {issues.map((issue, index) => (
@@ -321,9 +321,9 @@ function IssueList({ issues, showSeverity = true }) {
       ))}
     </div>
   );
-}
+});
 
-function SuggestionCard({ suggestion }) {
+const SuggestionCard = React.memo(function SuggestionCard({ suggestion }) {
   const [expanded, setExpanded] = React.useState(false);
 
   return (
@@ -366,7 +366,7 @@ function SuggestionCard({ suggestion }) {
       )}
     </div>
   );
-}
+});
 
 // Helper Functions
 function getComplexityStatus(value) {
