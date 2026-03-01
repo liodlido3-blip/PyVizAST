@@ -267,25 +267,25 @@ function Node3D({ position, node, isSelected, isFocused, isDimmed, isSignal, onC
     }
   }, []);
   
-  // Shape based on type
+  // Shape based on type (optimized with lower poly count)
   const geometry = category === 'structure' ? 
     <boxGeometry args={[1, 0.6, 0.6]} /> :
     category === 'control' ?
     <octahedronGeometry args={[0.5]} /> :
-    <sphereGeometry args={[0.4, 16, 16]} />;
+    <sphereGeometry args={[0.4, 12, 12]} />;
   
   // Calculate opacity
   const opacity = isDimmed ? 0.2 : 1;
   
-  // Determine colors based on signal intensity
+  // Determine colors based on signal intensity (white glow theme)
   const hasSignal = signalIntensity > 0;
   const nodeColor = hasSignal 
-    ? `rgb(${Math.round(0 + 0 * signalIntensity)}, ${Math.round(180 + 75 * signalIntensity)}, ${Math.round(180 + 75 * signalIntensity)})`
+    ? '#ffffff'
     : isFocused ? '#ffffff' : isSelected ? '#e0e0e0' : hovered ? '#d0d0d0' : color;
-  const emissiveColor = hasSignal ? '#00ccff' : (isFocused || isSelected || hovered) ? color : '#000000';
+  const emissiveColor = hasSignal ? '#ffffff' : (isFocused || isSelected || hovered) ? '#888888' : '#000000';
   const emissiveIntensityValue = hasSignal 
-    ? 0.5 + signalIntensity * 0.8 
-    : isFocused ? 0.8 : isSelected ? 0.5 : hovered ? 0.3 : 0;
+    ? 0.6 + signalIntensity * 0.6 
+    : isFocused ? 0.6 : isSelected ? 0.4 : hovered ? 0.2 : 0;
   
   return (
     <group position={position}>
@@ -309,26 +309,14 @@ function Node3D({ position, node, isSelected, isFocused, isDimmed, isSignal, onC
         />
       </mesh>
       
-      {/* Signal glow effect - shows when signal is active */}
+      {/* Signal glow effect - single optimized mesh with white color */}
       {signalIntensity > 0 && (
-        <mesh scale={1.5 + signalIntensity * 0.5}>
-          <sphereGeometry args={[0.5, 16, 16]} />
+        <mesh scale={1.4 + signalIntensity * 0.4}>
+          <sphereGeometry args={[0.5, 8, 8]} />
           <meshBasicMaterial 
-            color="#00ffff" 
+            color="#ffffff" 
             transparent 
-            opacity={0.4 * signalIntensity} 
-          />
-        </mesh>
-      )}
-      
-      {/* Outer glow ring */}
-      {signalIntensity > 0.5 && (
-        <mesh scale={2 + signalIntensity * 0.3}>
-          <sphereGeometry args={[0.5, 16, 16]} />
-          <meshBasicMaterial 
-            color="#00ccff" 
-            transparent 
-            opacity={0.15 * signalIntensity} 
+            opacity={0.35 * signalIntensity} 
           />
         </mesh>
       )}
@@ -362,9 +350,10 @@ function Edge3D({ start, end, isHighlighted, isDimmed, isSignal }) {
     ];
   }, [start, end]);
   
-  const color = isSignal ? '#00ccff' : isHighlighted ? '#00ff88' : 'rgba(255,255,255,0.15)';
-  const opacity = isDimmed ? 0.1 : isSignal ? 1 : isHighlighted ? 1 : 0.3;
-  const lineWidth = isSignal ? 3 : isHighlighted ? 2 : 1;
+  // White/gray theme for edges
+  const color = isSignal ? '#ffffff' : isHighlighted ? '#cccccc' : 'rgba(255,255,255,0.15)';
+  const opacity = isDimmed ? 0.1 : isSignal ? 1 : isHighlighted ? 0.8 : 0.3;
+  const lineWidth = isSignal ? 2 : isHighlighted ? 2 : 1;
   
   return (
     <Line
@@ -378,63 +367,32 @@ function Edge3D({ start, end, isHighlighted, isDimmed, isSignal }) {
 }
 
 /**
- * Signal particle that travels along edges
+ * Signal particle that travels along edges (optimized)
+ * White particle with simple glow trail
  */
 function SignalParticle({ start, end, progress }) {
-  const meshRef = useRef();
+  // Calculate current position (no useMemo to reduce overhead)
+  const x = start.x + (end.x - start.x) * progress;
+  const y = start.y + (end.y - start.y) * progress;
+  const z = start.z + (end.z - start.z) * progress;
   
-  // Calculate current position
-  const position = useMemo(() => {
-    return new THREE.Vector3(
-      start.x + (end.x - start.x) * progress,
-      start.y + (end.y - start.y) * progress,
-      start.z + (end.z - start.z) * progress
-    );
-  }, [start, end, progress]);
-  
-  // Trail positions
-  const trailPositions = useMemo(() => {
-    const trailLength = 0.15;
-    const startProgress = Math.max(0, progress - trailLength);
-    return [
-      new THREE.Vector3(
-        start.x + (end.x - start.x) * startProgress,
-        start.y + (end.y - start.y) * startProgress,
-        start.z + (end.z - start.z) * startProgress
-      ),
-      position
-    ];
-  }, [start, end, progress, position]);
-  
-  // Animate glow
-  useFrame(() => {
-    if (meshRef.current) {
-      meshRef.current.rotation.y += 0.1;
-    }
-  });
+  // Trail opacity fades based on progress
+  const trailOpacity = Math.max(0, 0.8 - progress * 0.5);
+  const glowSize = 0.12 + progress * 0.08;
   
   return (
-    <group position={[position.x, position.y, position.z]}>
-      {/* Main particle */}
-      <mesh ref={meshRef}>
-        <sphereGeometry args={[0.15, 16, 16]} />
-        <meshBasicMaterial color="#00ffff" transparent opacity={0.9} />
+    <group position={[x, y, z]}>
+      {/* Core white particle - low poly sphere */}
+      <mesh>
+        <sphereGeometry args={[0.08, 8, 8]} />
+        <meshBasicMaterial color="#ffffff" />
       </mesh>
       
-      {/* Glow effect */}
-      <mesh scale={2}>
-        <sphereGeometry args={[0.15, 16, 16]} />
-        <meshBasicMaterial color="#00ccff" transparent opacity={0.4} />
+      {/* Outer glow - single mesh instead of multiple */}
+      <mesh scale={glowSize * 8}>
+        <sphereGeometry args={[0.1, 8, 8]} />
+        <meshBasicMaterial color="#ffffff" transparent opacity={trailOpacity * 0.6} />
       </mesh>
-      
-      {/* Trail */}
-      <Line
-        points={trailPositions}
-        color="#00ffff"
-        lineWidth={2}
-        transparent
-        opacity={0.6}
-      />
     </group>
   );
 }

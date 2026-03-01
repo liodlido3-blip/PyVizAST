@@ -664,16 +664,16 @@ function ASTVisualizer({ graph, theme }) {
         <svg className="particles-overlay">
           <defs>
             <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
               <feMerge>
                 <feMergeNode in="coloredBlur"/>
                 <feMergeNode in="SourceGraphic"/>
               </feMerge>
             </filter>
             <radialGradient id="particleGradient" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#00ffff" stopOpacity="1"/>
-              <stop offset="50%" stopColor="#00ccff" stopOpacity="0.8"/>
-              <stop offset="100%" stopColor="#0088ff" stopOpacity="0"/>
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="1"/>
+              <stop offset="50%" stopColor="#ffffff" stopOpacity="0.6"/>
+              <stop offset="100%" stopColor="#ffffff" stopOpacity="0"/>
             </radialGradient>
           </defs>
           {signalParticles.map(particle => {
@@ -681,31 +681,24 @@ function ASTVisualizer({ graph, theme }) {
             const y = particle.startY + (particle.endY - particle.startY) * particle.progress;
             return (
               <g key={particle.id}>
-                {/* Trail effect */}
+                {/* Trail effect - simplified */}
                 <line
-                  x1={particle.startX + (particle.endX - particle.startX) * Math.max(0, particle.progress - 0.3)}
-                  y1={particle.startY + (particle.endY - particle.startY) * Math.max(0, particle.progress - 0.3)}
+                  x1={particle.startX + (particle.endX - particle.startX) * Math.max(0, particle.progress - 0.2)}
+                  y1={particle.startY + (particle.endY - particle.startY) * Math.max(0, particle.progress - 0.2)}
                   x2={x}
                   y2={y}
                   stroke="url(#particleGradient)"
-                  strokeWidth="4"
+                  strokeWidth="3"
                   strokeLinecap="round"
-                  filter="url(#glow)"
-                  opacity={0.8}
+                  opacity={0.7}
                 />
-                {/* Particle head */}
+                {/* Particle head - white */}
                 <circle
                   cx={x}
                   cy={y}
-                  r="6"
-                  fill="#00ffff"
-                  filter="url(#glow)"
-                />
-                <circle
-                  cx={x}
-                  cy={y}
-                  r="3"
+                  r="5"
                   fill="#ffffff"
+                  filter="url(#glow)"
                 />
               </g>
             );
@@ -856,9 +849,9 @@ function getCytoscapeStyles(theme) {
       selector: 'node.focused',
       style: {
         'border-width': 4,
-        'border-color': '#00ff88',
+        'border-color': '#ffffff',
         'z-index': 1000,
-        'overlay-color': '#00ff88',
+        'overlay-color': '#ffffff',
         'overlay-opacity': 0.2,
         'overlay-padding': 8,
       }
@@ -873,7 +866,7 @@ function getCytoscapeStyles(theme) {
       selector: 'node.focused-neighbor',
       style: {
         'border-width': 2,
-        'border-color': '#00ff88',
+        'border-color': '#ffffff',
         'opacity': 0.9,
         'z-index': 999,
       }
@@ -882,8 +875,8 @@ function getCytoscapeStyles(theme) {
       selector: 'node.signal-wave',
       style: {
         'border-width': 3,
-        'border-color': '#00ccff',
-        'overlay-color': '#00ccff',
+        'border-color': '#ffffff',
+        'overlay-color': '#ffffff',
         'overlay-opacity': 0.4,
         'overlay-padding': 12,
         'transition-property': 'overlay-opacity, border-color',
@@ -894,8 +887,8 @@ function getCytoscapeStyles(theme) {
       selector: 'node.signal-approaching',
       style: {
         'border-width': 3,
-        'border-color': '#00ccff',
-        'overlay-color': '#00ccff',
+        'border-color': '#ffffff',
+        'overlay-color': '#ffffff',
         'overlay-opacity': 0.3,
         'overlay-padding': 10,
         'z-index': 1000,
@@ -907,8 +900,8 @@ function getCytoscapeStyles(theme) {
       selector: 'node.signal-pulse',
       style: {
         'border-width': 4,
-        'border-color': '#00ccff',
-        'overlay-color': '#00ccff',
+        'border-color': '#ffffff',
+        'overlay-color': '#ffffff',
         'overlay-opacity': 0.6,
         'overlay-padding': 15,
         'z-index': 1001,
@@ -976,17 +969,17 @@ function getCytoscapeStyles(theme) {
       selector: 'edge.focused-edge',
       style: {
         'width': 2.5,
-        'line-color': '#00ff88',
-        'target-arrow-color': '#00ff88',
+        'line-color': '#ffffff',
+        'target-arrow-color': '#ffffff',
         'z-index': 997,
       }
     },
     {
       selector: 'edge.signal-wave',
       style: {
-        'width': 3,
-        'line-color': '#00ccff',
-        'target-arrow-color': '#00ccff',
+        'width': 2,
+        'line-color': '#ffffff',
+        'target-arrow-color': '#ffffff',
         'z-index': 999,
         'transition-property': 'line-color, width',
         'transition-duration': 0.3,
@@ -995,9 +988,9 @@ function getCytoscapeStyles(theme) {
     {
       selector: 'edge.signal-flow',
       style: {
-        'width': 3,
-        'line-color': '#00ccff',
-        'target-arrow-color': '#00ccff',
+        'width': 2,
+        'line-color': '#ffffff',
+        'target-arrow-color': '#ffffff',
         'z-index': 1000,
       }
     },
