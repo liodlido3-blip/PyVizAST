@@ -685,14 +685,64 @@ class PatchGenerator:
             return None
     
     def _validate_patch_applicable(self, lines: List[str], hunks: List[Dict[str, Any]]) -> bool:
-        """验证补丁是否适用于当前代码"""
+        """
+        验证补丁是否适用于当前代码
+        
+        通过检查上下文行是否匹配来验证补丁的适用性，
+        避免补丁应用到错误的位置。
+        """
         for hunk in hunks:
             start_line = hunk['start_line'] - 1
             context_lines = hunk.get('context', [])
+            deleted_lines = hunk.get('deleted_lines', [])
             
-            # 简单验证：检查上下文行是否匹配
-            # 这里可以添加更严格的验证逻辑
+            # 验证起始行是否在有效范围内
+            if start_line < 0 or start_line >= len(lines):
+                logger.warning(f"补丁起始行 {start_line + 1} 超出代码范围")
+                return False
             
+            # 验证上下文行是否匹配
+            for ctx_line_num, ctx_content in context_lines:
+                actual_line_idx = ctx_line_num - 1
+                if actual_line_idx < 0 or actual_line_idx >= len(lines):
+                    logger.warning(f"上下文行 {ctx_line_num} 超出范围")
+                    return False
+                
+                # 去除空白字符后比较（允许空白差异）
+                actual_content = lines[actual_line_idx].rstrip()
+                expected_content = ctx_content.rstrip() if ctx_content else ''
+                
+                # 允许一定的空白差异
+                if actual_content != expected_content:
+                    # 尝试更宽松的匹配（忽略尾部空白）
+                    if actual_content.strip() != expected_content.strip():
+                        logger.warning(
+                            f"上下文不匹配 (行 {ctx_line_num}): "
+                            f"期望 '{expected_content[:50]}...', "
+                            f"实际 '{actual_content[:50]}...'"
+                        )
+                        return False
+            
+            # 验证要删除的行是否存在
+            if deleted_lines:
+                for i, deleted_content in enumerate(deleted_lines):
+                    line_idx = start_line + i
+                    if line_idx >= len(lines):
+                        logger.warning(f"删除行 {line_idx + 1} 超出范围")
+                        return False
+                    
+                    actual = lines[line_idx].rstrip()
+                    expected = deleted_content.rstrip() if deleted_content else ''
+                    
+                    # 允许空白差异，但内容应该相似
+                    if actual.strip() != expected.strip():
+                        logger.warning(
+                            f"删除行不匹配 (行 {line_idx + 1}): "
+                            f"期望 '{expected[:30]}...', "
+                            f"实际 '{actual[:30]}...'"
+                        )
+                        return False
+        
         return True
     
     def _parse_patch_hunks(self, patch_lines: List[str]) -> List[Dict[str, Any]]:
@@ -700,12 +750,16 @@ class PatchGenerator:
         hunks = []
         current_hunk = None
         line_num = 0
+        deleted_lines = []  # 收集被删除的行用于验证
         
         for line in patch_lines:
             if line.startswith('@@'):
                 # 保存之前的 hunk
                 if current_hunk is not None:
+                    current_hunk['deleted_lines'] = deleted_lines
                     hunks.append(current_hunk)
+                
+                deleted_lines = []  # 重置
                 
                 # 解析 @@ -start,count +start,count @@ 或 @@ -start +start @@
                 match = re.match(r'@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@', line)
@@ -720,7 +774,8 @@ class PatchGenerator:
                         'deleted': 0,
                         'added': 0,
                         'lines': [],
-                        'context': []
+                        'context': [],
+                        'deleted_lines': []  # 新增：用于验证
                     }
                     line_num = new_start
                 else:
@@ -734,15 +789,18 @@ class PatchGenerator:
                     current_hunk['lines'].append(line[1:] if len(line) > 1 else '')
                     current_hunk['added'] += 1
                 elif line.startswith('-'):
-                    # 删除行
+                    # 删除行 - 记录内容用于验证
+                    deleted_content = line[1:] if len(line) > 1 else ''
                     current_hunk['deleted'] += 1
+                    deleted_lines.append(deleted_content)
                 elif line.startswith('\\'):
                     # 继续指示符，忽略
                     continue
                 elif line:
                     # 上下文行
-                    current_hunk['lines'].append(line if not line.startswith(' ') else line[1:])
-                    current_hunk['context'].append((line_num, line if not line.startswith(' ') else line[1:]))
+                    context_content = line if not line.startswith(' ') else line[1:]
+                    current_hunk['lines'].append(context_content)
+                    current_hunk['context'].append((line_num, context_content))
                     line_num += 1
                 else:
                     # 空行作为上下文
@@ -751,6 +809,7 @@ class PatchGenerator:
         
         # 添加最后一个 hunk
         if current_hunk is not None:
+            current_hunk['deleted_lines'] = deleted_lines
             hunks.append(current_hunk)
         
         return hunks

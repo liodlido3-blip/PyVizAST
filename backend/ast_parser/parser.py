@@ -29,41 +29,41 @@ PRIORITY_NODE_TYPES = {
 class ASTParser:
     """Python AST解析器 - 支持性能优化模式"""
     
-    # 节点类型到颜色和形状的映射
+    # 节点类型到颜色、形状和图标/描述的映射
     NODE_STYLES = {
         # 结构节点
-        NodeType.MODULE: {"color": "#ffffff", "shape": "hexagon", "size": 30},
-        NodeType.FUNCTION: {"color": "#ffffff", "shape": "roundrectangle", "size": 25},
-        NodeType.CLASS: {"color": "#e0e0e0", "shape": "roundrectangle", "size": 28},
+        NodeType.MODULE: {"color": "#ffffff", "shape": "hexagon", "size": 30, "icon": "📦", "description": "模块"},
+        NodeType.FUNCTION: {"color": "#ffffff", "shape": "roundrectangle", "size": 25, "icon": "ƒ", "description": "函数"},
+        NodeType.CLASS: {"color": "#e0e0e0", "shape": "roundrectangle", "size": 28, "icon": "C", "description": "类"},
         
         # 控制流
-        NodeType.IF: {"color": "#a0a0a0", "shape": "diamond", "size": 20},
-        NodeType.FOR: {"color": "#a0a0a0", "shape": "diamond", "size": 20},
-        NodeType.WHILE: {"color": "#a0a0a0", "shape": "diamond", "size": 20},
-        NodeType.TRY: {"color": "#909090", "shape": "diamond", "size": 22},
-        NodeType.WITH: {"color": "#909090", "shape": "diamond", "size": 20},
+        NodeType.IF: {"color": "#a0a0a0", "shape": "diamond", "size": 20, "icon": "?", "description": "条件判断"},
+        NodeType.FOR: {"color": "#a0a0a0", "shape": "diamond", "size": 20, "icon": "⟳", "description": "For循环"},
+        NodeType.WHILE: {"color": "#a0a0a0", "shape": "diamond", "size": 20, "icon": "↻", "description": "While循环"},
+        NodeType.TRY: {"color": "#909090", "shape": "diamond", "size": 22, "icon": "⚠", "description": "异常处理"},
+        NodeType.WITH: {"color": "#909090", "shape": "diamond", "size": 20, "icon": "▶", "description": "上下文管理"},
         
         # 表达式
-        NodeType.CALL: {"color": "#707070", "shape": "circle", "size": 15},
-        NodeType.BINARY_OP: {"color": "#606060", "shape": "circle", "size": 12},
-        NodeType.COMPARE: {"color": "#606060", "shape": "circle", "size": 12},
-        NodeType.LAMBDA: {"color": "#d0d0d0", "shape": "ellipse", "size": 18},
+        NodeType.CALL: {"color": "#707070", "shape": "circle", "size": 15, "icon": "()", "description": "函数调用"},
+        NodeType.BINARY_OP: {"color": "#606060", "shape": "circle", "size": 12, "icon": "+", "description": "二元运算"},
+        NodeType.COMPARE: {"color": "#606060", "shape": "circle", "size": 12, "icon": "≡", "description": "比较运算"},
+        NodeType.LAMBDA: {"color": "#d0d0d0", "shape": "ellipse", "size": 18, "icon": "λ", "description": "Lambda表达式"},
         
         # 数据结构
-        NodeType.LIST: {"color": "#808080", "shape": "rectangle", "size": 15},
-        NodeType.DICT: {"color": "#808080", "shape": "rectangle", "size": 15},
-        NodeType.SET: {"color": "#808080", "shape": "rectangle", "size": 15},
-        NodeType.TUPLE: {"color": "#808080", "shape": "rectangle", "size": 15},
+        NodeType.LIST: {"color": "#808080", "shape": "rectangle", "size": 15, "icon": "[]", "description": "列表"},
+        NodeType.DICT: {"color": "#808080", "shape": "rectangle", "size": 15, "icon": "{}", "description": "字典"},
+        NodeType.SET: {"color": "#808080", "shape": "rectangle", "size": 15, "icon": "∅", "description": "集合"},
+        NodeType.TUPLE: {"color": "#808080", "shape": "rectangle", "size": 15, "icon": "()", "description": "元组"},
         
         # 变量
-        NodeType.ASSIGN: {"color": "#505050", "shape": "circle", "size": 14},
-        NodeType.NAME: {"color": "#404040", "shape": "circle", "size": 10},
+        NodeType.ASSIGN: {"color": "#505050", "shape": "circle", "size": 14, "icon": "=", "description": "赋值"},
+        NodeType.NAME: {"color": "#404040", "shape": "circle", "size": 10, "icon": "x", "description": "变量名"},
         
         # 其他
-        NodeType.IMPORT: {"color": "#909090", "shape": "parallelogram", "size": 16},
-        NodeType.RETURN: {"color": "#707070", "shape": "triangle", "size": 14},
-        NodeType.YIELD: {"color": "#707070", "shape": "triangle", "size": 14},
-        NodeType.OTHER: {"color": "#404040", "shape": "circle", "size": 10},
+        NodeType.IMPORT: {"color": "#909090", "shape": "parallelogram", "size": 16, "icon": "↓", "description": "导入"},
+        NodeType.RETURN: {"color": "#707070", "shape": "triangle", "size": 14, "icon": "←", "description": "返回"},
+        NodeType.YIELD: {"color": "#707070", "shape": "triangle", "size": 14, "icon": "→", "description": "生成"},
+        NodeType.OTHER: {"color": "#404040", "shape": "circle", "size": 10, "icon": "•", "description": "其他"},
     }
     
     def __init__(self, max_nodes: int = 2000, simplified: bool = False):
@@ -174,6 +174,12 @@ class ASTParser:
         # 提取额外属性
         attributes = self._extract_attributes(ast_node)
         
+        # 生成详细标签（用于学习模式）
+        detailed_label = self._generate_detailed_label(ast_node, node_type, name, attributes)
+        
+        # 生成节点说明（用于学习模式）
+        explanation = self._generate_node_explanation(ast_node, node_type, name, attributes)
+        
         return ASTNode(
             id=node_id,
             type=node_type,
@@ -188,8 +194,213 @@ class ASTParser:
             children=[],
             parent=parent_id,
             docstring=docstring,
-            attributes=attributes
+            attributes=attributes,
+            # 新增字段
+            icon=style.get("icon", "•"),
+            description=style.get("description", ""),
+            detailed_label=detailed_label,
+            explanation=explanation
         )
+    
+    def _generate_detailed_label(self, ast_node: ast.AST, node_type: NodeType, 
+                                  name: Optional[str], attributes: Dict[str, Any]) -> str:
+        """生成详细的节点标签，便于理解"""
+        type_desc = self.NODE_STYLES.get(node_type, {}).get("description", node_type.value)
+        
+        if node_type == NodeType.FUNCTION:
+            args = attributes.get('args', [])
+            args_str = ', '.join(args[:3]) + ('...' if len(args) > 3 else '')
+            decorators = attributes.get('decorators', [])
+            dec_str = '@' + ' @'.join(decorators) + ' ' if decorators else ''
+            return f"{dec_str}def {name}({args_str})"
+        
+        elif node_type == NodeType.CLASS:
+            bases = attributes.get('bases', [])
+            bases_str = '(' + ', '.join(bases) + ')' if bases else ''
+            decorators = attributes.get('decorators', [])
+            dec_str = '@' + ' @'.join(decorators) + ' ' if decorators else ''
+            return f"{dec_str}class {name}{bases_str}"
+        
+        elif node_type == NodeType.FOR:
+            target = attributes.get('target', 'item')
+            return f"for {target} in ..."
+        
+        elif node_type == NodeType.WHILE:
+            return "while ..."
+        
+        elif node_type == NodeType.IF:
+            return "if ..."
+        
+        elif node_type == NodeType.CALL:
+            args_count = attributes.get('args_count', 0)
+            kwargs = attributes.get('kwargs', [])
+            params = []
+            if args_count > 0:
+                params.append(f"{args_count} args")
+            if kwargs:
+                params.append(', '.join(kwargs[:2]) + ('...' if len(kwargs) > 2 else ''))
+            params_str = ', '.join(params) if params else ''
+            return f"{name}({params_str})" if name else "call()"
+        
+        elif node_type == NodeType.ASSIGN:
+            return f"{name} = ..." if name else "= 赋值"
+        
+        elif node_type == NodeType.IMPORT:
+            names = attributes.get('names', [])
+            if names:
+                import_names = [n[0] if n[1] is None else f"{n[0]} as {n[1]}" for n in names[:3]]
+                return f"import {', '.join(import_names)}" + ('...' if len(names) > 3 else '')
+            return "import ..."
+        
+        elif node_type == NodeType.RETURN:
+            return "return ..."
+        
+        elif node_type == NodeType.LAMBDA:
+            return "λ: ..."
+        
+        elif node_type == NodeType.BINARY_OP:
+            op = attributes.get('operator', '?')
+            return f"... {op} ..."
+        
+        elif node_type == NodeType.COMPARE:
+            ops = attributes.get('operators', [])
+            if ops:
+                return f"... {ops[0]} ..."
+            return "... ? ..."
+        
+        elif node_type == NodeType.LIST:
+            return "[...]"
+        
+        elif node_type == NodeType.DICT:
+            return "{...}"
+        
+        elif node_type == NodeType.SET:
+            return "{...}"
+        
+        elif node_type == NodeType.TUPLE:
+            return "(...)"
+        
+        elif node_type == NodeType.NAME:
+            return f"变量: {name}" if name else "变量"
+        
+        elif node_type == NodeType.MODULE:
+            return "📦 模块"
+        
+        elif node_type == NodeType.TRY:
+            return "try/except"
+        
+        elif node_type == NodeType.WITH:
+            return "with ..."
+        
+        elif node_type == NodeType.YIELD:
+            return "yield ..."
+        
+        return f"{type_desc}: {name}" if name else type_desc
+    
+    def _generate_node_explanation(self, ast_node: ast.AST, node_type: NodeType,
+                                    name: Optional[str], attributes: Dict[str, Any]) -> str:
+        """生成节点解释，用于学习模式"""
+        explanations = {
+            NodeType.FUNCTION: lambda: (
+                f"函数定义: 定义了一个名为 '{name}' 的函数。\n"
+                f"参数: {', '.join(attributes.get('args', [])) or '无参数'}\n"
+                f"装饰器: {', '.join(attributes.get('decorators', [])) or '无'}\n"
+                f"提示: 函数是组织代码的基本单元，可以被调用执行特定任务。"
+            ),
+            NodeType.CLASS: lambda: (
+                f"类定义: 定义了一个名为 '{name}' 的类。\n"
+                f"继承自: {', '.join(attributes.get('bases', [])) or '无基类'}\n"
+                f"提示: 类是面向对象编程的核心，封装了数据和操作数据的方法。"
+            ),
+            NodeType.FOR: lambda: (
+                f"For循环: 遍历可迭代对象。\n"
+                f"循环变量: {attributes.get('target', 'item')}\n"
+                f"提示: for循环用于遍历序列（列表、元组、字符串等）或其他可迭代对象。"
+            ),
+            NodeType.WHILE: lambda: (
+                f"While循环: 当条件为真时重复执行。\n"
+                f"提示: while循环会一直执行，直到条件变为假。注意避免无限循环！"
+            ),
+            NodeType.IF: lambda: (
+                f"条件判断: 根据条件执行不同的代码分支。\n"
+                f"{'包含 else 分支' if attributes.get('has_else') else '无 else 分支'}\n"
+                f"提示: if语句用于控制程序的执行流程。"
+            ),
+            NodeType.CALL: lambda: (
+                f"函数调用: 调用 '{name}' 函数。\n"
+                f"参数数量: {attributes.get('args_count', 0)}\n"
+                f"关键字参数: {', '.join(attributes.get('kwargs', [])) or '无'}\n"
+                f"提示: 函数调用会执行函数体中的代码。"
+            ),
+            NodeType.ASSIGN: lambda: (
+                f"赋值语句: 将值绑定到变量名。\n"
+                f"变量: {name}\n"
+                f"提示: 赋值创建了变量和值之间的引用关系。"
+            ),
+            NodeType.IMPORT: lambda: (
+                f"导入语句: 导入外部模块。\n"
+                f"模块: {name}\n"
+                f"提示: import语句用于使用其他模块中定义的函数和类。"
+            ),
+            NodeType.RETURN: lambda: (
+                f"返回语句: 从函数返回值。\n"
+                f"提示: return语句结束函数执行并返回结果给调用者。"
+            ),
+            NodeType.LAMBDA: lambda: (
+                f"Lambda表达式: 匿名函数。\n"
+                f"提示: lambda用于创建简单的单行函数，常用于回调和高阶函数。"
+            ),
+            NodeType.LIST: lambda: (
+                f"列表: Python的有序可变序列。\n"
+                f"提示: 列表用方括号[]表示，可以包含任意类型的元素。"
+            ),
+            NodeType.DICT: lambda: (
+                f"字典: Python的键值对映射。\n"
+                f"提示: 字典用花括号{{}}表示，通过键快速查找值。"
+            ),
+            NodeType.SET: lambda: (
+                f"集合: 无序不重复元素集。\n"
+                f"提示: 集合用于去重和集合运算（交、并、差）。"
+            ),
+            NodeType.TUPLE: lambda: (
+                f"元组: 不可变的有序序列。\n"
+                f"提示: 元组用圆括号()表示，创建后不能修改。"
+            ),
+            NodeType.TRY: lambda: (
+                f"异常处理: 捕获和处理运行时错误。\n"
+                f"提示: try/except用于优雅地处理可能发生的错误。"
+            ),
+            NodeType.WITH: lambda: (
+                f"上下文管理器: 自动管理资源。\n"
+                f"提示: with语句确保资源（如文件）被正确关闭，即使发生异常。"
+            ),
+            NodeType.YIELD: lambda: (
+                f"生成器: 产出值的生成器函数。\n"
+                f"提示: yield使函数变成生成器，可以逐个产出值，节省内存。"
+            ),
+            NodeType.BINARY_OP: lambda: (
+                f"二元运算: 执行算术或位运算。\n"
+                f"运算符: {attributes.get('operator', '?')}\n"
+                f"提示: 二元运算符包括 +, -, *, /, //, %, ** 等。"
+            ),
+            NodeType.COMPARE: lambda: (
+                f"比较运算: 比较两个值。\n"
+                f"运算符: {', '.join(attributes.get('operators', ['?']))}\n"
+                f"提示: 比较运算符包括 ==, !=, <, >, <=, >=, in, is 等。"
+            ),
+            NodeType.NAME: lambda: (
+                f"变量名: 引用变量的值或定义变量。\n"
+                f"名称: {name}\n"
+                f"提示: 变量名应该具有描述性，遵循命名规范。"
+            ),
+            NodeType.MODULE: lambda: (
+                f"模块: Python代码文件。\n"
+                f"提示: 模块是组织代码的基本单位，可以包含函数、类和变量。"
+            ),
+        }
+        
+        generator = explanations.get(node_type)
+        return generator() if generator else f"{node_type.value}: {name or '未命名'}"
     
     def _extract_attributes(self, ast_node: ast.AST) -> Dict[str, Any]:
         """提取节点的额外属性"""

@@ -67,18 +67,28 @@ function ASTVisualizer({ graph, theme }) {
         let width = 50, height = 50;
         const type = node.type?.toLowerCase();
         
-        if (type === 'module') { width = 80; height = 40; }
-        else if (type === 'class') { width = 70; height = 40; }
-        else if (type === 'function' || type === 'functiondef' || type === 'asyncfunctiondef') { width = 65; height = 35; }
-        else if (['if', 'for', 'while', 'try', 'with'].includes(type)) { width = 40; height = 40; }
-        else if (type === 'call') { width = 35; height = 35; }
-        else if (type === 'assign') { width = 30; height = 30; }
-        else { width = 28; height = 28; }
+        // 根据标签长度动态调整尺寸
+        const labelText = node.detailed_label || node.name || node.type;
+        const labelLen = labelText.length;
+        
+        if (type === 'module') { width = Math.max(80, labelLen * 8); height = 40; }
+        else if (type === 'class') { width = Math.max(70, labelLen * 7); height = 40; }
+        else if (type === 'function' || type === 'functiondef' || type === 'asyncfunctiondef') { 
+          width = Math.max(65, labelLen * 7); height = 35; 
+        }
+        else if (['if', 'for', 'while', 'try', 'with'].includes(type)) { width = Math.max(45, labelLen * 6); height = 40; }
+        else if (type === 'call') { width = Math.max(40, labelLen * 6); height = 35; }
+        else if (type === 'assign') { width = Math.max(35, labelLen * 6); height = 30; }
+        else { width = Math.max(30, labelLen * 6); height = 28; }
+        
+        // 限制最大宽度
+        width = Math.min(width, 200);
         
         return {
           data: {
             id: node.id,
-            label: node.name || node.type,
+            // 使用详细标签或组合标签
+            label: node.detailed_label || `${node.icon || ''} ${node.name || node.type}`,
             type: node.type,
             color: node.color,
             width: width,
@@ -86,6 +96,11 @@ function ASTVisualizer({ graph, theme }) {
             lineno: node.lineno,
             docstring: node.docstring,
             source_code: node.source_code,
+            icon: node.icon,
+            description: node.description,
+            explanation: node.explanation,
+            name: node.name,
+            attributes: node.attributes,
           }
         };
       }),
@@ -187,10 +202,15 @@ function ASTVisualizer({ graph, theme }) {
           setSelectedNode({
             id: nodeData.id,
             type: nodeData.type,
-            name: nodeData.label,
+            name: nodeData.name,
+            label: nodeData.label,
             lineno: nodeData.lineno,
             docstring: nodeData.docstring,
             sourceCode: nodeData.source_code,
+            icon: nodeData.icon,
+            description: nodeData.description,
+            explanation: nodeData.explanation,
+            attributes: nodeData.attributes,
           });
 
           cy.elements().removeClass('highlighted highlighted-path');
@@ -362,28 +382,67 @@ function ASTVisualizer({ graph, theme }) {
         {selectedNode && (
           <div className="node-detail-panel">
             <div className="panel-header">
-              <h4>{selectedNode.type}</h4>
+              <div className="panel-header-main">
+                <span className="node-icon">{selectedNode.icon || '•'}</span>
+                <h4>{selectedNode.description || selectedNode.type}</h4>
+              </div>
               {selectedNode.name && <span className="node-name">{selectedNode.name}</span>}
             </div>
             
             <div className="panel-body">
+              {selectedNode.label && (
+                <div className="detail-item code-label">
+                  <span className="detail-label">代码结构</span>
+                  <code className="detail-code">{selectedNode.label}</code>
+                </div>
+              )}
+              
               {selectedNode.lineno && (
                 <div className="detail-item">
-                  <span className="detail-label">Line</span>
-                  <span className="detail-value">{selectedNode.lineno}</span>
+                  <span className="detail-label">位置</span>
+                  <span className="detail-value">第 {selectedNode.lineno} 行</span>
+                </div>
+              )}
+              
+              {selectedNode.explanation && (
+                <div className="detail-item explanation">
+                  <span className="detail-label">📖 说明</span>
+                  <p className="explanation-text">{selectedNode.explanation}</p>
                 </div>
               )}
               
               {selectedNode.docstring && (
                 <div className="detail-item">
-                  <span className="detail-label">Docstring</span>
+                  <span className="detail-label">文档字符串</span>
                   <p className="docstring">{selectedNode.docstring}</p>
+                </div>
+              )}
+              
+              {selectedNode.attributes && Object.keys(selectedNode.attributes).length > 0 && (
+                <div className="detail-item">
+                  <span className="detail-label">属性</span>
+                  <div className="attributes-list">
+                    {Object.entries(selectedNode.attributes).map(([key, value]) => {
+                      if (value === null || value === undefined || (Array.isArray(value) && value.length === 0)) {
+                        return null;
+                      }
+                      const displayValue = Array.isArray(value) 
+                        ? value.map(v => typeof v === 'object' ? JSON.stringify(v) : String(v)).join(', ')
+                        : typeof value === 'object' ? JSON.stringify(value) : String(value);
+                      return (
+                        <div key={key} className="attribute-item">
+                          <span className="attr-key">{formatAttrKey(key)}:</span>
+                          <span className="attr-value">{displayValue}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
               
               {selectedNode.sourceCode && (
                 <div className="detail-item">
-                  <span className="detail-label">Source</span>
+                  <span className="detail-label">源代码</span>
                   <pre className="source-code">{selectedNode.sourceCode}</pre>
                 </div>
               )}
@@ -516,3 +575,22 @@ function getCytoscapeStyles(theme) {
 }
 
 export default ASTVisualizer;
+
+// Helper function to format attribute keys
+function formatAttrKey(key) {
+  const keyMap = {
+    'args': '参数',
+    'decorators': '装饰器',
+    'bases': '基类',
+    'is_async': '异步',
+    'target': '循环变量',
+    'has_else': '有else分支',
+    'args_count': '参数数量',
+    'kwargs': '关键字参数',
+    'operator': '运算符',
+    'operators': '运算符',
+    'names': '导入名称',
+    'module': '模块',
+  };
+  return keyMap[key] || key;
+}

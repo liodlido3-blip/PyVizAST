@@ -6,7 +6,8 @@ import {
   Lightbulb,
   BookOpen,
   Trophy,
-  Zap
+  Zap,
+  Wand2
 } from 'lucide-react';
 
 function Sidebar({ isOpen, activeTab, onTabChange, analysisResult }) {
@@ -16,6 +17,7 @@ function Sidebar({ isOpen, activeTab, onTabChange, analysisResult }) {
     { id: 'performance', label: 'Performance', icon: <Zap size={18} /> },
     { id: 'security', label: 'Security', icon: <Shield size={18} /> },
     { id: 'suggestions', label: 'Suggestions', icon: <Lightbulb size={18} /> },
+    { id: 'patches', label: 'Auto Fix', icon: <Wand2 size={18} /> },
     { id: 'learn', label: 'Learn', icon: <BookOpen size={18} /> },
     { id: 'challenges', label: 'Challenges', icon: <Trophy size={18} /> },
   ];
@@ -32,6 +34,9 @@ function Sidebar({ isOpen, activeTab, onTabChange, analysisResult }) {
         return analysisResult.issues?.filter(i => i.type === 'security').length || 0;
       case 'suggestions':
         return analysisResult.suggestions?.length || 0;
+      case 'patches':
+        // 显示可自动修复的建议数量
+        return analysisResult.suggestions?.filter(s => s.auto_fixable).length || 0;
       default:
         return null;
     }

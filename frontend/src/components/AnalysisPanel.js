@@ -8,8 +8,9 @@ import {
   ChevronDown,
   ChevronRight
 } from 'lucide-react';
+import PatchPanel from './PatchPanel';
 
-function AnalysisPanel({ result, activeTab }) {
+function AnalysisPanel({ result, activeTab, code, onApplyPatch }) {
   if (!result) return null;
 
   const renderContent = () => {
@@ -22,6 +23,8 @@ function AnalysisPanel({ result, activeTab }) {
         return <SecurityPanel result={result} />;
       case 'suggestions':
         return <SuggestionsPanel result={result} />;
+      case 'patches':
+        return <PatchPanel code={code} onApplyPatch={onApplyPatch} />;
       case 'learn':
         return <LearnPanel result={result} />;
       case 'challenges':

@@ -204,6 +204,8 @@ function App() {
                 <AnalysisPanel 
                   result={analysisResult}
                   activeTab={activeTab}
+                  code={code}
+                  onApplyPatch={handleCodeChange}
                 />
               )
             ) : (

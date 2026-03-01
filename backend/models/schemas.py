@@ -65,6 +65,12 @@ class ASTNode(BaseModel):
     shape: str = "circle"
     size: int = 20
     
+    # 图标和描述（用于学习模式）
+    icon: str = "•"
+    description: str = ""
+    detailed_label: str = ""
+    explanation: str = ""
+    
     # 子节点和关系
     children: List[str] = []
     parent: Optional[str] = None

@@ -176,6 +176,25 @@ Contributions are welcome. Please submit pull requests to the main repository.
 
 <details> <summary>Version History</summary>
 
+### v0.2.2 (2026-03-01)
+**New Features:**
+- **Patch Application UI**: Interactive interface to preview and apply auto-fix patches
+  - Unified diff preview with syntax highlighting
+  - One-click patch application to code editor
+  - Visual status tracking for applied patches
+- **Enhanced AST Node Details**: Richer information for learning
+  - Descriptive icons for each node type (ƒ for functions, C for classes, etc.)
+  - Detailed labels showing full signatures (e.g., `def func(arg1, arg2)`)
+  - Educational explanations for each node type
+  - Attribute display (parameters, decorators, base classes, etc.)
+- **Patch Context Validation**: Improved safety for auto-fix
+  - Validates context lines before applying patches
+  - Prevents incorrect modifications to code
+
+**Bug Fixes:**
+- Fixed f-string syntax error in parser.py (escape `{}` to `{{}}`)
+- Fixed dictionary syntax error in suggestions.py
+
 ### v0.2.1 (2026-03-01)
 **Bug Fixes:**
 - Fixed CORS security configuration - now uses environment variable `ALLOWED_ORIGINS`

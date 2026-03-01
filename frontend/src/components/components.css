@@ -679,6 +679,88 @@
   border-radius: 2px;
 }
 
+/* Panel header with icon */
+.panel-header-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.node-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.panel-header h4 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-tertiary);
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Code label in detail panel */
+.code-label .detail-code {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  background: var(--bg-tertiary);
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  line-height: 1.5;
+  overflow-x: auto;
+}
+
+/* Explanation styling */
+.explanation {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle);
+}
+
+.explanation-text {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  white-space: pre-line;
+  margin: 0;
+}
+
+/* Attributes list */
+.attributes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.attribute-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 8px 12px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  border: 1px solid var(--border-subtle);
+}
+
+.attr-key {
+  color: var(--text-tertiary);
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.attr-value {
+  color: var(--text-primary);
+  text-align: right;
+  word-break: break-word;
+  max-width: 60%;
+}
+
 /* Loading Overlay */
 .loading-overlay {
   position: fixed;

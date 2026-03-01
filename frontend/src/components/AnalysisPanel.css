@@ -530,3 +530,274 @@
     flex-direction: column;
   }
 }
+
+/* Patch Panel Styles */
+.patch-panel {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.patch-panel.loading,
+.patch-panel.error,
+.patch-panel.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  gap: 16px;
+  color: var(--text-tertiary);
+}
+
+.patch-panel .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.patch-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-secondary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.patch-header h3 {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.patch-count {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 3px 8px;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-xs);
+  color: var(--text-tertiary);
+}
+
+.patch-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.patch-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.patch-item:hover {
+  border-color: var(--border-default);
+}
+
+.patch-item.expanded {
+  border-color: var(--border-default);
+}
+
+.patch-item.applied {
+  border-color: var(--success);
+  background: rgba(74, 222, 128, 0.05);
+}
+
+.patch-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.patch-item-header:hover {
+  background: var(--bg-hover);
+}
+
+.patch-item-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-primary);
+}
+
+.patch-category {
+  font-size: 14px;
+}
+
+.patch-title {
+  font-weight: 500;
+}
+
+.patch-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.auto-fix-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 3px 8px;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--info);
+  border-radius: var(--radius-xs);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.applied-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 3px 8px;
+  background: rgba(74, 222, 128, 0.1);
+  color: var(--success);
+  border-radius: var(--radius-xs);
+}
+
+.patch-item-body {
+  padding: 14px;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg-tertiary);
+}
+
+.patch-description {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  line-height: 1.6;
+}
+
+.patch-diff-container {
+  margin-bottom: 14px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.patch-diff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.patch-diff-header span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-copy {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  color: var(--text-tertiary);
+  font-size: 10px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-copy:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.patch-diff {
+  background: var(--bg-primary);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  line-height: 1.6;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.diff-line {
+  padding: 2px 12px;
+  white-space: pre;
+}
+
+.diff-header {
+  color: var(--text-tertiary);
+  background: var(--bg-secondary);
+}
+
+.diff-hunk {
+  color: var(--info);
+  background: rgba(59, 130, 246, 0.05);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.diff-add {
+  color: var(--success);
+  background: rgba(74, 222, 128, 0.08);
+}
+
+.diff-remove {
+  color: var(--error);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.diff-context {
+  color: var(--text-tertiary);
+}
+
+.patch-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.btn-apply {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  align-self: flex-start;
+}
+
+.btn-apply:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.patch-hint {
+  font-size: 11px;
+  color: var(--text-tertiary);
+}

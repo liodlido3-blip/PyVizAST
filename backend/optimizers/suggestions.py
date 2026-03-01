@@ -179,7 +179,7 @@ class SuggestionEngine:
         SINGLE_PASS_FUNCTIONS = {
             'sum', 'any', 'all', 'max', 'min', 'sorted', 'reversed',
             'list', 'tuple', 'set', 'dict', 'frozenset',
-            ''.join.__name__: 'join',  # 字符串 join
+            'join',  # 字符串 join
             'map', 'filter', 'enumerate', 'zip',
             'heapq.nlargest', 'heapq.nsmallest',
             'itertools.chain', 'itertools.islice',
