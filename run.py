@@ -60,10 +60,26 @@ def start_backend(host='0.0.0.0', port=8000):
     backend_path = os.path.dirname(__file__)
     sys.path.insert(0, backend_path)
     
-    import uvicorn
-    from backend.main import app
-    
-    uvicorn.run(app, host=host, port=port)
+    try:
+        import uvicorn
+        from backend.main import app
+        
+        uvicorn.run(app, host=host, port=port)
+    except Exception as e:
+        print(f"\n{'='*50}")
+        print("✗ 后端启动失败!")
+        print(f"{'='*50}")
+        print(f"错误类型: {type(e).__name__}")
+        print(f"错误信息: {e}")
+        
+        # 打印完整的错误堆栈
+        import traceback
+        print(f"\n错误堆栈:")
+        print("-" * 50)
+        traceback.print_exc()
+        print("-" * 50)
+        
+        sys.exit(1)
 
 
 def start_frontend(port=3000):

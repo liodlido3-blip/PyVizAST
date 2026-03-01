@@ -85,6 +85,57 @@
   animation: slideUp var(--transition-base) forwards;
 }
 
+/* 服务器连接状态错误 */
+.server-status-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px;
+  margin: 16px;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.03));
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-left: 3px solid var(--error);
+  border-radius: var(--radius-md);
+  animation: slideUp var(--transition-base) forwards;
+}
+
+.server-status-error svg {
+  color: var(--error);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.server-status-error .status-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.server-status-error strong {
+  color: var(--error);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.server-status-error p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.server-status-error .status-hint {
+  margin-top: 4px;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+}
+
+.server-status-error code {
+  color: var(--accent-primary);
+  font-weight: 500;
+}
+
 .error-icon {
   font-size: 14px;
   flex-shrink: 0;

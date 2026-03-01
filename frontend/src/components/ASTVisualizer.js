@@ -18,6 +18,22 @@ const SECONDARY_TYPES = new Set([
 ]);
 
 
+// Helper function to format attribute keys (defined outside component to avoid recreation)
+const ATTR_KEY_MAP = {
+  'args': '参数',
+  'decorators': '装饰器',
+  'bases': '基类',
+  'is_async': '异步',
+  'target': '循环变量',
+  'has_else': '有else分支',
+  'args_count': '参数数量',
+  'kwargs': '关键字参数',
+  'operator': '运算符',
+  'operators': '运算符',
+  'names': '导入名称',
+  'module': '模块',
+};
+
 function ASTVisualizer({ graph, theme }) {
   const containerRef = useRef(null);
   const cyRef = useRef(null);
@@ -26,7 +42,12 @@ function ASTVisualizer({ graph, theme }) {
   const [detailLevel, setDetailLevel] = useState('normal');
   const [isRendering, setIsRendering] = useState(false);
   const [layoutType, setLayoutType] = useState('dagre');
+  const [signalParticles, setSignalParticles] = useState([]); // Particles for edge animation
   const zoomRef = useRef(1);
+  const initialThemeRef = useRef(theme); // Store initial theme to avoid re-initializing
+
+  // Format attribute key using memoized map
+  const formatAttrKey = useCallback((key) => ATTR_KEY_MAP[key] || key, []);
 
   // Filter elements based on detail level
   const filteredElements = useMemo(() => {
@@ -149,13 +170,11 @@ function ASTVisualizer({ graph, theme }) {
     }
   }, []);
 
-  // Initialize Cytoscape once
+  // Initialize Cytoscape once on mount
   useEffect(() => {
-    if (!graph || !containerRef.current) return;
-    if (cytoscapeElements.nodes.length === 0) return;
+    if (!containerRef.current) return;
 
     let mounted = true;
-    setIsRendering(true);
 
     const initCytoscape = async () => {
       try {
@@ -171,20 +190,10 @@ function ASTVisualizer({ graph, theme }) {
 
         if (!mounted) return;
 
-        // Destroy existing instance
-        if (cyRef.current) {
-          cyRef.current.destroy();
-          cyRef.current = null;
-        }
-
-        const nodeCount = cytoscapeElements.nodes.length;
-        const layoutConfig = getLayoutConfig(nodeCount, layoutType);
-
         const cy = cytoscape({
           container: containerRef.current,
-          elements: cytoscapeElements,
-          style: getCytoscapeStyles(theme),
-          layout: layoutConfig,
+          elements: { nodes: [], edges: [] },
+          style: getCytoscapeStyles(initialThemeRef.current),
           userZoomingEnabled: true,
           userPanningEnabled: true,
           boxSelectionEnabled: true,
@@ -227,7 +236,7 @@ function ASTVisualizer({ graph, theme }) {
           }
         });
 
-        // Zoom handler - only update zoom display, don't re-render
+        // Zoom handler
         cy.on('zoom', () => {
           const currentZoom = cy.zoom();
           zoomRef.current = currentZoom;
@@ -244,27 +253,197 @@ function ASTVisualizer({ graph, theme }) {
           });
         });
 
-        cy.ready(() => {
-          if (mounted) {
-            cy.fit(undefined, 50);
-            setIsRendering(false);
+        // Long press to focus with detailed info (taphold = 500ms press)
+        cy.on('taphold', 'node', (evt) => {
+          const node = evt.target;
+          const nodeData = node.data();
+          
+          // Set detailed node info for panel
+          setSelectedNode({
+            id: nodeData.id,
+            type: nodeData.type,
+            name: nodeData.name,
+            label: nodeData.label,
+            lineno: nodeData.lineno,
+            docstring: nodeData.docstring,
+            sourceCode: nodeData.source_code,
+            icon: nodeData.icon,
+            description: nodeData.description,
+            explanation: nodeData.explanation,
+            attributes: nodeData.attributes,
+            isLongPress: true,
+          });
+
+          // Hide all nodes except selected and neighbors
+          const neighbors = node.neighborhood('node');
+          const connectedEdges = node.connectedEdges();
+          
+          cy.elements().addClass('dimmed');
+          node.removeClass('dimmed').addClass('focused');
+          neighbors.removeClass('dimmed').addClass('focused-neighbor');
+          connectedEdges.removeClass('dimmed').addClass('focused-edge');
+
+          // Animate to focus on node
+          cy.animate({
+            zoom: 2,
+            center: { eles: node },
+            duration: 400,
+            easing: 'ease-out'
+          });
+        });
+
+        // Release long press - trigger signal propagation animation
+        cy.on('tapend', 'node', (evt) => {
+          const node = evt.target;
+          
+          // Check if this was a long press (node has focused class)
+          if (!node.hasClass('focused')) return;
+          
+          // Signal propagation animation with particles
+          propagateSignalWithParticles(cy, node, setSignalParticles);
+        });
+
+        // Tap on background to reset
+        cy.on('tap', (evt) => {
+          if (evt.target === cy) {
+            setSelectedNode(null);
+            setSignalParticles([]);
+            cy.elements().removeClass('dimmed focused focused-neighbor focused-edge highlighted highlighted-path signal-wave');
           }
         });
 
       } catch (error) {
         console.error('Failed to initialize Cytoscape:', error);
-        if (mounted) setIsRendering(false);
       }
     };
 
-    // Delay init to avoid ResizeObserver issues
-    const timer = setTimeout(() => {
-      requestAnimationFrame(initCytoscape);
-    }, 50);
+    // Signal propagation with particle animation
+    function propagateSignalWithParticles(cy, sourceNode, setParticles) {
+      const visitedNodes = new Set();
+      const visitedEdges = new Set();
+      const nodeId = sourceNode.id();
+      visitedNodes.add(nodeId);
+      
+      // Build propagation queue: [{ sourceNode, targetNode, delay }]
+      const propagationQueue = [];
+      let currentNodes = [{ node: sourceNode, delay: 0 }];
+      
+      // Particle speed: pixels per millisecond
+      const particleSpeed = 0.5; // 0.5 pixels per ms = 500 pixels per second
+      
+      // BFS to build propagation order
+      for (let depth = 0; depth < 5 && currentNodes.length > 0; depth++) {
+        const nextNodes = [];
+        
+        currentNodes.forEach(({ node, delay }) => {
+          node.connectedEdges().forEach(edge => {
+            const edgeId = edge.id();
+            
+            // Skip if this edge was already processed
+            if (visitedEdges.has(edgeId)) return;
+            visitedEdges.add(edgeId);
+            
+            const isOutgoing = edge.source().id() === node.id();
+            const targetNode = isOutgoing ? edge.target() : edge.source();
+            
+            // Calculate edge length for delay
+            const sourcePos = node.renderedPosition();
+            const targetPos = targetNode.renderedPosition();
+            const dx = targetPos.x - sourcePos.x;
+            const dy = targetPos.y - sourcePos.y;
+            const edgeLength = Math.sqrt(dx * dx + dy * dy);
+            
+            // Delay based on edge length (constant speed)
+            const travelTime = edgeLength / particleSpeed;
+            
+            propagationQueue.push({
+              sourceNode: node,
+              targetNode,
+              delay,
+            });
+            
+            // Only add target node to next wave if not visited
+            if (!visitedNodes.has(targetNode.id())) {
+              visitedNodes.add(targetNode.id());
+              nextNodes.push({ node: targetNode, delay: delay + travelTime });
+            }
+          });
+        });
+        
+        currentNodes = nextNodes;
+      }
+      
+      // Restore visibility first
+      cy.elements().removeClass('dimmed focused focused-neighbor focused-edge');
+      
+      // Create particles that travel along edges
+      let particleId = 0;
+      
+      propagationQueue.forEach(({ sourceNode, targetNode, delay }) => {
+        // Create particle after delay
+        setTimeout(() => {
+          // Get current positions at animation time
+          const sourcePos = sourceNode.renderedPosition();
+          const targetPos = targetNode.renderedPosition();
+          
+          // Calculate edge length
+          const dx = targetPos.x - sourcePos.x;
+          const dy = targetPos.y - sourcePos.y;
+          const edgeLength = Math.sqrt(dx * dx + dy * dy);
+          
+          const particle = {
+            id: particleId++,
+            startX: sourcePos.x,
+            startY: sourcePos.y,
+            endX: targetPos.x,
+            endY: targetPos.y,
+            progress: 0,
+            startTime: Date.now(),
+            duration: edgeLength / particleSpeed,
+          };
+          
+          // Add particle to state
+          setParticles(prev => [...prev, particle]);
+          
+          // Add signal class to target node when particle is approaching
+          let signalAdded = false;
+          
+          // Animate particle
+          const animateParticle = () => {
+            const elapsed = Date.now() - particle.startTime;
+            const progress = Math.min(elapsed / particle.duration, 1);
+            
+            // Add signal class when particle is halfway
+            if (progress > 0.5 && !signalAdded) {
+              targetNode.addClass('signal-approaching');
+              signalAdded = true;
+            }
+            
+            if (progress < 1) {
+              setParticles(prev => 
+                prev.map(p => p.id === particle.id ? { ...p, progress } : p)
+              );
+              requestAnimationFrame(animateParticle);
+            } else {
+              // Remove particle when done
+              setParticles(prev => prev.filter(p => p.id !== particle.id));
+              
+              // Transition to pulse effect
+              targetNode.removeClass('signal-approaching');
+              targetNode.addClass('signal-pulse');
+              setTimeout(() => targetNode.removeClass('signal-pulse'), 400);
+            }
+          };
+          
+          requestAnimationFrame(animateParticle);
+        }, delay);
+      });
+    }
+
+    requestAnimationFrame(initCytoscape);
 
     return () => {
       mounted = false;
-      clearTimeout(timer);
       if (cyRef.current) {
         try {
           cyRef.current.destroy();
@@ -272,7 +451,32 @@ function ASTVisualizer({ graph, theme }) {
         cyRef.current = null;
       }
     };
-  }, [cytoscapeElements, theme, layoutType, getLayoutConfig, graph]);
+  }, []); // Only run once on mount
+
+  // Update elements when data changes (incremental update)
+  useEffect(() => {
+    if (!cyRef.current || cytoscapeElements.nodes.length === 0) return;
+    
+    setIsRendering(true);
+    
+    const cy = cyRef.current;
+    
+    // Use json() for batch update - more efficient than destroy/recreate
+    cy.json({ elements: cytoscapeElements });
+    
+    // Apply layout
+    const layoutConfig = getLayoutConfig(cytoscapeElements.nodes.length, layoutType);
+    const layout = cy.layout(layoutConfig);
+    
+    layout.on('layoutstop', () => {
+      if (cyRef.current) {
+        cyRef.current.fit(undefined, 50);
+        setIsRendering(false);
+      }
+    });
+    
+    layout.run();
+  }, [cytoscapeElements, layoutType, getLayoutConfig]);
 
   // Update theme without re-initializing
   useEffect(() => {
@@ -281,13 +485,67 @@ function ASTVisualizer({ graph, theme }) {
     }
   }, [theme]);
 
-  // Re-layout when layout type changes
+  // Keyboard navigation (WASD and Arrow keys) - Smooth movement
   useEffect(() => {
-    if (cyRef.current && cytoscapeElements.nodes.length > 0) {
-      const layoutConfig = getLayoutConfig(cytoscapeElements.nodes.length, layoutType);
-      cyRef.current.layout(layoutConfig).run();
-    }
-  }, [layoutType, getLayoutConfig, cytoscapeElements.nodes.length]);
+    const keysPressed = new Set();
+    let animationId = null;
+    
+    const handleKeyDown = (e) => {
+      const key = e.key.toLowerCase();
+      if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+        e.preventDefault();
+        keysPressed.add(key);
+        
+        if (!animationId) {
+          animate();
+        }
+      }
+    };
+    
+    const handleKeyUp = (e) => {
+      const key = e.key.toLowerCase();
+      keysPressed.delete(key);
+      
+      if (keysPressed.size === 0 && animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
+    };
+    
+    const animate = () => {
+      if (!cyRef.current || keysPressed.size === 0) {
+        animationId = null;
+        return;
+      }
+      
+      const cy = cyRef.current;
+      const speed = 8 / cy.zoom(); // Pixels per frame
+      
+      let dx = 0, dy = 0;
+      
+      if (keysPressed.has('w') || keysPressed.has('arrowup')) dy = speed;
+      if (keysPressed.has('s') || keysPressed.has('arrowdown')) dy = -speed;
+      if (keysPressed.has('a') || keysPressed.has('arrowleft')) dx = speed;
+      if (keysPressed.has('d') || keysPressed.has('arrowright')) dx = -speed;
+      
+      if (dx !== 0 || dy !== 0) {
+        cy.panBy({ x: dx, y: dy });
+      }
+      
+      animationId = requestAnimationFrame(animate);
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+    };
+  }, []);
 
   const handleZoomIn = useCallback(() => {
     if (cyRef.current) {
@@ -379,6 +637,58 @@ function ASTVisualizer({ graph, theme }) {
         )}
         <div className="cytoscape-container" ref={containerRef}></div>
         
+        {/* Signal particles overlay */}
+        <svg className="particles-overlay">
+          <defs>
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+              <feMerge>
+                <feMergeNode in="coloredBlur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+            <radialGradient id="particleGradient" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor="#00ffff" stopOpacity="1"/>
+              <stop offset="50%" stopColor="#00ccff" stopOpacity="0.8"/>
+              <stop offset="100%" stopColor="#0088ff" stopOpacity="0"/>
+            </radialGradient>
+          </defs>
+          {signalParticles.map(particle => {
+            const x = particle.startX + (particle.endX - particle.startX) * particle.progress;
+            const y = particle.startY + (particle.endY - particle.startY) * particle.progress;
+            return (
+              <g key={particle.id}>
+                {/* Trail effect */}
+                <line
+                  x1={particle.startX + (particle.endX - particle.startX) * Math.max(0, particle.progress - 0.3)}
+                  y1={particle.startY + (particle.endY - particle.startY) * Math.max(0, particle.progress - 0.3)}
+                  x2={x}
+                  y2={y}
+                  stroke="url(#particleGradient)"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  filter="url(#glow)"
+                  opacity={0.8}
+                />
+                {/* Particle head */}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="6"
+                  fill="#00ffff"
+                  filter="url(#glow)"
+                />
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="3"
+                  fill="#ffffff"
+                />
+              </g>
+            );
+          })}
+        </svg>
+        
         {selectedNode && (
           <div className="node-detail-panel">
             <div className="panel-header">
@@ -406,7 +716,7 @@ function ASTVisualizer({ graph, theme }) {
               
               {selectedNode.explanation && (
                 <div className="detail-item explanation">
-                  <span className="detail-label">📖 说明</span>
+                  <span className="detail-label">说明</span>
                   <p className="explanation-text">{selectedNode.explanation}</p>
                 </div>
               )}
@@ -472,7 +782,7 @@ function ASTVisualizer({ graph, theme }) {
           <span className="legend-color" style={{ background: '#505050' }}></span>
           <span>Assignment</span>
         </div>
-        <div className="legend-hint">Double-click node to focus</div>
+        <div className="legend-hint">双击聚焦 | 长按查看详情 | WASD/方向键移动</div>
       </div>
     </div>
   );
@@ -517,6 +827,68 @@ function getCytoscapeStyles(theme) {
         'border-width': 2,
         'border-color': isDark ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.3)',
         'opacity': 0.8,
+      }
+    },
+    {
+      selector: 'node.focused',
+      style: {
+        'border-width': 4,
+        'border-color': '#00ff88',
+        'z-index': 1000,
+        'overlay-color': '#00ff88',
+        'overlay-opacity': 0.2,
+        'overlay-padding': 8,
+      }
+    },
+    {
+      selector: 'node.dimmed',
+      style: {
+        'opacity': 0.15,
+      }
+    },
+    {
+      selector: 'node.focused-neighbor',
+      style: {
+        'border-width': 2,
+        'border-color': '#00ff88',
+        'opacity': 0.9,
+        'z-index': 999,
+      }
+    },
+    {
+      selector: 'node.signal-wave',
+      style: {
+        'border-width': 3,
+        'border-color': '#00ccff',
+        'overlay-color': '#00ccff',
+        'overlay-opacity': 0.4,
+        'overlay-padding': 12,
+        'transition-property': 'overlay-opacity, border-color',
+        'transition-duration': 0.3,
+      }
+    },
+    {
+      selector: 'node.signal-approaching',
+      style: {
+        'border-width': 3,
+        'border-color': '#00ccff',
+        'overlay-color': '#00ccff',
+        'overlay-opacity': 0.3,
+        'overlay-padding': 10,
+        'z-index': 1000,
+        'transition-property': 'border-color, overlay-opacity',
+        'transition-duration': 0.2,
+      }
+    },
+    {
+      selector: 'node.signal-pulse',
+      style: {
+        'border-width': 4,
+        'border-color': '#00ccff',
+        'overlay-color': '#00ccff',
+        'overlay-opacity': 0.6,
+        'overlay-padding': 15,
+        'z-index': 1001,
       }
     },
     {
@@ -571,26 +943,42 @@ function getCytoscapeStyles(theme) {
         'line-style': 'dashed',
       }
     },
+    {
+      selector: 'edge.dimmed',
+      style: {
+        'opacity': 0.1,
+      }
+    },
+    {
+      selector: 'edge.focused-edge',
+      style: {
+        'width': 2.5,
+        'line-color': '#00ff88',
+        'target-arrow-color': '#00ff88',
+        'z-index': 997,
+      }
+    },
+    {
+      selector: 'edge.signal-wave',
+      style: {
+        'width': 3,
+        'line-color': '#00ccff',
+        'target-arrow-color': '#00ccff',
+        'z-index': 999,
+        'transition-property': 'line-color, width',
+        'transition-duration': 0.3,
+      }
+    },
+    {
+      selector: 'edge.signal-flow',
+      style: {
+        'width': 3,
+        'line-color': '#00ccff',
+        'target-arrow-color': '#00ccff',
+        'z-index': 1000,
+      }
+    },
   ];
 }
 
 export default ASTVisualizer;
-
-// Helper function to format attribute keys
-function formatAttrKey(key) {
-  const keyMap = {
-    'args': '参数',
-    'decorators': '装饰器',
-    'bases': '基类',
-    'is_async': '异步',
-    'target': '循环变量',
-    'has_else': '有else分支',
-    'args_count': '参数数量',
-    'kwargs': '关键字参数',
-    'operator': '运算符',
-    'operators': '运算符',
-    'names': '导入名称',
-    'module': '模块',
-  };
-  return keyMap[key] || key;
-}

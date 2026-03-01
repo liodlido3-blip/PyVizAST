@@ -48,6 +48,13 @@ app.add_middleware(
 )
 
 
+# 本地模型定义
+class PatchApplyRequest(BaseModel):
+    """补丁应用请求模型"""
+    code: str
+    patch: str
+
+
 class AnalyzerFactory:
     """分析器工厂 - 每次请求创建新实例避免状态污染"""
     
@@ -96,6 +103,7 @@ async def root():
         "name": "PyVizAST API",
         "version": "0.1.0",
         "description": "Python AST可视化与静态分析器",
+        "status": "running",
         "endpoints": {
             "analyze": "/api/analyze",
             "ast": "/api/ast",
@@ -106,6 +114,12 @@ async def root():
             "docs": "/docs"
         }
     }
+
+
+@app.get("/api/health")
+async def health_check():
+    """健康检查端点"""
+    return {"status": "healthy", "service": "PyVizAST API"}
 
 
 @app.post("/api/analyze", response_model=AnalysisResult)
@@ -419,7 +433,7 @@ async def generate_patches(input_data: CodeInput):
 
 
 @app.post("/api/apply-patch")
-async def apply_patch(code: str, patch: str):
+async def apply_patch(request: PatchApplyRequest):
     """
     应用补丁到代码
     """
@@ -427,7 +441,7 @@ async def apply_patch(code: str, patch: str):
     
     try:
         patch_generator = AnalyzerFactory.create_patch_generator()
-        result = patch_generator.apply_patch(code, patch)
+        result = patch_generator.apply_patch(request.code, request.patch)
         if result is None:
             raise HTTPException(status_code=400, detail="补丁应用失败")
         return {"fixed_code": result}

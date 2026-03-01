@@ -277,8 +277,9 @@ class PerformanceAnalyzer:
     def _detect_global_lookups(self, tree: ast.AST):
         """检测可能的全局查找"""
         
+        import builtins
         # Python 内置函数和常见全局名称
-        BUILTINS = set(dir(__builtins__)) if isinstance(__builtins__, dict) else set()
+        BUILTINS = set(dir(builtins))
         BUILTINS.update(['print', 'len', 'range', 'str', 'int', 'float', 'list', 'dict', 'set', 'tuple',
                          'True', 'False', 'None', 'open', 'type', 'isinstance', 'hasattr', 'getattr',
                          'enumerate', 'zip', 'map', 'filter', 'sorted', 'reversed', 'sum', 'min', 'max'])

@@ -1,11 +1,13 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import CodeEditor from './components/CodeEditor';
 import ASTVisualizer from './components/ASTVisualizer';
+import ASTVisualizer3D from './components/ASTVisualizer3D';
 import AnalysisPanel from './components/AnalysisPanel';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import LoadingOverlay from './components/LoadingOverlay';
-import { analyzeCode } from './api';
+import ErrorBoundary from './components/ErrorBoundary';
+import { analyzeCode, checkServerHealth, getApiBaseUrl } from './api';
 import './App.css';
 import './components/components.css';
 import './components/AnalysisPanel.css';
@@ -103,9 +105,29 @@ function App() {
   const [activeTab, setActiveTab] = useState('ast');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [theme, setTheme] = useState('dark');
+  const [viewMode, setViewMode] = useState('2d'); // '2d' or '3d'
+  const [serverStatus, setServerStatus] = useState({ checking: true, connected: false });
   
   // 用于取消请求的 AbortController
   const abortControllerRef = useRef(null);
+
+  // 检查服务器连接状态
+  useEffect(() => {
+    const checkConnection = async () => {
+      const result = await checkServerHealth();
+      setServerStatus({ 
+        checking: false, 
+        connected: result.connected,
+        error: result.error,
+        hint: result.hint
+      });
+    };
+    
+    checkConnection();
+    // 每30秒检查一次连接
+    const interval = setInterval(checkConnection, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   // 组件卸载时取消正在进行的请求
   useEffect(() => {
@@ -119,6 +141,12 @@ function App() {
   const handleAnalyze = useCallback(async () => {
     if (!code.trim()) {
       setError('请输入Python代码');
+      return;
+    }
+
+    // 检查服务器连接
+    if (!serverStatus.connected) {
+      setError(`无法连接到服务器 (${getApiBaseUrl()})。请确保后端正在运行: python run.py backend`);
       return;
     }
 
@@ -141,11 +169,16 @@ function App() {
       if (err.name === 'AbortError' || err.name === 'CanceledError') {
         return;
       }
-      setError(err.message || '分析失败，请检查代码语法');
+      // 提供更详细的错误信息
+      if (err.message?.includes('Network Error') || err.message?.includes('无法连接')) {
+        setError(`无法连接到服务器 (${getApiBaseUrl()})。请确保后端正在运行: python run.py backend`);
+      } else {
+        setError(err.message || '分析失败，请检查代码语法');
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [code]);
+  }, [code, serverStatus.connected]);
 
   const handleCodeChange = useCallback((newCode) => {
     setCode(newCode);
@@ -171,6 +204,8 @@ function App() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           analysisResult={analysisResult}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
         />
         
         <main className="main-content">
@@ -183,6 +218,23 @@ function App() {
           </div>
           
           <div className="visualization-panel">
+            {/* 服务器连接状态 */}
+            {!serverStatus.checking && !serverStatus.connected && (
+              <div className="server-status-error">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+                  <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+                  <line x1="6" y1="6" x2="6.01" y2="6" />
+                  <line x1="6" y1="18" x2="6.01" y2="18" />
+                </svg>
+                <div className="status-content">
+                  <strong>无法连接到后端服务器</strong>
+                  <p>API地址: {getApiBaseUrl()}</p>
+                  <p className="status-hint">请在终端运行: <code>python run.py backend</code></p>
+                </div>
+              </div>
+            )}
+            
             {error && (
               <div className="error-message">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -194,38 +246,47 @@ function App() {
               </div>
             )}
             
-            {analysisResult ? (
-              activeTab === 'ast' ? (
-                <ASTVisualizer 
-                  graph={analysisResult.ast_graph}
-                  theme={theme}
-                />
+            <ErrorBoundary>
+              {analysisResult ? (
+                activeTab === 'ast' ? (
+                  viewMode === '3d' ? (
+                    <ASTVisualizer3D 
+                      graph={analysisResult.ast_graph}
+                      theme={theme}
+                    />
+                  ) : (
+                    <ASTVisualizer 
+                      graph={analysisResult.ast_graph}
+                      theme={theme}
+                    />
+                  )
+                ) : (
+                  <AnalysisPanel 
+                    result={analysisResult}
+                    activeTab={activeTab}
+                    code={code}
+                    onApplyPatch={handleCodeChange}
+                  />
+                )
               ) : (
-                <AnalysisPanel 
-                  result={analysisResult}
-                  activeTab={activeTab}
-                  code={code}
-                  onApplyPatch={handleCodeChange}
-                />
-              )
-            ) : (
-              <div className="placeholder">
-                <div className="placeholder-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
-                  </svg>
+                <div className="placeholder">
+                  <div className="placeholder-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                      <line x1="16" y1="13" x2="8" y2="13" />
+                      <line x1="16" y1="17" x2="8" y2="17" />
+                      <polyline points="10 9 9 9 8 9" />
+                    </svg>
+                  </div>
+                  <h3>PyVizAST</h3>
+                  <p>Enter Python code and click Analyze to begin</p>
+                  <p className="placeholder-hint">
+                    AST visualization, complexity analysis, performance detection, security scanning
+                  </p>
                 </div>
-                <h3>PyVizAST</h3>
-                <p>Enter Python code and click Analyze to begin</p>
-                <p className="placeholder-hint">
-                  AST visualization, complexity analysis, performance detection, security scanning
-                </p>
-              </div>
-            )}
+              )}
+            </ErrorBoundary>
           </div>
         </main>
       </div>

@@ -2,6 +2,48 @@ import axios from 'axios';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 const API_TIMEOUT = 30000; // 30秒超时
+const MAX_RETRIES = 2; // 最大重试次数
+const RETRY_DELAY = 1000; // 重试延迟（毫秒）
+
+// 判断是否应该重试的错误
+const shouldRetry = (error) => {
+  // 不重试的情况
+  if (!error) return false;
+  
+  // 4xx 错误不重试（客户端错误）
+  if (error.response?.status >= 400 && error.response?.status < 500) {
+    return false;
+  }
+  
+  // 超时、网络错误、5xx 服务器错误可以重试
+  return (
+    error.code === 'ECONNABORTED' ||
+    error.code === 'ERR_NETWORK' ||
+    error.code === 'ECONNRESET' ||
+    error.message?.includes('timeout') ||
+    error.message?.includes('Network Error') ||
+    (error.response?.status >= 500)
+  );
+};
+
+// 延迟函数
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+// 带重试的请求包装器
+const withRetry = async (requestFn, retries = MAX_RETRIES) => {
+  try {
+    return await requestFn();
+  } catch (error) {
+    // 如果不应该重试或已用完重试次数
+    if (!shouldRetry(error) || retries <= 0) {
+      throw error;
+    }
+
+    // 等待后重试
+    await delay(RETRY_DELAY);
+    return withRetry(requestFn, retries - 1);
+  }
+};
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -15,6 +57,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     // 可以在这里添加认证 token 等
+    console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
     return config;
   },
   (error) => {
@@ -75,24 +118,28 @@ api.interceptors.response.use(
  * @param {AbortSignal} signal - 可选的取消信号
  */
 export const analyzeCode = async (code, options = {}, signal = null) => {
-  const response = await api.post('/api/analyze', {
-    code,
-    options,
-  }, {
-    signal,
+  return withRetry(async () => {
+    const response = await api.post('/api/analyze', {
+      code,
+      options,
+    }, {
+      signal,
+    });
+    return response.data;
   });
-  return response.data;
 };
 
 /**
  * 获取AST图结构
  */
 export const getAST = async (code, format = 'cytoscape', theme = 'default') => {
-  const response = await api.post('/api/ast', {
-    code,
-    options: { format, theme },
+  return withRetry(async () => {
+    const response = await api.post('/api/ast', {
+      code,
+      options: { format, theme },
+    });
+    return response.data;
   });
-  return response.data;
 };
 
 /**
@@ -131,8 +178,10 @@ export const getSuggestions = async (code) => {
  * 生成补丁
  */
 export const generatePatches = async (code) => {
-  const response = await api.post('/api/patches', { code });
-  return response.data;
+  return withRetry(async () => {
+    const response = await api.post('/api/patches', { code });
+    return response.data;
+  });
 };
 
 /**
@@ -169,5 +218,26 @@ export const submitChallenge = async (challengeId, foundIssues) => {
   });
   return response.data;
 };
+
+/**
+ * 检查服务器连接状态
+ */
+export const checkServerHealth = async () => {
+  try {
+    const response = await api.get('/api/health', { timeout: 5000 });
+    return { connected: true, data: response.data };
+  } catch (error) {
+    return { 
+      connected: false, 
+      error: error.message,
+      hint: '请确保后端服务器正在运行 (python run.py backend)'
+    };
+  }
+};
+
+/**
+ * 获取API基础URL
+ */
+export const getApiBaseUrl = () => API_BASE_URL;
 
 export default api;

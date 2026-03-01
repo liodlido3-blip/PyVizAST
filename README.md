@@ -176,6 +176,40 @@ Contributions are welcome. Please submit pull requests to the main repository.
 
 <details> <summary>Version History</summary>
 
+### v0.3.0 (2026-03-01)
+**3D Visualization:**
+- Added 3D AST view with Three.js and React Three Fiber
+- Custom 3D force-directed layout algorithm for automatic node positioning
+- Different 3D shapes for node types (boxes for structures, diamonds for control flow, spheres for expressions)
+- OrbitControls for camera manipulation (drag to rotate, scroll to zoom)
+- Reset camera button to return to initial view
+
+**Signal Propagation Animation:**
+- Long press on a node to focus and display detailed information
+- Release to trigger electric-like signal propagation animation
+- Particles travel along edges at constant speed (duration based on edge length)
+- Target nodes glow with fade-in/fade-out animation when particles approach
+- Smooth BFS-based wave propagation (up to 5 levels deep)
+
+**Keyboard Navigation:**
+- WASD / Arrow keys for smooth horizontal camera movement
+- Space bar to move camera up
+- Shift key to move camera down
+- Continuous movement while keys are held
+
+**UI Improvements:**
+- Server connection status indicator with helpful error messages
+- Better error handling and display
+- Improved startup error reporting in run.py
+- Removed emoji from detail panel labels
+
+**Bug Fixes:**
+- Fixed `PatchApplyRequest` undefined error (moved class definition before usage)
+- Fixed `__builtins__` type check reliability in performance analyzer
+- Fixed particle duplication issue (added edge-level visited tracking)
+- Fixed particle position offset issue (positions now fetched at animation time)
+- Fixed 3D particle reference issue (positions now copied, not referenced)
+
 ### v0.2.2 (2026-03-01)
 **New Features:**
 - **Patch Application UI**: Interactive interface to preview and apply auto-fix patches

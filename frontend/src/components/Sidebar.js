@@ -7,10 +7,12 @@ import {
   BookOpen,
   Trophy,
   Zap,
-  Wand2
+  Wand2,
+  Box,
+  LayoutGrid
 } from 'lucide-react';
 
-function Sidebar({ isOpen, activeTab, onTabChange, analysisResult }) {
+function Sidebar({ isOpen, activeTab, onTabChange, analysisResult, viewMode, onViewModeChange }) {
   const tabs = [
     { id: 'ast', label: 'AST Visualization', icon: <GitBranch size={18} /> },
     { id: 'complexity', label: 'Complexity', icon: <Activity size={18} /> },
@@ -64,6 +66,31 @@ function Sidebar({ isOpen, activeTab, onTabChange, analysisResult }) {
           );
         })}
       </nav>
+      
+      {/* View mode toggle - only show when AST tab is active */}
+      {activeTab === 'ast' && (
+        <div className="view-mode-toggle">
+          <h4>View Mode</h4>
+          <div className="view-mode-buttons">
+            <button
+              className={`view-mode-btn ${viewMode === '2d' ? 'active' : ''}`}
+              onClick={() => onViewModeChange('2d')}
+              title="2D View"
+            >
+              <LayoutGrid size={16} />
+              <span>2D</span>
+            </button>
+            <button
+              className={`view-mode-btn ${viewMode === '3d' ? 'active' : ''}`}
+              onClick={() => onViewModeChange('3d')}
+              title="3D View"
+            >
+              <Box size={16} />
+              <span>3D</span>
+            </button>
+          </div>
+        </div>
+      )}
       
       {analysisResult && (
         <div className="sidebar-stats">
