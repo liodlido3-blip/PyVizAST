@@ -174,7 +174,7 @@ GNU General Public License v3.0
 
 Contributions are welcome. Please submit pull requests to the main repository.
 
-## Version History
+<details> <summary>Version History</summary>
 
 ### v0.2.1 (2026-03-01)
 **Bug Fixes:**
@@ -240,3 +240,4 @@ Contributions are welcome. Please submit pull requests to the main repository.
 - Security scanning
 - Optimization suggestions
 - Interactive learning mode
+</details>
