@@ -21,7 +21,7 @@ function Header({ onAnalyze, onToggleSidebar, isLoading, theme, onThemeChange })
           <a href="https://github.com/ChidcGithub/PyVizAST#features" target="_blank" rel="noopener noreferrer" className="nav-link">
             Features
           </a>
-          <a href="https://github.com/ChidcGithub/PyVizAST#api-documentation" target="_blank" rel="noopener noreferrer" className="nav-link">
+          <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer" className="nav-link">
             Docs
           </a>
           <a href="https://github.com/ChidcGithub/PyVizAST" target="_blank" rel="noopener noreferrer" className="nav-link">
