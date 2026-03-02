@@ -199,8 +199,12 @@ function Node3D({ position, node, isSelected, isFocused, isDimmed, isSignal, onC
   const [signalIntensity, setSignalIntensity] = useState(0);
   // 使用 ref 追踪上次渲染的信号强度，避免频繁状态更新
   const lastSignalIntensityRef = useRef(0);
+  // 使用 ref 存储目标缩放向量，避免每帧创建新对象
+  const targetScaleRef = useRef(new THREE.Vector3(0.5, 0.5, 0.5));
   // 状态更新阈值，只有变化超过此值才触发更新
   const SIGNAL_UPDATE_THRESHOLD = 0.05;
+  // 节流更新计数器
+  const frameCountRef = useRef(0);
   
   // Cleanup on unmount
   useEffect(() => {
@@ -220,10 +224,16 @@ function Node3D({ position, node, isSelected, isFocused, isDimmed, isSignal, onC
                    category === 'control' ? 0.4 : 0.3;
   const size = isFocused ? baseSize * 1.5 : isSelected ? baseSize * 1.3 : hovered ? baseSize * 1.15 : baseSize;
   
-  // Animation
+  // 更新目标缩放向量（只在 size 变化时）
+  useEffect(() => {
+    targetScaleRef.current.set(size, size, size);
+  }, [size]);
+  
+  // Animation - 优化版本
   useFrame(() => {
     if (meshRef.current) {
-      meshRef.current.scale.lerp(new THREE.Vector3(size, size, size), 0.1);
+      // 使用预先创建的向量进行插值
+      meshRef.current.scale.lerp(targetScaleRef.current, 0.1);
     }
     
     // Signal wave animation - smooth fade in/out
@@ -234,6 +244,10 @@ function Node3D({ position, node, isSelected, isFocused, isDimmed, isSignal, onC
       // Slow fade out
       signalRef.current = Math.max(signalRef.current - 0.03, 0);
     }
+    
+    // 节流更新：每3帧检查一次信号强度
+    frameCountRef.current++;
+    if (frameCountRef.current % 3 !== 0) return;
     
     // 仅在信号强度变化超过阈值时才更新状态，减少不必要的重渲染
     const intensityDiff = Math.abs(signalRef.current - lastSignalIntensityRef.current);

@@ -176,6 +176,35 @@ Contributions are welcome. Please submit pull requests to the main repository.
 
 <details> <summary>Version History</summary>
 
+### v0.3.4 (2026-03-02)
+**Bug Fixes:**
+- Fixed 422 validation error showing `[object Object]` instead of readable message
+  - Added `extractErrorMessage` function to properly parse Pydantic validation errors
+  - Correctly extracts error details from arrays/objects to display meaningful messages
+- Fixed large file support:
+  - Increased `MAX_CODE_LENGTH` from 100,000 to 5,000,000 characters
+  - Now supports analyzing large project files
+
+**Backend Bug Fixes:**
+- Fixed potential infinite recursion in `performance.py` (removed duplicate `generic_visit`)
+- Fixed incomplete dead code detection in `code_smells.py` (removed premature `break`)
+- Fixed patch parsing logic in `patches.py` (line number tracking)
+- Fixed regex false positives in `security.py` (excluded comments and placeholders)
+- Added progressive simplification strategy for large files in `main.py`
+- Added deduplication in `suggestions.py` to prevent duplicate suggestions
+
+**Frontend Bug Fixes:**
+- Fixed memory leak in `ASTVisualizer.js` (animation cancellation flags)
+- Fixed useFrame state updates in `ASTVisualizer3D.js` (throttling + ref-based vectors)
+- Fixed retry logic in `api.js` (only retry idempotent methods like GET)
+- Fixed patch application in `PatchPanel.js` (API-first with fallback)
+
+**Performance Notes:**
+- Very large files (millions of characters) may cause:
+  - Increased memory usage during AST parsing
+  - Performance slowdown in visualization with many nodes
+  - Consider splitting large projects into separate files for analysis
+
 ### v0.3.3 (2026-03-02)
 **New Features:**
 - **Search Functionality**: Search nodes in 2D/3D AST view

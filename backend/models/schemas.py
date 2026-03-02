@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, field_validator, ConfigDict
 
 
 # 常量定义
-MAX_CODE_LENGTH = 100000  # 最大代码长度（字符数）
+MAX_CODE_LENGTH = 5000000  # 最大代码长度（字符数）- 支持大型项目文件（五百万字符）
 MAX_FILENAME_LENGTH = 255  # 最大文件名长度
 
 

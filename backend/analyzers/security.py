@@ -174,21 +174,54 @@ class SecurityScanner:
     
     def _check_hardcoded_secrets(self, code: str, source_lines: List[str]):
         """检查硬编码的敏感信息"""
+        # 编译一个匹配注释行开头（包括缩进）的正则
+        comment_pattern = re.compile(r'^\s*#')
+        # 匹配多行字符串开头
+        multiline_string_start = re.compile(r'^\s*(\'\'\'|""")')
+        
         for i, line in enumerate(source_lines, 1):
+            # 跳过注释行
+            if comment_pattern.match(line):
+                continue
+            
+            # 跳过多行字符串内的内容（简化处理）
+            if multiline_string_start.search(line):
+                continue
+            
             for pattern, secret_type in self.SENSITIVE_PATTERNS:
                 if re.search(pattern, line):
-                    # 排除注释和明显的占位符
-                    stripped = line.strip()
-                    if not stripped.startswith('#') and 'xxx' not in line.lower():
-                        self.issues.append(CodeIssue(
-                            id=self._generate_issue_id("hardcoded_secret"),
-                            type="security",
-                            severity=SeverityLevel.ERROR,
-                            message=f"检测到硬编码的{secret_type}",
-                            lineno=i,
-                            source_snippet=stripped[:50] + ('...' if len(stripped) > 50 else ''),
-                            documentation_url="https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_password"
-                        ))
+                    # 排除明显的占位符和示例值
+                    stripped = line.strip().lower()
+                    placeholder_indicators = [
+                        'xxx', 'your_', 'example', 'placeholder', 'sample',
+                        'changeme', 'todo', 'fixme', '<', '>', 'dummy',
+                        'test_key', 'fake', 'mock'
+                    ]
+                    
+                    # 如果行中包含占位符指示词，跳过
+                    if any(indicator in stripped for indicator in placeholder_indicators):
+                        continue
+                    
+                    # 检查值是否是明显的占位符
+                    # 提取等号右边的值
+                    value_match = re.search(r'=\s*["\']([^"\']+)["\']', line)
+                    if value_match:
+                        value = value_match.group(1).lower()
+                        if any(indicator in value for indicator in placeholder_indicators):
+                            continue
+                        # 跳过太短的值（很可能是占位符）
+                        if len(value) < 4:
+                            continue
+                    
+                    self.issues.append(CodeIssue(
+                        id=self._generate_issue_id("hardcoded_secret"),
+                        type="security",
+                        severity=SeverityLevel.ERROR,
+                        message=f"检测到硬编码的{secret_type}",
+                        lineno=i,
+                        source_snippet=stripped[:50] + ('...' if len(stripped) > 50 else ''),
+                        documentation_url="https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_password"
+                    ))
     
     def _check_unsafe_deserialization(self, tree: ast.AST):
         """检查不安全的反序列化"""

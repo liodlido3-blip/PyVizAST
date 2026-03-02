@@ -335,21 +335,39 @@ class CodeSmellDetector:
             
             def visit_FunctionDef(self, node):
                 self.after_return = False
+                dead_code_start = None
+                
                 for i, stmt in enumerate(node.body):
                     if self.after_return:
-                        self.detector.issues.append(CodeIssue(
-                            id=self.detector._generate_issue_id("dead_code"),
-                            type="code_smell",
-                            severity=SeverityLevel.WARNING,
-                            message="return语句后的代码永远不会执行",
-                            lineno=getattr(stmt, 'lineno', node.lineno)
-                        ))
-                        break
+                        # 记录死代码块的起始位置
+                        if dead_code_start is None:
+                            dead_code_start = i
+                    else:
+                        # 如果之前有死代码块，现在遇到了非死代码，报告之前的死代码块
+                        if dead_code_start is not None:
+                            self.detector.issues.append(CodeIssue(
+                                id=self.detector._generate_issue_id("dead_code"),
+                                type="code_smell",
+                                severity=SeverityLevel.WARNING,
+                                message=f"return语句后有 {i - dead_code_start} 行代码永远不会执行",
+                                lineno=getattr(node.body[dead_code_start], 'lineno', node.lineno)
+                            ))
+                            dead_code_start = None
                     
                     if isinstance(stmt, ast.Return):
                         self.after_return = True
                     
                     self.visit(stmt)
+                
+                # 处理函数末尾的死代码块
+                if dead_code_start is not None:
+                    self.detector.issues.append(CodeIssue(
+                        id=self.detector._generate_issue_id("dead_code"),
+                        type="code_smell",
+                        severity=SeverityLevel.WARNING,
+                        message=f"return语句后有 {len(node.body) - dead_code_start} 行代码永远不会执行",
+                        lineno=getattr(node.body[dead_code_start], 'lineno', node.lineno)
+                    ))
                 
                 self.after_return = False
             

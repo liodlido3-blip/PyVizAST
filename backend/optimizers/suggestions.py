@@ -116,10 +116,23 @@ class SuggestionEngine:
     def __init__(self):
         self.suggestions: List[OptimizationSuggestion] = []
         self.suggestion_counter = 0
+        self._added_suggestion_keys: set = set()  # 用于去重的键集合
     
     def _generate_suggestion_id(self) -> str:
         self.suggestion_counter += 1
         return f"suggestion_{self.suggestion_counter}"
+    
+    def _get_suggestion_key(self, title: str, lineno: Optional[int] = None) -> str:
+        """生成建议的唯一键，用于去重"""
+        return f"{title}:{lineno or 0}"
+    
+    def _is_duplicate(self, title: str, lineno: Optional[int] = None) -> bool:
+        """检查是否已存在相同的建议"""
+        key = self._get_suggestion_key(title, lineno)
+        if key in self._added_suggestion_keys:
+            return True
+        self._added_suggestion_keys.add(key)
+        return False
     
     def generate_suggestions(
         self, 
@@ -141,8 +154,10 @@ class SuggestionEngine:
         if tree is None:
             tree = ast.parse(code)
         
+        # 重置状态
         self.suggestions = []
         self.suggestion_counter = 0
+        self._added_suggestion_keys = set()
         
         source_lines = code.splitlines()
         
@@ -321,6 +336,9 @@ class SuggestionEngine:
                             arg = node.iter.args[0]
                             if isinstance(arg, ast.Call):
                                 if isinstance(arg.func, ast.Name) and arg.func.id == 'len':
+                                    # 检查是否已存在相同的建议
+                                    if self._is_duplicate('使用enumerate()替代range(len())', node.lineno):
+                                        continue
                                     # 找到range(len(...))模式
                                     self.suggestions.append(OptimizationSuggestion(
                                         id=self._generate_suggestion_id(),
@@ -341,6 +359,9 @@ class SuggestionEngine:
             if isinstance(node, ast.BinOp):
                 if isinstance(node.op, ast.Mod):
                     if isinstance(node.left, ast.Constant) and isinstance(node.right, ast.Tuple):
+                        # 检查是否已存在相同的建议
+                        if self._is_duplicate('考虑使用f-string', node.lineno):
+                            continue
                         # % 格式化
                         self.suggestions.append(OptimizationSuggestion(
                             id=self._generate_suggestion_id(),
@@ -357,6 +378,9 @@ class SuggestionEngine:
             elif isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Attribute) and node.func.attr == 'format':
                     if isinstance(node.func.value, ast.Constant):
+                        # 检查是否已存在相同的建议
+                        if self._is_duplicate('考虑使用f-string', node.lineno):
+                            continue
                         # .format() 方法
                         self.suggestions.append(OptimizationSuggestion(
                             id=self._generate_suggestion_id(),
@@ -378,6 +402,9 @@ class SuggestionEngine:
                     if isinstance(op, (ast.In, ast.NotIn)):
                         comparator = node.comparators[i]
                         if isinstance(comparator, ast.List):
+                            # 检查是否已存在相同的建议
+                            if self._is_duplicate('使用集合进行成员检查', node.lineno):
+                                continue
                             self.suggestions.append(OptimizationSuggestion(
                                 id=self._generate_suggestion_id(),
                                 category='performance',
@@ -413,6 +440,9 @@ class SuggestionEngine:
                 
                 # 如果类主要是数据属性，建议使用dataclass
                 if len(simple_attributes) > 2 and (has_init or has_repr or has_eq):
+                    # 检查是否已存在相同的建议
+                    if self._is_duplicate('考虑使用@dataclass', node.lineno):
+                        continue
                     self.suggestions.append(OptimizationSuggestion(
                         id=self._generate_suggestion_id(),
                         category='best_practice',
@@ -432,6 +462,9 @@ class SuggestionEngine:
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Name) and node.func.id == 'open':
+                    # 检查是否已存在相同的建议
+                    if self._is_duplicate('使用with语句管理文件', node.lineno):
+                        continue
                     # 检查是否使用了with
                     # 简化：标记所有open调用
                     self.suggestions.append(OptimizationSuggestion(

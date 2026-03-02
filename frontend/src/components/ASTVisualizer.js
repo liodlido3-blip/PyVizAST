@@ -589,9 +589,13 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
           
           // Add signal class to target node when particle is approaching
           let signalAdded = false;
+          let animationCancelled = false;
           
           // Animate particle (tracked for cleanup)
           const animateParticle = () => {
+            // 检查动画是否已取消
+            if (animationCancelled) return;
+            
             const elapsed = Date.now() - particle.startTime;
             const progress = Math.min(elapsed / particle.duration, 1);
             
@@ -605,8 +609,10 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
               setParticles(prev => 
                 prev.map(p => p.id === particle.id ? { ...p, progress } : p)
               );
+              // 使用单一帧ID，而不是为每一帧创建新的
               const frameId = requestAnimationFrame(animateParticle);
-              animationFramesRef.current.add(frameId);
+              // 存储当前帧ID以便取消
+              particle.currentFrameId = frameId;
             } else {
               // Remove particle when done
               setParticles(prev => prev.filter(p => p.id !== particle.id));
@@ -620,7 +626,18 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
           };
           
           const frameId = requestAnimationFrame(animateParticle);
-          animationFramesRef.current.add(frameId);
+          particle.currentFrameId = frameId;
+          
+          // 注册清理函数
+          const cancelAnimation = () => {
+            animationCancelled = true;
+            if (particle.currentFrameId) {
+              cancelAnimationFrame(particle.currentFrameId);
+            }
+          };
+          // 将取消函数存储在 ref 中以便清理
+          if (!window.__particleCleanup) window.__particleCleanup = [];
+          window.__particleCleanup.push(cancelAnimation);
         }, delay);
         timersRef.current.add(timerId);
       });
@@ -630,6 +647,12 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
 
     return () => {
       mounted = false;
+      
+      // 取消所有粒子动画
+      if (window.__particleCleanup) {
+        window.__particleCleanup.forEach(cancel => cancel());
+        window.__particleCleanup = [];
+      }
       
       // Copy refs to local variables for cleanup
       // eslint-disable-next-line react-hooks/exhaustive-deps

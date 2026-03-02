@@ -363,7 +363,8 @@ class PerformanceAnalyzer:
                                 suggestion=f"在循环前添加: local_{node.id} = {node.id}"
                             ))
                             self.reported_vars.add(node.id)
-                self.generic_visit(node)
+                # 注意：不要在这里调用 generic_visit，因为 Name 节点没有子节点
+                # 调用会导致不必要的遍历开销
         
         visitor = GlobalLookupVisitor(self)
         visitor.visit(tree)

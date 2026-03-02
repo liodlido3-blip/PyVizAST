@@ -5,10 +5,18 @@ const API_TIMEOUT = 30000; // 30秒超时
 const MAX_RETRIES = 2; // 最大重试次数
 const RETRY_DELAY = 1000; // 重试延迟（毫秒）
 
+// 幂等方法列表（可以安全重试）
+const IDEMPOTENT_METHODS = ['get', 'head', 'options', 'put', 'delete'];
+
 // 判断是否应该重试的错误
-const shouldRetry = (error) => {
+const shouldRetry = (error, method) => {
   // 不重试的情况
   if (!error) return false;
+  
+  // 非幂等方法不重试（避免重复操作）
+  if (method && !IDEMPOTENT_METHODS.includes(method.toLowerCase())) {
+    return false;
+  }
   
   // 4xx 错误不重试（客户端错误）
   if (error.response?.status >= 400 && error.response?.status < 500) {
@@ -30,18 +38,18 @@ const shouldRetry = (error) => {
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // 带重试的请求包装器
-const withRetry = async (requestFn, retries = MAX_RETRIES) => {
+const withRetry = async (requestFn, method = 'get', retries = MAX_RETRIES) => {
   try {
     return await requestFn();
   } catch (error) {
     // 如果不应该重试或已用完重试次数
-    if (!shouldRetry(error) || retries <= 0) {
+    if (!shouldRetry(error, method) || retries <= 0) {
       throw error;
     }
 
     // 等待后重试
     await delay(RETRY_DELAY);
-    return withRetry(requestFn, retries - 1);
+    return withRetry(requestFn, method, retries - 1);
   }
 };
 
@@ -65,6 +73,41 @@ api.interceptors.request.use(
   }
 );
 
+// 辅助函数：从 detail 中提取可读的错误消息
+const extractErrorMessage = (detail) => {
+  if (!detail) return null;
+  
+  // 字符串直接返回
+  if (typeof detail === 'string') return detail;
+  
+  // Pydantic 验证错误数组格式: [{type, loc, msg, ...}, ...]
+  if (Array.isArray(detail)) {
+    const messages = detail.map(err => {
+      // 提取字段名和错误消息
+      const field = err.loc?.join('.') || '';
+      const msg = err.msg || err.message || JSON.stringify(err);
+      return field ? `${field}: ${msg}` : msg;
+    });
+    return messages.join('; ');
+  }
+  
+  // 对象格式
+  if (typeof detail === 'object') {
+    // 尝试提取常见字段
+    if (detail.message) return detail.message;
+    if (detail.msg) return detail.msg;
+    if (detail.error) return detail.error;
+    // 转换为 JSON 字符串
+    try {
+      return JSON.stringify(detail);
+    } catch {
+      return '未知错误';
+    }
+  }
+  
+  return String(detail);
+};
+
 // 响应拦截器 - 统一错误处理
 api.interceptors.response.use(
   (response) => response,
@@ -77,10 +120,11 @@ api.interceptors.response.use(
       // 服务器返回错误
       const status = error.response.status;
       const detail = error.response.data?.detail;
+      const extractedMsg = extractErrorMessage(detail);
       
       switch (status) {
         case 400:
-          errorMessage = detail || '请求参数错误';
+          errorMessage = extractedMsg || '请求参数错误';
           break;
         case 401:
           errorMessage = '未授权，请先登录';
@@ -89,13 +133,17 @@ api.interceptors.response.use(
           errorMessage = '拒绝访问';
           break;
         case 404:
-          errorMessage = detail || '请求的资源不存在';
+          errorMessage = extractedMsg || '请求的资源不存在';
+          break;
+        case 422:
+          // Pydantic 验证错误
+          errorMessage = extractedMsg || '请求参数验证失败';
           break;
         case 500:
-          errorMessage = detail || '服务器内部错误';
+          errorMessage = extractedMsg || '服务器内部错误';
           break;
         default:
-          errorMessage = detail || `请求失败 (${status})`;
+          errorMessage = extractedMsg || `请求失败 (${status})`;
       }
     } else if (error.request) {
       // 请求已发出但没有收到响应
@@ -118,84 +166,78 @@ api.interceptors.response.use(
  * @param {AbortSignal} signal - 可选的取消信号
  */
 export const analyzeCode = async (code, options = {}, signal = null) => {
-  return withRetry(async () => {
-    const response = await api.post('/api/analyze', {
-      code,
-      options,
-    }, {
-      signal,
-    });
-    return response.data;
+  // POST 请求不重试，避免重复分析
+  const response = await api.post('/api/analyze', {
+    code,
+    options,
+  }, {
+    signal,
   });
+  return response.data;
 };
 
 /**
  * 获取AST图结构
  */
 export const getAST = async (code, format = 'cytoscape', theme = 'default') => {
-  return withRetry(async () => {
-    const response = await api.post('/api/ast', {
-      code,
-      options: { format, theme },
-    });
-    return response.data;
+  // POST 请求不重试
+  const response = await api.post('/api/ast', {
+    code,
+    options: { format, theme },
   });
+  return response.data;
 };
 
 /**
  * 获取复杂度分析
  */
 export const getComplexity = async (code) => {
-  return withRetry(async () => {
-    const response = await api.post('/api/complexity', { code });
-    return response.data;
-  });
+  // POST 请求不重试
+  const response = await api.post('/api/complexity', { code });
+  return response.data;
 };
 
 /**
  * 获取性能问题
  */
 export const getPerformanceIssues = async (code) => {
-  return withRetry(async () => {
-    const response = await api.post('/api/performance', { code });
-    return response.data;
-  });
+  // POST 请求不重试
+  const response = await api.post('/api/performance', { code });
+  return response.data;
 };
 
 /**
  * 获取安全问题
  */
 export const getSecurityIssues = async (code) => {
-  return withRetry(async () => {
-    const response = await api.post('/api/security', { code });
-    return response.data;
-  });
+  // POST 请求不重试
+  const response = await api.post('/api/security', { code });
+  return response.data;
 };
 
 /**
  * 获取优化建议
  */
 export const getSuggestions = async (code) => {
-  return withRetry(async () => {
-    const response = await api.post('/api/suggestions', { code });
-    return response.data;
-  });
+  // POST 请求不重试
+  const response = await api.post('/api/suggestions', { code });
+  return response.data;
 };
 
 /**
  * 生成补丁
  */
 export const generatePatches = async (code) => {
-  return withRetry(async () => {
-    const response = await api.post('/api/patches', { code });
-    return response.data;
-  });
+  // POST 请求不重试
+  const response = await api.post('/api/patches', { code });
+  return response.data;
 };
 
 /**
  * 获取节点解释（学习模式）
  */
 export const explainNode = async (nodeId, code) => {
+  // POST 请求不重试
   const response = await api.post(`/api/learn/node/${nodeId}`, { code });
   return response.data;
 };
@@ -204,22 +246,29 @@ export const explainNode = async (nodeId, code) => {
  * 获取挑战列表
  */
 export const getChallenges = async () => {
-  const response = await api.get('/api/challenges');
-  return response.data;
+  // GET 请求可以安全重试
+  return withRetry(async () => {
+    const response = await api.get('/api/challenges');
+    return response.data;
+  }, 'get');
 };
 
 /**
  * 获取挑战详情
  */
 export const getChallenge = async (challengeId) => {
-  const response = await api.get(`/api/challenges/${challengeId}`);
-  return response.data;
+  // GET 请求可以安全重试
+  return withRetry(async () => {
+    const response = await api.get(`/api/challenges/${challengeId}`);
+    return response.data;
+  }, 'get');
 };
 
 /**
  * 提交挑战答案
  */
 export const submitChallenge = async (challengeId, foundIssues) => {
+  // POST 请求不重试，避免重复提交
   const response = await api.post('/api/challenges/submit', {
     challenge_id: challengeId,
     found_issues: foundIssues,
@@ -232,8 +281,11 @@ export const submitChallenge = async (challengeId, foundIssues) => {
  */
 export const checkServerHealth = async () => {
   try {
-    const response = await api.get('/api/health', { timeout: 5000 });
-    return { connected: true, data: response.data };
+    // GET 请求可以安全重试
+    return withRetry(async () => {
+      const response = await api.get('/api/health', { timeout: 5000 });
+      return { connected: true, data: response.data };
+    }, 'get');
   } catch (error) {
     return { 
       connected: false, 

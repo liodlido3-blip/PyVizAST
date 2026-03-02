@@ -725,10 +725,10 @@ class PatchGenerator:
             
             # 验证要删除的行是否存在
             if deleted_lines:
-                for i, deleted_content in enumerate(deleted_lines):
-                    line_idx = start_line + i
-                    if line_idx >= len(lines):
-                        logger.warning(f"删除行 {line_idx + 1} 超出范围")
+                for line_num, deleted_content in deleted_lines:
+                    line_idx = line_num - 1
+                    if line_idx < 0 or line_idx >= len(lines):
+                        logger.warning(f"删除行 {line_num} 超出范围")
                         return False
                     
                     actual = lines[line_idx].rstrip()
@@ -737,7 +737,7 @@ class PatchGenerator:
                     # 允许空白差异，但内容应该相似
                     if actual.strip() != expected.strip():
                         logger.warning(
-                            f"删除行不匹配 (行 {line_idx + 1}): "
+                            f"删除行不匹配 (行 {line_num}): "
                             f"期望 '{expected[:30]}...', "
                             f"实际 '{actual[:30]}...'"
                         )
@@ -749,17 +749,14 @@ class PatchGenerator:
         """解析补丁中的hunks - 改进版"""
         hunks = []
         current_hunk = None
-        line_num = 0
-        deleted_lines = []  # 收集被删除的行用于验证
+        old_line_num = 0  # 原始文件行号
+        new_line_num = 0  # 新文件行号
         
         for line in patch_lines:
             if line.startswith('@@'):
                 # 保存之前的 hunk
                 if current_hunk is not None:
-                    current_hunk['deleted_lines'] = deleted_lines
                     hunks.append(current_hunk)
-                
-                deleted_lines = []  # 重置
                 
                 # 解析 @@ -start,count +start,count @@ 或 @@ -start +start @@
                 match = re.match(r'@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@', line)
@@ -771,13 +768,15 @@ class PatchGenerator:
                     
                     current_hunk = {
                         'start_line': new_start,
+                        'old_start': old_start,
                         'deleted': 0,
                         'added': 0,
                         'lines': [],
                         'context': [],
-                        'deleted_lines': []  # 新增：用于验证
+                        'deleted_lines': []
                     }
-                    line_num = new_start
+                    old_line_num = old_start
+                    new_line_num = new_start
                 else:
                     current_hunk = None
                     
@@ -786,30 +785,35 @@ class PatchGenerator:
                     continue
                 elif line.startswith('+'):
                     # 新增行
-                    current_hunk['lines'].append(line[1:] if len(line) > 1 else '')
+                    content = line[1:] if len(line) > 1 else ''
+                    current_hunk['lines'].append(content)
                     current_hunk['added'] += 1
+                    new_line_num += 1
                 elif line.startswith('-'):
                     # 删除行 - 记录内容用于验证
                     deleted_content = line[1:] if len(line) > 1 else ''
                     current_hunk['deleted'] += 1
-                    deleted_lines.append(deleted_content)
+                    current_hunk['deleted_lines'].append((old_line_num, deleted_content))
+                    old_line_num += 1  # 原始文件行号增加
                 elif line.startswith('\\'):
-                    # 继续指示符，忽略
+                    # 继续指示符（如 "\ No newline at end of file"），忽略
                     continue
-                elif line:
-                    # 上下文行
-                    context_content = line if not line.startswith(' ') else line[1:]
+                elif line.startswith(' '):
+                    # 上下文行（以空格开头）
+                    context_content = line[1:] if len(line) > 1 else ''
                     current_hunk['lines'].append(context_content)
-                    current_hunk['context'].append((line_num, context_content))
-                    line_num += 1
+                    current_hunk['context'].append((new_line_num, context_content))
+                    old_line_num += 1
+                    new_line_num += 1
                 else:
-                    # 空行作为上下文
+                    # 空行或其他情况，作为上下文处理
                     current_hunk['lines'].append('')
-                    line_num += 1
+                    current_hunk['context'].append((new_line_num, ''))
+                    old_line_num += 1
+                    new_line_num += 1
         
         # 添加最后一个 hunk
         if current_hunk is not None:
-            current_hunk['deleted_lines'] = deleted_lines
             hunks.append(current_hunk)
         
         return hunks

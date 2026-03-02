@@ -239,13 +239,49 @@ async def analyze_code(input_data: CodeInput):
         auto_simplified = code_lines > 500
         logger.debug(f"代码行数: {code_lines}, 简化模式: {auto_simplified}")
         
-        # 解析AST
-        try:
-            tree = ast.parse(code)
-        except SyntaxError as e:
-            raise CodeParsingError(f"语法错误: {str(e)}")
-        except MemoryError:
-            raise CodeTooLargeError("代码过大，无法解析")
+        # 解析AST - 使用渐进式策略处理大文件
+        tree = None
+        simplification_level = 0  # 0=正常, 1=简化, 2=激进简化
+        
+        while tree is None and simplification_level <= 2:
+            try:
+                tree = ast.parse(code)
+            except SyntaxError as e:
+                raise CodeParsingError(f"语法错误: {str(e)}")
+            except MemoryError:
+                simplification_level += 1
+                if simplification_level == 1:
+                    # 第一次内存错误：尝试简化模式
+                    logger.warning(f"代码过大 ({code_lines} 行)，尝试简化模式...")
+                    auto_simplified = True
+                    import gc
+                    gc.collect()  # 强制垃圾回收
+                elif simplification_level == 2:
+                    # 第二次内存错误：尝试激进简化
+                    logger.warning("简化模式仍不足，尝试激进简化...")
+                    # 尝试只解析代码结构（去除函数体内容）
+                    try:
+                        # 只保留代码的结构框架
+                        lines = code.splitlines()
+                        if len(lines) > 2000:
+                            # 对于超大文件，只分析前 2000 行
+                            code = '\n'.join(lines[:2000])
+                            code_lines = 2000
+                            tree = ast.parse(code)
+                            logger.info(f"已截取前 2000 行进行分析")
+                            break
+                    except MemoryError:
+                        pass
+                    import gc
+                    gc.collect()
+                else:
+                    # 最终失败
+                    raise CodeTooLargeError(
+                        f"代码过大 ({code_lines} 行)，无法解析。"
+                        f"建议：1) 将代码拆分为多个文件；"
+                        f"2) 使用更强大的机器；"
+                        f"3) 只分析部分代码。"
+                    )
         
         parser = get_parser({'simplified': auto_simplified, **options})
         ast_graph = parser.parse(code)
