@@ -66,35 +66,56 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
   // Format attribute key using memoized map
   const formatAttrKey = useCallback((key) => ATTR_KEY_MAP[key] || key, []);
   
-  // 搜索节点
+  // 搜索防抖 ref
+  const searchDebounceRef = useRef(null);
+  
+  // 清理防抖计时器
+  useEffect(() => {
+    return () => {
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
+    };
+  }, []);
+  
+  // 搜索节点（带防抖）
   const handleSearch = useCallback((query) => {
     setSearchQuery(query);
     setSelectedSearchIndex(-1);
     
+    // 清除之前的防抖计时器
+    if (searchDebounceRef.current) {
+      clearTimeout(searchDebounceRef.current);
+    }
+    
+    // 空查询立即清除
     if (!query.trim() || !graph) {
       setSearchResults([]);
       setHighlightedNodeIds(new Set());
       return;
     }
     
-    const lowerQuery = query.toLowerCase().trim();
-    const results = graph.nodes.filter(node => {
-      // 确保 node 是有效对象
-      if (!node || !node.id) return false;
+    // 设置防抖（200ms）
+    searchDebounceRef.current = setTimeout(() => {
+      const lowerQuery = query.toLowerCase().trim();
+      const results = graph.nodes.filter(node => {
+        // 确保 node 是有效对象
+        if (!node || !node.id) return false;
+        
+        const name = (node.name || '').toLowerCase();
+        const type = (node.type || '').toLowerCase();
+        const label = (node.detailed_label || '').toLowerCase();
+        const description = (node.description || '').toLowerCase();
+        
+        return name.includes(lowerQuery) ||
+               type.includes(lowerQuery) ||
+               label.includes(lowerQuery) ||
+               description.includes(lowerQuery);
+      }).slice(0, 20); // 限制结果数量
       
-      const name = (node.name || '').toLowerCase();
-      const type = (node.type || '').toLowerCase();
-      const label = (node.detailed_label || '').toLowerCase();
-      const description = (node.description || '').toLowerCase();
-      
-      return name.includes(lowerQuery) ||
-             type.includes(lowerQuery) ||
-             label.includes(lowerQuery) ||
-             description.includes(lowerQuery);
-    }).slice(0, 20); // 限制结果数量
-    
-    setSearchResults(results);
-    setHighlightedNodeIds(new Set(results.filter(n => n && n.id).map(n => n.id)));
+      setSearchResults(results);
+      setHighlightedNodeIds(new Set(results.filter(n => n && n.id).map(n => n.id)));
+    }, 200);
   }, [graph]);
   
   // 清除搜索
@@ -558,8 +579,12 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
       cy.elements().removeClass('dimmed focused focused-neighbor focused-edge');
       
       // Create particles that travel along edges
-      // 使用全局计数器确保 ID 唯一
-      const particleIdCounter = { current: Date.now() };
+      // 使用全局计数器 + 随机数确保 ID 唯一，避免快速操作时的冲突
+      const particleIdCounter = { current: 0 };
+      const generateParticleId = () => {
+        particleIdCounter.current += 1;
+        return `particle_${Date.now()}_${particleIdCounter.current}_${Math.random().toString(36).substr(2, 5)}`;
+      };
       
       propagationQueue.forEach(({ sourceNode, targetNode, delay }) => {
         // Create particle after delay (tracked for cleanup)
@@ -651,6 +676,11 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
 
     return () => {
       mounted = false;
+      
+      // 清除搜索防抖计时器
+      if (searchDebounceRef.current) {
+        clearTimeout(searchDebounceRef.current);
+      }
       
       // 取消所有粒子动画
       if (particleCleanupRef.current) {

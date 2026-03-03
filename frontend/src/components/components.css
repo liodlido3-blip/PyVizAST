@@ -84,6 +84,45 @@
   letter-spacing: -0.03em;
 }
 
+/* 模式切换按钮 */
+.mode-switch {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.mode-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mode-btn:hover {
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+}
+
+.mode-btn.active {
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+}
+
+.mode-btn svg {
+  flex-shrink: 0;
+}
+
 .header-center {
   flex: 1;
   display: flex;
@@ -1272,4 +1311,287 @@
   background: var(--bg-elevated);
   color: var(--text-primary);
   box-shadow: var(--shadow-inset);
+}
+
+/* ========== Project Visualization Styles ========== */
+
+.project-viz-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+  position: relative;
+}
+
+.project-viz-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: linear-gradient(to bottom, var(--bg-tertiary), var(--bg-secondary));
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.project-viz-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.project-viz-title h3 {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.project-viz-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.viz-stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.viz-stat-value {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.project-viz-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  min-height: 200px;
+}
+
+.project-viz-legend {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 18px;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.viz-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+.viz-legend-color {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  box-shadow: 0 0 4px rgba(255, 255, 255, 0.1);
+}
+
+/* 图例形状样式 */
+.viz-legend-shape {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.viz-legend-shape.rectangle {
+  background: var(--bg-primary);
+  border: 2px solid var(--text-secondary);
+  border-radius: 3px;
+}
+
+.viz-legend-shape.diamond {
+  background: #fecaca;
+  border: 2px solid #dc2626;
+  transform: rotate(45deg);
+  width: 12px;
+  height: 12px;
+}
+
+/* 深色模式下的菱形 */
+.dark .viz-legend-shape.diamond {
+  background: #7f1d1d;
+  border-color: #dc2626;
+}
+
+/* 图例线条样式 */
+.viz-legend-line {
+  width: 24px;
+  height: 2px;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.viz-legend-line.solid {
+  background: var(--text-tertiary);
+}
+
+.viz-legend-line.dashed {
+  background: repeating-linear-gradient(
+    90deg,
+    #dc2626,
+    #dc2626 4px,
+    transparent 4px,
+    transparent 8px
+  );
+}
+
+/* Node detail panel in project viz */
+.project-viz-panel .node-detail-panel {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 280px;
+  max-height: calc(100% - 80px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+}
+
+.project-viz-panel .node-detail-panel .panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.project-viz-panel .node-detail-panel .panel-header-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.project-viz-panel .node-detail-panel .close-btn {
+  padding: 4px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.project-viz-panel .node-detail-panel .close-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.project-viz-panel .node-detail-panel .panel-body {
+  padding: 12px 16px;
+}
+
+.project-viz-panel .node-detail-panel .detail-item {
+  margin-bottom: 12px;
+}
+
+.project-viz-panel .node-detail-panel .detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.project-viz-panel .node-detail-panel .detail-label {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.project-viz-panel .node-detail-panel .detail-value {
+  font-size: 12px;
+  color: var(--text-primary);
+}
+
+.project-viz-panel .node-detail-panel .detail-value.code {
+  font-family: 'JetBrains Mono', monospace;
+  word-break: break-all;
+}
+
+/* ========== 项目编辑模式样式 ========== */
+
+.project-edit-mode {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-primary);
+}
+
+.project-edit-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--bg-tertiary);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.project-edit-header .exit-edit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.project-edit-header .exit-edit-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.edit-file-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.edit-file-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.edit-file-path {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-edit-content {
+  flex: 1;
+  min-height: 0;
+  position: relative;
 }

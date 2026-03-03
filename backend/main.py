@@ -26,6 +26,19 @@ from .ast_parser import ASTParser, NodeMapper
 from .analyzers import ComplexityAnalyzer, PerformanceAnalyzer, CodeSmellDetector, SecurityScanner
 from .optimizers import SuggestionEngine, PatchGenerator
 from .utils.logger import get_logger, log_exception, init_logging
+from .project_analyzer import (
+    ProjectScanner,
+    DependencyAnalyzer,
+    CycleDetector,
+    SymbolExtractor,
+    UnusedExportDetector,
+    ProjectMetricsAggregator,
+    ProjectScanResult,
+    ProjectAnalysisResult,
+    FileAnalysisResult,
+    FileSummary,
+    FileInfo,
+)
 
 
 # 自定义异常类
@@ -914,6 +927,422 @@ async def receive_frontend_logs(request: FrontendLogsRequest):
     except Exception as e:
         logger.error(f"保存前端日志失败: {e}")
         return {"status": "error", "message": str(e)}
+
+
+# ============== 项目级分析端点 ==============
+
+import tempfile
+import shutil
+import time
+import threading
+from fastapi import UploadFile, File, Form
+from dataclasses import dataclass
+from typing import Optional
+
+
+@dataclass
+class ProjectStorageEntry:
+    """项目存储条目"""
+    scan_result: Any
+    project_root: str
+    temp_dir: str
+    zip_path: str
+    file_name: str
+    created_at: float
+    last_accessed: float
+
+
+class ProjectStorage:
+    """
+    项目存储管理器
+    - 支持最大条目限制
+    - 支持 TTL 过期清理
+    - 线程安全
+    """
+    
+    def __init__(self, max_entries: int = 50, ttl_seconds: float = 3600):
+        """
+        初始化项目存储
+        
+        Args:
+            max_entries: 最大存储条目数
+            ttl_seconds: 条目过期时间（秒）
+        """
+        self._storage: Dict[str, ProjectStorageEntry] = {}
+        self._lock = threading.RLock()
+        self._max_entries = max_entries
+        self._ttl_seconds = ttl_seconds
+        self._cleanup_interval = 300  # 清理间隔（秒）
+        self._last_cleanup = time.time()
+    
+    def _cleanup_expired(self) -> None:
+        """清理过期条目"""
+        now = time.time()
+        expired_keys = []
+        
+        for key, entry in self._storage.items():
+            if now - entry.last_accessed > self._ttl_seconds:
+                expired_keys.append(key)
+        
+        for key in expired_keys:
+            self._remove_entry(key)
+        
+        if expired_keys:
+            logger.debug(f"清理了 {len(expired_keys)} 个过期项目存储条目")
+    
+    def _remove_entry(self, key: str) -> None:
+        """移除条目并清理临时目录"""
+        entry = self._storage.pop(key, None)
+        if entry:
+            try:
+                shutil.rmtree(entry.temp_dir, ignore_errors=True)
+            except Exception as e:
+                logger.warning(f"清理临时目录失败: {e}")
+    
+    def _evict_oldest_if_needed(self) -> None:
+        """如果超过最大条目数，移除最旧的条目"""
+        if len(self._storage) >= self._max_entries:
+            # 找到最旧的条目
+            oldest_key = min(
+                self._storage.keys(),
+                key=lambda k: self._storage[k].last_accessed
+            )
+            self._remove_entry(oldest_key)
+            logger.debug(f"移除最旧的项目存储条目: {oldest_key}")
+    
+    def _maybe_cleanup(self) -> None:
+        """定期清理检查"""
+        now = time.time()
+        if now - self._last_cleanup > self._cleanup_interval:
+            self._cleanup_expired()
+            self._last_cleanup = now
+    
+    def set(self, project_id: str, entry: ProjectStorageEntry) -> None:
+        """存储项目条目"""
+        with self._lock:
+            self._maybe_cleanup()
+            self._evict_oldest_if_needed()
+            self._storage[project_id] = entry
+    
+    def get(self, project_id: str) -> Optional[ProjectStorageEntry]:
+        """获取项目条目并更新访问时间"""
+        with self._lock:
+            entry = self._storage.get(project_id)
+            if entry:
+                entry.last_accessed = time.time()
+            return entry
+    
+    def delete(self, project_id: str) -> bool:
+        """删除项目条目"""
+        with self._lock:
+            if project_id in self._storage:
+                self._remove_entry(project_id)
+                return True
+            return False
+    
+    def clear(self) -> None:
+        """清空所有条目"""
+        with self._lock:
+            for key in list(self._storage.keys()):
+                self._remove_entry(key)
+    
+    def __len__(self) -> int:
+        return len(self._storage)
+
+
+# 项目存储实例
+_project_storage = ProjectStorage(max_entries=50, ttl_seconds=3600)
+
+
+class ProjectUploadResponse(BaseModel):
+    """项目上传响应"""
+    project_id: str
+    project_name: str
+    total_files: int
+    file_paths: List[str]
+    skipped_count: int
+    message: str = "项目上传成功"
+
+
+class QuickModeOptions(BaseModel):
+    """快速模式选项"""
+    quick_mode: bool = False
+
+
+@app.post("/api/project/upload", response_model=ProjectUploadResponse)
+async def upload_project(file: UploadFile = File(...)):
+    """
+    上传项目 ZIP 文件
+    """
+    logger.info(f"上传项目: {file.filename}")
+    
+    if not file.filename or not file.filename.lower().endswith('.zip'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="请上传 .zip 格式的项目压缩包"
+        )
+    
+    # 保存上传的文件到临时目录
+    temp_dir = tempfile.mkdtemp(prefix='pyvizast_upload_')
+    temp_file = Path(temp_dir) / file.filename
+    
+    try:
+        # 写入上传的文件
+        content = await file.read()
+        with open(temp_file, 'wb') as f:
+            f.write(content)
+        
+        # 扫描项目
+        scanner = ProjectScanner()
+        scan_result, project_root = scanner.scan_zip(str(temp_file), Path(file.filename).stem)
+        
+        # 生成项目 ID
+        project_id = f"proj_{int(time.time() * 1000)}"
+        
+        # 存储项目信息（使用新的 ProjectStorage 类）
+        now = time.time()
+        entry = ProjectStorageEntry(
+            scan_result=scan_result,
+            project_root=project_root,
+            temp_dir=temp_dir,
+            zip_path=str(temp_file),
+            file_name=file.filename,
+            created_at=now,
+            last_accessed=now,
+        )
+        _project_storage.set(project_id, entry)
+        
+        logger.info(f"项目上传成功: {project_id}, {scan_result.total_files} 个文件, 当前存储: {len(_project_storage)} 个项目")
+        
+        return ProjectUploadResponse(
+            project_id=project_id,
+            project_name=scan_result.project_name,
+            total_files=scan_result.total_files,
+            file_paths=scan_result.file_paths,
+            skipped_count=scan_result.skipped_count,
+        )
+    
+    except Exception as e:
+        # 清理临时目录
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        logger.error(f"项目上传失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"项目上传失败: {str(e)}"
+        )
+
+
+@app.post("/api/project/analyze")
+async def analyze_project(
+    file: UploadFile = File(...),
+    quick_mode: bool = Form(False)
+):
+    """
+    分析上传的项目
+    直接接收 ZIP 文件并分析，一步完成
+    """
+    logger.info(f"分析项目: {file.filename}, 快速模式: {quick_mode}")
+    
+    if not file.filename or not file.filename.lower().endswith('.zip'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="请上传 .zip 格式的项目压缩包"
+        )
+    
+    start_time = time.time()
+    temp_dir = tempfile.mkdtemp(prefix='pyvizast_analyze_')
+    temp_file = Path(temp_dir) / file.filename
+    
+    try:
+        # 写入上传的文件
+        content = await file.read()
+        with open(temp_file, 'wb') as f:
+            f.write(content)
+        
+        # 扫描项目
+        scanner = ProjectScanner()
+        scan_result, project_root = scanner.scan_zip(str(temp_file), Path(file.filename).stem)
+        
+        # 分析依赖关系
+        logger.debug("分析依赖关系...")
+        dependency_analyzer = DependencyAnalyzer(project_root)
+        module_files = {f.relative_path: f.path for f in scan_result.file_infos}
+        dependency_graph = dependency_analyzer.analyze(list(module_files.values()))
+        
+        # 检测循环依赖
+        logger.debug("检测循环依赖...")
+        cycle_detector = CycleDetector(dependency_graph.adjacency_list)
+        circular_issues = cycle_detector.detect()
+        
+        # 检测未使用的导出
+        logger.debug("检测未使用的导出...")
+        unused_detector = UnusedExportDetector(dependency_analyzer)
+        unused_issues = unused_detector.detect(module_files) if not quick_mode else []
+        
+        # 合并全局问题
+        global_issues = circular_issues + unused_issues
+        
+        # 分析每个文件
+        file_results: List[FileAnalysisResult] = []
+        
+        for file_info in scan_result.file_infos:
+            if quick_mode and file_info.is_test:
+                # 快速模式下跳过测试文件
+                continue
+            
+            try:
+                file_result = await _analyze_single_file(file_info, project_root)
+                file_results.append(file_result)
+            except Exception as e:
+                logger.warning(f"分析文件失败 {file_info.relative_path}: {e}")
+                # 添加一个空结果
+                file_results.append(FileAnalysisResult(
+                    file=file_info,
+                    summary=FileSummary(),
+                    issues=[],
+                    complexity={},
+                    performance_hotspots=[],
+                    suggestions=[],
+                ))
+        
+        # 聚合项目指标
+        metrics_aggregator = ProjectMetricsAggregator()
+        metrics = metrics_aggregator.aggregate(file_results, scan_result, global_issues)
+        
+        # 计算分析时间
+        analysis_time_ms = (time.time() - start_time) * 1000
+        
+        # 构建依赖关系数据
+        dependencies = {
+            'dependency_graph': dependency_graph.adjacency_list,
+            'nodes': dependency_graph.nodes,
+            'edges': [
+                {'source': e['source'], 'target': e['target']}
+                for e in dependency_graph.edges
+            ],
+        }
+        
+        logger.info(f"项目分析完成: {len(file_results)} 个文件, "
+                   f"{len(global_issues)} 个全局问题, "
+                   f"耗时 {analysis_time_ms:.2f}ms")
+        
+        return {
+            'scan_result': scan_result.model_dump(),
+            'files': [f.model_dump() for f in file_results],
+            'dependencies': dependencies,
+            'global_issues': [issue.model_dump() for issue in global_issues],
+            'metrics': metrics.model_dump(),
+            'analysis_time_ms': analysis_time_ms,
+        }
+    
+    except Exception as e:
+        logger.error(f"项目分析失败: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"项目分析失败: {str(e)}"
+        )
+    
+    finally:
+        # 清理临时目录
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+async def _analyze_single_file(file_info: FileInfo, project_root: str) -> FileAnalysisResult:
+    """
+    分析单个文件
+    """
+    from pathlib import Path as PathlibPath
+    
+    file_path = PathlibPath(file_info.path)
+    
+    try:
+        code = file_path.read_text(encoding='utf-8', errors='ignore')
+        tree = ast.parse(code)
+    except SyntaxError as e:
+        # 读取文件内容用于编辑
+        try:
+            code_content = file_path.read_text(encoding='utf-8', errors='ignore')
+        except:
+            code_content = ""
+        return FileAnalysisResult(
+            file=file_info,
+            content=code_content,
+            summary=FileSummary(
+                lines_of_code=file_info.line_count,
+                issue_count=1,
+            ),
+            issues=[{
+                'id': f'syntax_error_{file_info.relative_path}',
+                'type': 'code_smell',
+                'severity': 'error',
+                'message': f"语法错误: {str(e)}",
+                'lineno': e.lineno,
+            }],
+            complexity={},
+            performance_hotspots=[],
+            suggestions=[],
+        )
+    except Exception as e:
+        # 读取文件内容用于编辑
+        try:
+            code_content = file_path.read_text(encoding='utf-8', errors='ignore')
+        except:
+            code_content = ""
+        return FileAnalysisResult(
+            file=file_info,
+            content=code_content,
+            summary=FileSummary(lines_of_code=file_info.line_count),
+            issues=[],
+            complexity={},
+            performance_hotspots=[],
+            suggestions=[],
+        )
+    
+    # 运行分析器
+    complexity_analyzer = ComplexityAnalyzer()
+    performance_analyzer = PerformanceAnalyzer()
+    code_smell_detector = CodeSmellDetector()
+    security_scanner = SecurityScanner()
+    
+    # 复杂度分析
+    complexity = complexity_analyzer.analyze(code, tree)
+    
+    # 性能分析
+    performance_analyzer.analyze(code, tree)
+    
+    # 代码异味检测
+    code_smell_detector.analyze(code, tree)
+    
+    # 安全扫描
+    security_scanner.scan(code, tree)
+    
+    # 合并问题
+    all_issues = (
+        complexity_analyzer.get_issues() +
+        performance_analyzer.get_issues() +
+        code_smell_detector.issues +
+        security_scanner.issues
+    )
+    
+    # 构建摘要
+    summary = FileSummary(
+        issue_count=len(all_issues),
+        cyclomatic_complexity=complexity.cyclomatic_complexity,
+        lines_of_code=complexity.lines_of_code,
+        function_count=complexity.function_count,
+        class_count=complexity.class_count,
+        maintainability_index=complexity.maintainability_index,
+    )
+    
+    return FileAnalysisResult(
+        file=file_info,
+        content=code,  # 包含文件内容
+        summary=summary,
+        issues=[issue.model_dump() for issue in all_issues],
+        complexity=complexity.model_dump(),
+        performance_hotspots=[hs.model_dump() for hs in performance_analyzer.hotspots],
+        suggestions=[],
+    )
 
 
 if __name__ == "__main__":

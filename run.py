@@ -6,6 +6,9 @@ import os
 import sys
 import subprocess
 import argparse
+import threading
+import time
+import webbrowser
 
 
 def check_python_version():
@@ -53,9 +56,20 @@ def install_frontend_deps():
         return False
 
 
-def start_backend(host='0.0.0.0', port=8000):
+def start_backend(host='0.0.0.0', port=8000, open_browser=True):
     """启动后端服务"""
     print(f"\n正在启动后端服务 (http://{host}:{port})...")
+    
+    # 在后台线程中延迟打开浏览器
+    def open_browser_delayed():
+        time.sleep(1.5)  # 等待服务器启动
+        url = f"http://localhost:{port}"
+        print(f"\n正在打开浏览器: {url}")
+        webbrowser.open(url)
+    
+    if open_browser:
+        browser_thread = threading.Thread(target=open_browser_delayed, daemon=True)
+        browser_thread.start()
     
     backend_path = os.path.dirname(__file__)
     sys.path.insert(0, backend_path)
@@ -120,7 +134,7 @@ def main():
         install_frontend_deps()
         
     elif args.command == 'backend':
-        start_backend(args.host, args.port)
+        start_backend(args.host, args.port, open_browser=True)
         
     elif args.command == 'frontend':
         start_frontend(args.frontend_port)
@@ -131,7 +145,7 @@ def main():
         
         backend_process = multiprocessing.Process(
             target=start_backend,
-            args=(args.host, args.port)
+            args=(args.host, args.port, True)  # 打开浏览器
         )
         
         backend_process.start()
@@ -155,7 +169,7 @@ def main():
             
             backend_process = multiprocessing.Process(
                 target=start_backend,
-                args=(args.host, args.port)
+                args=(args.host, args.port, True)  # 打开浏览器
             )
             
             backend_process.start()

@@ -300,4 +300,48 @@ export const checkServerHealth = async () => {
  */
 export const getApiBaseUrl = () => API_BASE_URL;
 
+/**
+ * 上传项目 ZIP 文件（扫描项目结构）
+ * @param {File} file - ZIP 文件对象
+ * @param {AbortSignal} signal - 可选的取消信号
+ * @returns {Promise<Object>} 扫描结果
+ */
+export const uploadProject = async (file, signal = null) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  
+  const response = await api.post('/api/project/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    signal,
+    timeout: 60000, // 上传可能需要更长时间
+  });
+  
+  return response.data;
+};
+
+/**
+ * 分析项目（一步完成上传和分析）
+ * @param {File} file - ZIP 文件对象
+ * @param {boolean} quickMode - 是否使用快速模式
+ * @param {AbortSignal} signal - 可选的取消信号
+ * @returns {Promise<Object>} 项目分析结果
+ */
+export const analyzeProject = async (file, quickMode = false, signal = null) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('quick_mode', quickMode.toString());
+  
+  const response = await api.post('/api/project/analyze', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    signal,
+    timeout: 300000, // 项目分析可能需要很长时间（5分钟）
+  });
+  
+  return response.data;
+};
+
 export default api;

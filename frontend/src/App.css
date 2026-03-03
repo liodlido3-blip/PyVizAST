@@ -23,6 +23,27 @@
   position: relative;
 }
 
+/* 项目分析模式布局 */
+.main-content.project-mode {
+  display: flex;
+}
+
+.project-left-panel {
+  min-width: 20%;
+  max-width: 80%;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-content.project-mode .visualization-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
 .editor-panel {
   display: flex;
   flex-direction: column;

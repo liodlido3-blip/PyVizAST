@@ -1,5 +1,5 @@
-import React, { useState, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
-import { analyzeProject, uploadProject } from '../api';
+import React, { useState, useCallback, useRef, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { analyzeProject } from '../api';
 import './ProjectAnalysisView.css';
 
 /**
@@ -8,8 +8,8 @@ import './ProjectAnalysisView.css';
  * 1. 上传区域（未上传时）
  * 2. 文件列表预览（上传后）
  * 
- * 单击文件：选中并显示分析
- * 双击文件：进入编辑模式
+ * 单击文件：选中
+ * 再次点击选中的文件：进入编辑模式
  */
 const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
   { 
@@ -18,8 +18,7 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
     onAnalysisStateChange, 
     onResultChange, 
     onFileSelect,
-    onFileDoubleClick,  // 双击进入编辑模式
-    isEditMode = false,  // 是否处于编辑模式
+    onFileDoubleClick,  // 进入编辑模式回调
     editedFilePath = null, // 当前编辑的文件路径
     hasUnsavedChanges = false, // 是否有未保存的更改
     onSaveFile,  // 保存文件回调
@@ -42,6 +41,16 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
 
   const fileInputRef = useRef(null);
   const abortControllerRef = useRef(null);
+  
+  // 组件卸载时清理
+  useEffect(() => {
+    return () => {
+      // 取消正在进行的请求
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
 
   // 暴露给父组件的方法
   useImperativeHandle(ref, () => ({
@@ -62,7 +71,7 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
     })
   }));
 
-  // 执行完整分析
+  // 执行完整分析（一步完成上传和分析）
   const performAnalysis = useCallback(async () => {
     if (!uploadedFile) return;
 
@@ -79,6 +88,7 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
     abortControllerRef.current = new AbortController();
 
     try {
+      // 直接调用 analyzeProject，一步完成上传和分析
       const result = await analyzeProject(
         uploadedFile,
         quickMode,
@@ -86,6 +96,15 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
       );
       
       setAnalysisResult(result);
+      
+      // 从分析结果中提取扫描信息
+      if (result.scan_result) {
+        setScanResult({
+          total_files: result.scan_result.total_files,
+          file_paths: result.scan_result.file_paths,
+          skipped_count: result.scan_result.skipped_count,
+        });
+      }
       
       // 通知父组件结果变化
       if (onResultChange) {
@@ -114,11 +133,12 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
       return;
     }
 
-    setIsUploading(true);
+    // 清除之前的状态
     setError(null);
     setScanResult(null);
     setAnalysisResult(null);
     setSelectedFileIndex(null);
+    setUploadedFile(file);
 
     // 通知父组件清除结果和选中的文件
     if (onResultChange) {
@@ -126,17 +146,6 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
     }
     if (onFileSelect) {
       onFileSelect(null, null);
-    }
-
-    try {
-      const result = await uploadProject(file);
-      
-      setUploadedFile(file);
-      setScanResult(result);
-    } catch (err) {
-      setError(err.message || '上传失败');
-    } finally {
-      setIsUploading(false);
     }
   }, [onResultChange, onFileSelect]);
 
@@ -184,34 +193,28 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
     }
   }, []);
 
-  // 处理文件单击（选中）
+  // 处理文件点击（单击选中，再次点击进入编辑）
   const handleFileClick = useCallback((index, path) => {
-    // 如果在编辑模式，不响应单击
-    if (isEditMode) return;
+    // 如果点击的是已选中的文件，进入编辑模式
+    if (selectedFileIndex === index && analysisResult && onFileDoubleClick) {
+      const fileAnalysis = analysisResult.files?.find(f => f.file?.relative_path === path);
+      if (fileAnalysis) {
+        onFileDoubleClick(fileAnalysis, index);
+      }
+      return;
+    }
     
+    // 否则选中该文件
     setSelectedFileIndex(index);
     
-    // 如果已经有分析结果，通知父组件选中的文件
+    // 通知父组件选中的文件
     if (analysisResult && onFileSelect) {
-      const fileAnalysis = analysisResult.files?.find(f => f.file.path === path);
+      const fileAnalysis = analysisResult.files?.find(f => f.file?.relative_path === path);
       if (fileAnalysis) {
         onFileSelect(fileAnalysis, index);
       }
     }
-  }, [analysisResult, onFileSelect, isEditMode]);
-
-  // 处理文件双击（进入编辑模式）
-  const handleFileDoubleClick = useCallback((index, path) => {
-    setSelectedFileIndex(index);
-    
-    // 通知父组件进入编辑模式
-    if (analysisResult && onFileDoubleClick) {
-      const fileAnalysis = analysisResult.files?.find(f => f.file.path === path);
-      if (fileAnalysis) {
-        onFileDoubleClick(fileAnalysis, index);
-      }
-    }
-  }, [analysisResult, onFileDoubleClick]);
+  }, [analysisResult, onFileSelect, onFileDoubleClick, selectedFileIndex]);
 
   // 渲染上传区域
   if (!uploadedFile) {
@@ -272,12 +275,27 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
           </svg>
           <span>{uploadedFile.name}</span>
         </div>
-        <button className="clear-button" onClick={handleClearFile} title="重新选择">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
+        <div className="panel-header-actions">
+          {hasUnsavedChanges && onSaveFile && (
+            <button 
+              className="save-btn-header"
+              onClick={onSaveFile}
+              title="保存更改"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+              </svg>
+            </button>
+          )}
+          <button className="clear-button" onClick={handleClearFile} title="重新选择">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* 快速模式选项 */}
@@ -329,43 +347,27 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
           <div className="file-tree-header">
             <span>文件列表</span>
             <div className="file-tree-header-actions">
-              {analysisResult && <span className="hint">单击查看 · 双击编辑</span>}
-              {hasUnsavedChanges && onSaveFile && (
-                <button 
-                  className="save-btn small"
-                  onClick={onSaveFile}
-                  title="保存更改"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                    <polyline points="17 21 17 13 7 13 7 21" />
-                    <polyline points="7 3 7 8 15 8" />
-                  </svg>
-                  保存
-                </button>
-              )}
+              {analysisResult && <span className="hint">单击选中 · 再次点击编辑</span>}
             </div>
           </div>
           <div className="file-tree-content">
             {scanResult.file_paths?.map((path, index) => {
-              const fileAnalysis = analysisResult?.files?.find(f => f.file.path === path);
+              const fileAnalysis = analysisResult?.files?.find(f => f.file?.relative_path === path);
               const issueCount = fileAnalysis?.summary?.issue_count || 0;
               const complexity = fileAnalysis?.summary?.cyclomatic_complexity;
-              const isEditing = editedFilePath === path;
+              const isSelected = selectedFileIndex === index;
               
               return (
                 <div 
                   key={index} 
-                  className={`file-tree-item ${selectedFileIndex === index ? 'selected' : ''} ${analysisResult ? 'clickable' : ''} ${isEditing ? 'editing' : ''}`}
+                  className={`file-tree-item ${isSelected ? 'selected' : ''} ${analysisResult ? 'clickable' : ''}`}
                   onClick={() => analysisResult && handleFileClick(index, path)}
-                  onDoubleClick={() => analysisResult && handleFileDoubleClick(index, path)}
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                     <polyline points="14 2 14 8 20 8" />
                   </svg>
                   <span className="file-name">{path}</span>
-                  {isEditing && <span className="edit-badge">编辑中</span>}
                   {analysisResult && (
                     <span className="file-info">
                       {complexity !== undefined && (
@@ -384,7 +386,7 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
       )}
 
       {/* 分析提示 */}
-      {scanResult && !analysisResult && !isAnalyzing && (
+      {uploadedFile && !analysisResult && !isAnalyzing && (
         <div className="analyze-hint-compact">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <circle cx="12" cy="12" r="10" />

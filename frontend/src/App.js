@@ -4,6 +4,8 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import LoadingOverlay from './components/LoadingOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
+import ProjectAnalysisView from './components/ProjectAnalysisView';
+import ProjectVisualization from './components/ProjectVisualization';
 import { analyzeCode, checkServerHealth, getApiBaseUrl } from './api';
 import { setupGlobalErrorHandlers } from './utils/logger';
 import './App.css';
@@ -119,6 +121,19 @@ function App() {
   const [viewMode, setViewMode] = useState('2d'); // '2d' or '3d'
   const [serverStatus, setServerStatus] = useState({ checking: true, connected: false });
   
+  // 分析模式: 'file' 或 'project'
+  const [analysisMode, setAnalysisMode] = useState('file');
+  
+  // 项目分析状态
+  const [projectResult, setProjectResult] = useState(null);
+  const [isProjectAnalyzing, setIsProjectAnalyzing] = useState(false);
+  const projectAnalysisRef = useRef(null);
+  
+  // 项目模式下选中的文件
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedFileIndex, setSelectedFileIndex] = useState(null);
+  const [isFileEditMode, setIsFileEditMode] = useState(false);
+  
   // 分割线拖动状态
   const [splitPosition, setSplitPosition] = useState(50); // 百分比
   const [isDragging, setIsDragging] = useState(false);
@@ -200,7 +215,16 @@ function App() {
     };
   }, []);
 
+  // 单文件分析
   const handleAnalyze = useCallback(async () => {
+    // 项目模式下调用项目分析
+    if (analysisMode === 'project') {
+      if (projectAnalysisRef.current?.canAnalyze()) {
+        projectAnalysisRef.current.analyze();
+      }
+      return;
+    }
+
     if (!code.trim()) {
       setError('请输入Python代码');
       return;
@@ -240,7 +264,55 @@ function App() {
     } finally {
       setIsLoading(false);
     }
-  }, [code, serverStatus.connected]);
+  }, [code, serverStatus.connected, analysisMode]);
+
+  // 项目分析结果回调
+  const handleProjectResultChange = useCallback((result) => {
+    setProjectResult(result);
+  }, []);
+
+  // 项目分析状态变化回调
+  const handleProjectAnalysisStateChange = useCallback((isAnalyzing) => {
+    setIsProjectAnalyzing(isAnalyzing);
+    setIsLoading(isAnalyzing);
+  }, []);
+
+  // 文件选择回调（单击）
+  const handleFileSelect = useCallback((fileAnalysis, index) => {
+    setSelectedFile(fileAnalysis);
+    setSelectedFileIndex(index);
+    setIsFileEditMode(false);
+  }, []);
+
+  // 文件双击回调（进入编辑模式）
+  const handleFileDoubleClick = useCallback((fileAnalysis, index) => {
+    setSelectedFile(fileAnalysis);
+    setSelectedFileIndex(index);
+    setIsFileEditMode(true);
+    // 设置文件内容到编辑器 (content 在 fileAnalysis 根级别)
+    if (fileAnalysis?.content) {
+      setCode(fileAnalysis.content);
+    }
+  }, []);
+
+  // 退出编辑模式回调
+  const handleExitEditMode = useCallback(() => {
+    setIsFileEditMode(false);
+    setSelectedFile(null);
+    setSelectedFileIndex(null);
+  }, []);
+
+  // 切换分析模式
+  const handleAnalysisModeChange = useCallback((mode) => {
+    setAnalysisMode(mode);
+    setError(null);
+    // 切换模式时清除之前的结果
+    if (mode === 'file') {
+      setProjectResult(null);
+    } else {
+      setAnalysisResult(null);
+    }
+  }, []);
 
   const handleCodeChange = useCallback((newCode) => {
     setCode(newCode);
@@ -261,14 +333,16 @@ function App() {
 
   return (
     <div className={`app ${theme}`}>
-      {isLoading && <LoadingOverlay />}
+      {(isLoading || isProjectAnalyzing) && <LoadingOverlay />}
       
       <Header 
         onAnalyze={handleAnalyze}
         onToggleSidebar={() => setSidebarOpen(!sidebarOpen)}
-        isLoading={isLoading}
+        isLoading={isLoading || isProjectAnalyzing}
         theme={theme}
         onThemeChange={setTheme}
+        analysisMode={analysisMode}
+        onAnalysisModeChange={handleAnalysisModeChange}
       />
       
       <div className="app-body">
@@ -281,6 +355,158 @@ function App() {
           onViewModeChange={setViewMode}
         />
         
+        {/* 项目分析模式 */}
+        {analysisMode === 'project' ? (
+          <main className="main-content project-mode" ref={mainContentRef}
+            style={{ 
+              '--split-position': `${splitPosition}%`,
+              cursor: isDragging ? 'col-resize' : 'default'
+            }}>
+            <div className="project-left-panel" style={{ width: `calc(var(--split-position, 35%) - 4px)` }}>
+              <ProjectAnalysisView
+                ref={projectAnalysisRef}
+                theme={theme}
+                activeTab={activeTab}
+                onAnalysisStateChange={handleProjectAnalysisStateChange}
+                onResultChange={handleProjectResultChange}
+                onFileSelect={handleFileSelect}
+                onFileDoubleClick={handleFileDoubleClick}
+                editedFilePath={selectedFile?.file?.relative_path}
+              />
+            </div>
+            
+            <div 
+              className={`resize-divider ${isDragging ? 'dragging' : ''}`}
+              onMouseDown={handleMouseDown}
+            >
+              <div className="resize-handle">
+                <svg width="4" height="24" viewBox="0 0 4 24" fill="none">
+                  <circle cx="2" cy="6" r="1" fill="currentColor" />
+                  <circle cx="2" cy="12" r="1" fill="currentColor" />
+                  <circle cx="2" cy="18" r="1" fill="currentColor" />
+                </svg>
+              </div>
+            </div>
+            
+            <div className="visualization-panel">
+              {/* 编辑模式 - 显示编辑器 */}
+              {isFileEditMode && selectedFile ? (
+                <div className="project-edit-mode">
+                  <div className="project-edit-header">
+                    <button className="exit-edit-btn" onClick={handleExitEditMode} title="退出编辑">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                    <div className="edit-file-info">
+                      <span className="edit-file-name">{selectedFile?.file?.relative_path?.split('/').pop() || '文件'}</span>
+                      <span className="edit-file-path">{selectedFile?.file?.relative_path}</span>
+                    </div>
+                  </div>
+                  <div className="project-edit-content">
+                    <CodeEditor 
+                      ref={editorRef}
+                      code={code}
+                      onChange={handleCodeChange}
+                      theme={theme}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {!serverStatus.checking && !serverStatus.connected && (
+                    <div className="server-status-error">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <rect x="2" y="2" width="20" height="8" rx="2" ry="2" />
+                        <rect x="2" y="14" width="20" height="8" rx="2" ry="2" />
+                        <line x1="6" y1="6" x2="6.01" y2="6" />
+                        <line x1="6" y1="18" x2="6.01" y2="18" />
+                      </svg>
+                      <div className="status-content">
+                        <strong>无法连接到后端服务器</strong>
+                        <p>API地址: {getApiBaseUrl()}</p>
+                        <p className="status-hint">请在终端运行: <code>python run.py backend</code></p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {error && (
+                    <div className="error-message">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="12" y1="8" x2="12" y2="12" />
+                        <line x1="12" y1="16" x2="12.01" y2="16" />
+                      </svg>
+                      {error}
+                    </div>
+                  )}
+                  
+                  <ErrorBoundary>
+                    {projectResult ? (
+                      activeTab === 'ast' ? (
+                        <ProjectVisualization 
+                          projectResult={projectResult}
+                          theme={theme}
+                          viewMode={viewMode}
+                        />
+                      ) : (
+                        <Suspense fallback={<ComponentLoader />}>
+                          <AnalysisPanel 
+                            result={{
+                              issues: [
+                                ...(projectResult.global_issues || []),
+                                ...(projectResult.files?.flatMap(f => f.issues || []) || [])
+                              ],
+                              suggestions: projectResult.files?.flatMap(f => f.suggestions || []) || [],
+                              performance_hotspots: projectResult.files?.flatMap(f => f.performance_hotspots || []) || [],
+                              complexity: {
+                                cyclomatic_complexity: projectResult.metrics?.avg_complexity || 0,
+                                cognitive_complexity: 0,
+                                maintainability_index: projectResult.metrics?.avg_maintainability || 0,
+                                max_nesting_depth: 0,
+                                lines_of_code: projectResult.metrics?.total_lines || 0,
+                                function_count: projectResult.metrics?.total_functions || 0,
+                                class_count: projectResult.metrics?.total_classes || 0,
+                                avg_function_length: 0,
+                                halstead_volume: 0,
+                                halstead_difficulty: 0,
+                              },
+                              summary: {
+                                total_issues: (projectResult.global_issues?.length || 0) + 
+                                  (projectResult.files?.reduce((sum, f) => sum + (f.summary?.issue_count || 0), 0) || 0),
+                                project_stats: projectResult.metrics
+                              }
+                            }}
+                            activeTab={activeTab}
+                            code=""
+                            onApplyPatch={() => {}}
+                            projectMode={true}
+                            projectResult={projectResult}
+                          />
+                        </Suspense>
+                      )
+                    ) : (
+                      <div className="placeholder">
+                        <div className="placeholder-icon">
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                          </svg>
+                        </div>
+                        <h3>Project Analysis</h3>
+                        <p>Upload a ZIP file and click Analyze to begin</p>
+                        <p className="placeholder-hint">
+                          Dependency graph, circular dependency detection, unused exports
+                        </p>
+                      </div>
+                    )}
+                  </ErrorBoundary>
+                </>
+              )}
+            </div>
+          </main>
+        ) : (
+        /* 单文件分析模式 */
         <main 
           className="main-content" 
           ref={mainContentRef}
@@ -390,6 +616,7 @@ function App() {
             </ErrorBoundary>
           </div>
         </main>
+        )}
       </div>
     </div>
   );

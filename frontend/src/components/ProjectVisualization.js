@@ -9,17 +9,24 @@ import './components.css';
 cytoscape.use(dagre);
 cytoscape.use(fcose);
 
-// 颜色映射
+// 颜色映射 - 黑白灰色调
 const NODE_COLORS = {
-  file: '#3b82f6',      // 蓝色 - 文件
-  module: '#8b5cf6',    // 紫色 - 模块
-  external: '#6b7280',  // 灰色 - 外部依赖
-  circular: '#ef4444',  // 红色 - 循环依赖
+  file: '#ffffff',      // 白色填充 - 普通模块
+  module: '#f3f4f6',    // 浅灰色 - 模块
+  external: '#9ca3af',  // 灰色 - 外部依赖
+  circular: '#fecaca',  // 浅红色 - 循环依赖
+};
+
+const NODE_BORDER_COLORS = {
+  file: '#374151',      // 深灰色边框 - 普通模块
+  module: '#4b5563',    // 灰色边框
+  external: '#6b7280',  // 灰色边框
+  circular: '#dc2626',  // 红色边框 - 循环依赖
 };
 
 const EDGE_COLORS = {
-  import: '#4ade80',    // 绿色 - 导入
-  circular: '#ef4444',  // 红色 - 循环依赖
+  import: '#4b5563',    // 深灰色 - 普通导入
+  circular: '#dc2626',  // 红色 - 循环依赖
 };
 
 /**
@@ -55,20 +62,24 @@ function ProjectVisualization({ projectResult, theme, viewMode = '2d' }) {
     });
 
     // 添加所有文件节点
-    const filePaths = new Set();
-    Object.keys(depGraph).forEach(file => filePaths.add(file));
-    Object.values(depGraph).flat().forEach(file => filePaths.add(file));
+    // 注意：后端返回的是模块名格式（如 backend.main），不是文件路径格式
+    const moduleNames = new Set();
+    Object.keys(depGraph).forEach(module => moduleNames.add(module));
+    Object.values(depGraph).flat().forEach(module => moduleNames.add(module));
 
-    filePaths.forEach((file) => {
+    moduleNames.forEach((moduleName) => {
       const isCircular = circularDeps.some(issue => 
-        issue.locations?.some(loc => loc.file_path === file)
+        issue.locations?.some(loc => loc.file_path === module)
       );
+      
+      // 模块名用 . 分隔，取最后一部分作为标签
+      const label = moduleName.split('.').pop() || moduleName;
       
       nodes.push({
         data: {
-          id: file,
-          label: file.split('/').pop(),
-          fullPath: file,
+          id: moduleName,
+          label: label,
+          fullPath: moduleName,
           type: isCircular ? 'circular' : 'file',
         },
       });
@@ -121,64 +132,78 @@ function ProjectVisualization({ projectResult, theme, viewMode = '2d' }) {
         elements: [...graphData.nodes, ...graphData.edges],
         
         style: [
+          // 普通模块节点 - 矩形
           {
-            selector: 'node',
+            selector: 'node[type="file"]',
             style: {
-              'background-color': function(ele) {
-                const type = ele.data('type');
-                return NODE_COLORS[type] || NODE_COLORS.file;
-              },
+              'shape': 'roundrectangle',
+              'background-color': isDark ? '#1f2937' : '#ffffff',
               'label': 'data(label)',
               'text-valign': 'center',
               'text-halign': 'center',
               'font-size': '11px',
               'font-family': 'Inter, sans-serif',
               'color': isDark ? '#e5e7eb' : '#374151',
-              'width': 60,
-              'height': 60,
+              'width': 80,
+              'height': 40,
               'text-wrap': 'wrap',
-              'text-max-width': 80,
+              'text-max-width': 70,
               'border-width': 2,
-              'border-color': isDark ? '#374151' : '#d1d5db',
+              'border-color': isDark ? '#4b5563' : '#374151',
+              'corner-radius': 4,
             },
           },
+          // 循环依赖节点 - 菱形
+          {
+            selector: 'node[type="circular"]',
+            style: {
+              'shape': 'diamond',
+              'background-color': isDark ? '#7f1d1d' : '#fecaca',
+              'label': 'data(label)',
+              'text-valign': 'center',
+              'text-halign': 'center',
+              'font-size': '11px',
+              'font-family': 'Inter, sans-serif',
+              'color': isDark ? '#fca5a5' : '#991b1b',
+              'width': 70,
+              'height': 70,
+              'text-wrap': 'wrap',
+              'text-max-width': 60,
+              'border-width': 2,
+              'border-color': '#dc2626',
+            },
+          },
+          // 选中状态
           {
             selector: 'node:selected',
             style: {
               'border-width': 3,
-              'border-color': '#ffffff',
-              'line-color': '#ffffff',
+              'border-color': isDark ? '#60a5fa' : '#2563eb',
             },
           },
+          // 普通导入边 - 实线
           {
-            selector: 'node[type="circular"]',
+            selector: 'edge[type="import"]',
             style: {
-              'background-color': NODE_COLORS.circular,
-              'border-color': '#fca5a5',
-            },
-          },
-          {
-            selector: 'edge',
-            style: {
-              'width': 2,
-              'line-color': function(ele) {
-                const type = ele.data('type');
-                return EDGE_COLORS[type] || EDGE_COLORS.import;
-              },
-              'target-arrow-color': function(ele) {
-                const type = ele.data('type');
-                return EDGE_COLORS[type] || EDGE_COLORS.import;
-              },
+              'width': 1.5,
+              'line-color': isDark ? '#6b7280' : '#9ca3af',
+              'target-arrow-color': isDark ? '#6b7280' : '#9ca3af',
               'target-arrow-shape': 'triangle',
               'curve-style': 'bezier',
-              'arrow-scale': 0.8,
+              'arrow-scale': 0.6,
+              'line-style': 'solid',
             },
           },
+          // 循环依赖边 - 虚线
           {
             selector: 'edge[type="circular"]',
             style: {
-              'line-color': EDGE_COLORS.circular,
-              'target-arrow-color': EDGE_COLORS.circular,
+              'width': 2,
+              'line-color': '#dc2626',
+              'target-arrow-color': '#dc2626',
+              'target-arrow-shape': 'triangle',
+              'curve-style': 'bezier',
+              'arrow-scale': 0.7,
               'line-style': 'dashed',
             },
           },
@@ -243,7 +268,6 @@ function ProjectVisualization({ projectResult, theme, viewMode = '2d' }) {
     let timeoutId = null;
     let attempts = 0;
     const maxAttempts = 10;
-    let isResizing = false;
 
     const tryInit = () => {
       if (containerRef.current) {
@@ -266,6 +290,9 @@ function ProjectVisualization({ projectResult, theme, viewMode = '2d' }) {
     return () => {
       if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
+      }
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
       if (cyRef.current) {
         try {
@@ -378,19 +405,19 @@ function ProjectVisualization({ projectResult, theme, viewMode = '2d' }) {
 
       <div className="project-viz-legend">
         <div className="viz-legend-item">
-          <div className="viz-legend-color" style={{ background: NODE_COLORS.file }}></div>
-          <span>文件</span>
+          <div className="viz-legend-shape rectangle" title="普通模块"></div>
+          <span>模块</span>
         </div>
         <div className="viz-legend-item">
-          <div className="viz-legend-color" style={{ background: NODE_COLORS.circular }}></div>
+          <div className="viz-legend-shape diamond" title="循环依赖"></div>
           <span>循环依赖</span>
         </div>
         <div className="viz-legend-item">
-          <div className="viz-legend-color" style={{ background: EDGE_COLORS.import }}></div>
+          <div className="viz-legend-line solid" title="普通导入"></div>
           <span>导入</span>
         </div>
         <div className="viz-legend-item">
-          <div className="viz-legend-color" style={{ background: EDGE_COLORS.circular }}></div>
+          <div className="viz-legend-line dashed" title="循环引用"></div>
           <span>循环引用</span>
         </div>
       </div>
