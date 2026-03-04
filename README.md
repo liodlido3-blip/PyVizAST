@@ -114,15 +114,15 @@ Access the interactive API documentation at `http://localhost:8000/docs`
 
 ### Key Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/analyze` | POST | Full code analysis |
-| `/api/ast` | POST | Get AST graph structure |
-| `/api/complexity` | POST | Complexity metrics |
-| `/api/performance` | POST | Performance hotspots |
-| `/api/security` | POST | Security vulnerabilities |
-| `/api/suggestions` | POST | Optimization suggestions |
-| `/api/patches` | POST | Generate auto-fix patches |
+| Endpoint           | Method | Description               |
+|--------------------|--------|---------------------------|
+| `/api/analyze`     | POST   | Full code analysis        |
+| `/api/ast`         | POST   | Get AST graph structure   |
+| `/api/complexity`  | POST   | Complexity metrics        |
+| `/api/performance` | POST   | Performance hotspots      |
+| `/api/security`    | POST   | Security vulnerabilities  |
+| `/api/suggestions` | POST   | Optimization suggestions  |
+| `/api/patches`     | POST   | Generate auto-fix patches |
 
 ## Example Analysis
 
@@ -435,7 +435,7 @@ This release includes all features and fixes from alpha, beta, and pre releases.
   - Removed duplicate counting of nested If nodes
 
 **Frontend Memory Leak Fixes:**
-- Fixed `requestAnimationFrame` not being cancelled on unmount (`ASTVisualizer.js`)
+- Fixed `requestAnimationFrame` not being canceled on unmount (`ASTVisualizer.js`)
 - Fixed `setTimeout` not being cleared on unmount (`ASTVisualizer.js`, `ASTVisualizer3D.js`)
 - Added proper cleanup for event listeners and timers
 - Added `isMountedRef` to prevent state updates after unmount
@@ -527,7 +527,7 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Fixed state accumulation in performance analyzer
 
 **Maintainability Index:**
-- Rewrote algorithm with multi-dimensional weighted scoring
+- Rewrote algorithm with multidimensional weighted scoring
 - Now handles large codebases correctly (minimum score 20 instead of 0)
 - Considers complexity (35%), scale (25%), function quality (25%), Halstead (15%)
 

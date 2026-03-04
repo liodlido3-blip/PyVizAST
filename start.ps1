@@ -1,116 +1,118 @@
-# PyVizAST - Python AST可视化分析器启动脚本
-# PowerShell 版本
+# PyVizAST - Python AST Visualization Analyzer Launch Script
+# PowerShell Version
 
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  PyVizAST - Python AST可视化分析器" -ForegroundColor Cyan
+Write-Host "  PyVizAST - Python AST Visualization Analyzer" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 检查Python
+# Test Python
 try {
     $pythonVersion = python --version 2>&1
     Write-Host "[OK] $pythonVersion" -ForegroundColor Green
 } catch {
-    Write-Host "[错误] 未找到Python，请先安装Python 3.8+" -ForegroundColor Red
-    Read-Host "按回车键退出"
+    Write-Host "[Error] Python not found, please install Python 3.8+ first." -ForegroundColor Red
+    Read-Host "Press Enter to exit."
     exit 1
 }
 
-# 检查pip
+# Test pip
 try {
     pip --version | Out-Null
-    Write-Host "[OK] pip已安装" -ForegroundColor Green
+    Write-Host "[OK] pip already installed." -ForegroundColor Green
 } catch {
-    Write-Host "[错误] 未找到pip" -ForegroundColor Red
-    Read-Host "按回车键退出"
+    Write-Host "[Error] pip was not found." -ForegroundColor Red
+    Read-Host "Press Enter to exit"
     exit 1
 }
 
-# 安装后端依赖
+# Install backend dependencies
 Write-Host ""
-Write-Host "正在安装后端依赖..." -ForegroundColor Yellow
+Write-Host "Installing backend dependencies..." -ForegroundColor Yellow
 pip install -r requirements.txt
 if ($LASTEXITCODE -eq 0) {
-    Write-Host "[OK] 后端依赖安装完成" -ForegroundColor Green
+    Write-Host "[OK] Backend dependencies installation completed." -ForegroundColor Green
 } else {
-    Write-Host "[错误] 后端依赖安装失败" -ForegroundColor Red
-    Read-Host "按回车键退出"
+    Write-Host "[Error] Backend dependency installation failed." -ForegroundColor Red
+    Read-Host "Press Enter to exit."
     exit 1
 }
 
-# 检查npm
+# Test npm
 $npmExists = Get-Command npm -ErrorAction SilentlyContinue
 if ($npmExists) {
-    Write-Host "[OK] npm已安装" -ForegroundColor Green
+    Write-Host "[OK] npm is installed." -ForegroundColor Green
     
-    # 安装前端依赖
+    # Install Front-End Dependencies
     Write-Host ""
-    Write-Host "正在安装前端依赖..." -ForegroundColor Yellow
+    Write-Host "Installing Front-End Dependencies..." -ForegroundColor Yellow
     Push-Location frontend
     npm install
     Pop-Location
     
     if ($LASTEXITCODE -eq 0) {
-        Write-Host "[OK] 前端依赖安装完成" -ForegroundColor Green
+        Write-Host "[OK] Front-end dependencies installation completed" -ForegroundColor Green
     } else {
-        Write-Host "[警告] 前端依赖安装失败，将只启动后端" -ForegroundColor Yellow
+        Write-Host "[Warning] Front-end dependency installation failed. Only the back-end will be started." -ForegroundColor Yellow
     }
 } else {
-    Write-Host "[警告] 未找到npm，跳过前端安装" -ForegroundColor Yellow
-    Write-Host "        如需前端功能，请安装Node.js" -ForegroundColor Yellow
+    Write-Host "[Warning] npm not found, skipping frontend installation" -ForegroundColor Yellow
+    Write-Host "       If front-end functionality is required, please install Node.js." -ForegroundColor Yellow
 }
 
-# 启动服务
+# Start Service
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  启动服务" -ForegroundColor Cyan
+Write-Host "  Starting Services..." -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 
-# 启动后端
+# Start Backend
 Write-Host ""
-Write-Host "正在启动后端服务 (http://localhost:8000)..." -ForegroundColor Yellow
+Write-Host "Starting the backend service (http://localhost:8000)..." -ForegroundColor Yellow
 
 $backendJob = Start-Job -ScriptBlock {
     Set-Location $using:PSScriptRoot
     python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 }
 
-# 等待后端启动
+# Waiting for the backend to start
 Start-Sleep -Seconds 3
 
-# 检查后端是否启动成功
+# Verify whether the backend has started successfully
 try {
     $response = Invoke-WebRequest -Uri "http://localhost:8000" -TimeoutSec 5 -ErrorAction Stop
-    Write-Host "[OK] 后端服务启动成功" -ForegroundColor Green
-    Write-Host "      API文档: http://localhost:8000/docs" -ForegroundColor Cyan
+    Write-Host "[OK] Backend service started successfully" -ForegroundColor Green
+    Write-Host "      API Documentation: http://localhost:8000/docs" -ForegroundColor Cyan
 } catch {
-    Write-Host "[警告] 后端服务可能正在启动中..." -ForegroundColor Yellow
+    Write-Host "[Error] An error has occurred in the backend service. Please check the logs in the logs folder and submit an issue to the repository." -ForegroundColor Red
 }
 
-# 启动前端
+# Start the frontend
 if ($npmExists) {
     Write-Host ""
-    Write-Host "正在启动前端服务 (http://localhost:3000)..." -ForegroundColor Yellow
+    Write-Host "Starting the frontend service (http://localhost:3000)..." -ForegroundColor Yellow
     
     $frontendJob = Start-Job -ScriptBlock {
         Set-Location "$using:PSScriptRoot\frontend"
         npm start
     }
     
-    Write-Host "[OK] 前端服务启动中..." -ForegroundColor Green
-    Write-Host "      访问地址: http://localhost:3000" -ForegroundColor Cyan
+    Write-Host "[OK] Frontend service is starting..." -ForegroundColor Green
+    Write-Host "      Visit address: http://localhost:3000" -ForegroundColor Cyan
 }
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "  服务已启动，按Ctrl+C停止所有服务" -ForegroundColor Green
+Write-Host " The service has started. Press Ctrl+C to stop all services." -ForegroundColor Green
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# 等待用户中断
+start http://localhost:3000
+
+# Waiting for user interruption
 try {
     while ($true) {
-        # 检查后端日志
+        # Check the backend logs
         $backendOutput = Receive-Job -Job $backendJob -ErrorAction SilentlyContinue
         if ($backendOutput) {
             Write-Host $backendOutput -ForegroundColor Gray
@@ -127,7 +129,7 @@ try {
     }
 } finally {
     Write-Host ""
-    Write-Host "正在停止服务..." -ForegroundColor Yellow
+    Write-Host "Service is being discontinued..." -ForegroundColor Yellow
     
     Stop-Job -Job $backendJob -ErrorAction SilentlyContinue
     Remove-Job -Job $backendJob -ErrorAction SilentlyContinue
@@ -137,5 +139,5 @@ try {
         Remove-Job -Job $frontendJob -ErrorAction SilentlyContinue
     }
     
-    Write-Host "[OK] 服务已停止" -ForegroundColor Green
+    Write-Host "[OK] The service has been stopped." -ForegroundColor Green
 }

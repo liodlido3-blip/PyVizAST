@@ -197,13 +197,13 @@ function Node3D({ position, node, isSelected, isFocused, isDimmed, isSignal, onC
   const pointerDownTime = useRef(0);
   const signalRef = useRef(0);
   const [signalIntensity, setSignalIntensity] = useState(0);
-  // 使用 ref 追踪上次渲染的信号强度，避免频繁状态更新
+  // Use ref to track last rendered signal intensity to avoid frequent state updates
   const lastSignalIntensityRef = useRef(0);
-  // 使用 ref 存储目标缩放向量，避免每帧创建新对象
+  // Use ref to store target scale vector to avoid creating new objects each frame
   const targetScaleRef = useRef(new THREE.Vector3(0.5, 0.5, 0.5));
-  // 状态更新阈值，只有变化超过此值才触发更新
+  // State update threshold, only trigger update when change exceeds this value
   const SIGNAL_UPDATE_THRESHOLD = 0.05;
-  // 节流更新计数器
+  // Throttle update counter
   const frameCountRef = useRef(0);
   
   // Cleanup on unmount
@@ -736,7 +736,7 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
   const timersRef = useRef(new Set());
   const animationFramesRef = useRef(new Set());
   
-  // 搜索相关状态
+  // Search related state
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -763,7 +763,7 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
     };
   }, []);
   
-  // 搜索节点
+  // Search nodes
   const handleSearch = useCallback((query) => {
     setSearchQuery(query);
     setSelectedSearchIndex(-1);
@@ -794,7 +794,7 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
     setHighlightedNodeIds(new Set(results.filter(n => n && n.id).map(n => n.id)));
   }, [graph]);
   
-  // 清除搜索
+  // Clear search
   const clearSearch = useCallback(() => {
     setSearchQuery('');
     setSearchResults([]);
@@ -804,16 +804,16 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
     setFocusedNode(null);
   }, []);
   
-  // 聚焦到搜索结果
+  // Focus on search result
   const focusSearchResult = useCallback((node, index) => {
-    // 严格的空值检查
+    // Strict null check
     if (!node || typeof node !== 'object' || !node.id) return;
     setSelectedSearchIndex(index);
     setSelectedNode(node);
     setFocusedNode(node);
   }, []);
   
-  // 跳转到编辑器对应行
+  // Jump to editor line
   const handleGoToLine = useCallback((node) => {
     if (node && onGoToLine && node.lineno) {
       onGoToLine(node.lineno, node.end_lineno);
@@ -821,7 +821,7 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
     clearSearch();
   }, [onGoToLine, clearSearch]);
   
-  // 键盘导航搜索结果
+  // Keyboard navigation for search results
   const handleSearchKeyDown = useCallback((e) => {
     if (searchResults.length === 0) return;
     
@@ -1115,7 +1115,7 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
                 ref={searchInputRef}
                 type="text"
                 className="search-input"
-                placeholder="搜索函数、类、变量名..."
+                placeholder="Search functions, classes, variables..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
@@ -1156,7 +1156,7 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
                       <span className="result-name">{node.name || node.type}</span>
                       <span className="result-type">{node.description || node.type}</span>
                     </div>
-                    {node.lineno && <span className="result-line">行 {node.lineno}</span>}
+                    {node.lineno && <span className="result-line">Line {node.lineno}</span>}
                   </div>
                 ))}
               </div>
@@ -1164,7 +1164,7 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
             
             {searchQuery && searchResults.length === 0 && (
               <div className="search-no-results">
-                未找到匹配的节点
+                No matching nodes found
               </div>
             )}
           </div>
@@ -1211,31 +1211,31 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
             <div className="panel-body">
               {(focusedNode || selectedNode)?.label && (
                 <div className="detail-item code-label">
-                  <span className="detail-label">代码结构</span>
+                  <span className="detail-label">Code Structure</span>
                   <code className="detail-code">{(focusedNode || selectedNode)?.label}</code>
                 </div>
               )}
               {(focusedNode || selectedNode)?.lineno && (
                 <div className="detail-item">
-                  <span className="detail-label">位置</span>
-                  <span className="detail-value">第 {(focusedNode || selectedNode)?.lineno} 行</span>
+                  <span className="detail-label">Location</span>
+                  <span className="detail-value">Line {(focusedNode || selectedNode)?.lineno}</span>
                 </div>
               )}
               {(focusedNode || selectedNode)?.explanation && (
                 <div className="detail-item explanation">
-                  <span className="detail-label">说明</span>
+                  <span className="detail-label">Description</span>
                   <p className="explanation-text">{(focusedNode || selectedNode)?.explanation}</p>
                 </div>
               )}
               {(focusedNode || selectedNode)?.docstring && (
                 <div className="detail-item">
-                  <span className="detail-label">文档字符串</span>
+                  <span className="detail-label">Docstring</span>
                   <p className="docstring">{(focusedNode || selectedNode)?.docstring}</p>
                 </div>
               )}
               {(focusedNode || selectedNode)?.sourceCode && (
                 <div className="detail-item">
-                  <span className="detail-label">源代码</span>
+                  <span className="detail-label">Source Code</span>
                   <pre className="source-code">{(focusedNode || selectedNode)?.sourceCode}</pre>
                 </div>
               )}
@@ -1247,17 +1247,17 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
       <div className="visualizer-legend-3d">
         <div className="legend-item">
           <span className="legend-shape box"></span>
-          <span>结构节点</span>
+          <span>Structure Node</span>
         </div>
         <div className="legend-item">
           <span className="legend-shape diamond"></span>
-          <span>控制流</span>
+          <span>Control Flow</span>
         </div>
         <div className="legend-item">
           <span className="legend-shape circle"></span>
-          <span>表达式</span>
+          <span>Expression</span>
         </div>
-        <div className="legend-hint">拖动旋转 | 滚轮缩放 | 点击选中 | 长按聚焦 | WASD移动 | 空格上升 | Shift下降</div>
+        <div className="legend-hint">Drag to rotate | Scroll to zoom | Click to select | Long press to focus | WASD to move | Space to go up | Shift to go down</div>
       </div>
     </div>
   );
