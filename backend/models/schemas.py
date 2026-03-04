@@ -266,3 +266,4 @@ class ChallengeResult(BaseModel):
     found_issues: List[str]
     missed_issues: List[str]
     feedback: str
+    passed: bool = False

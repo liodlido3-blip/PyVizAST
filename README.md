@@ -1,6 +1,6 @@
 # PyVizAST
 
-[![Version](https://img.shields.io/badge/Version-0.4.0--beta2-blue.svg)](https://github.com/ChidcGithub/PyVizAST/releases/tag/v0.4.0-beta2)
+[![Version](https://img.shields.io/badge/Version-0.4.0--beta3-blue.svg)](https://github.com/ChidcGithub/PyVizAST/releases/tag/v0.4.0-beta3)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ChidcGithub/PyVizAST)
@@ -181,6 +181,36 @@ GNU General Public License v3.0
 Contributions are welcome. Please submit pull requests to the main repository.
 
 <details> <summary>Version History</summary>
+
+### v0.4.0-beta3 (2026-03-04)
+**New Features:**
+- **Learn Mode**: Interactive AST learning with node explanations
+  - Write code and visualize AST in real-time
+  - Click on nodes to see detailed explanations
+  - Python documentation and code examples for each node type
+  - Related concepts for deeper learning
+- **Challenges Mode**: Interactive coding challenges
+  - 12 professional challenges across 5 categories (Performance, Security, Complexity, Code Smell, Best Practice)
+  - Difficulty levels: Easy, Medium, Hard
+  - Learning objectives and hints for each challenge
+  - Score system with immediate feedback
+
+**Backend Improvements:**
+- Enhanced node explanation system with 20+ AST node types
+- New `/api/challenges/categories` endpoint for challenge categories
+- Auto-reload challenge data when JSON file changes
+- Improved challenge scoring and feedback system
+
+**Frontend Improvements:**
+- New `LearnView` component with two-panel layout (Code Editor + AST/Explanation)
+- New `ChallengeView` component with challenge list, detail, and result views
+- Monochrome black/white theme for Learn and Challenges modes
+- Responsive layout for different screen sizes
+- Integrated Learn/Challenges into Sidebar tabs
+
+**Content:**
+- All content translated to English for consistency
+- Professional challenge descriptions and learning objectives
 
 ### v0.4.0-beta2 (2026-03-04)
 **Bug Fixes:**

@@ -254,6 +254,17 @@ export const getChallenges = async () => {
 };
 
 /**
+ * Get challenge categories
+ */
+export const getChallengeCategories = async () => {
+  // GET requests can safely retry
+  return withRetry(async () => {
+    const response = await api.get('/api/challenges/categories');
+    return response.data;
+  }, 'get');
+};
+
+/**
  * Get challenge details
  */
 export const getChallenge = async (challengeId) => {

@@ -2,73 +2,326 @@
   "challenges": [
     {
       "id": "challenge_1",
-      "title": "优化嵌套循环",
-      "description": "找出代码中的性能问题并修复",
+      "title": "Optimize Nested Loops",
+      "description": "Find and fix performance issues in this code. It finds duplicate elements in an array but has serious performance problems.",
+      "category": "performance",
       "code": "def find_duplicates(arr):\n    duplicates = []\n    for i in range(len(arr)):\n        for j in range(len(arr)):\n            if i != j and arr[i] == arr[j]:\n                if arr[i] not in duplicates:\n                    duplicates.append(arr[i])\n    return duplicates\n",
       "issues": ["nested_loop", "list_membership"],
       "difficulty": "easy",
-      "hints": [
-        "注意嵌套循环的时间复杂度",
-        "查找成员检查的效率问题"
+      "learning_objectives": [
+        "Understand time complexity analysis",
+        "Master efficient lookup with Sets",
+        "Learn to avoid unnecessary nested loops"
       ],
-      "estimated_time_minutes": 5
+      "hints": [
+        "The nested loop has O(n²) time complexity",
+        "List membership check is O(n), set is O(1)",
+        "Consider using set() for efficient lookups"
+      ],
+      "solution_hint": "Use a set to store seen elements to reduce time complexity from O(n³) to O(n)",
+      "estimated_time_minutes": 5,
+      "points": 100
     },
     {
       "id": "challenge_2",
-      "title": "修复安全问题",
-      "description": "找出代码中的安全漏洞",
+      "title": "Fix Security Vulnerabilities",
+      "description": "Find security vulnerabilities in this code. It handles user input and has serious security risks.",
+      "category": "security",
       "code": "def execute_user_input(user_input):\n    result = eval(user_input)\n    return result\n\ndef get_user(user_id):\n    query = f\"SELECT * FROM users WHERE id = {user_id}\"\n    return db.execute(query)\n",
       "issues": ["eval_usage", "sql_injection"],
       "difficulty": "medium",
-      "hints": [
-        "eval() 函数有什么安全风险？",
-        "SQL 查询字符串拼接是否安全？"
+      "learning_objectives": [
+        "Understand code injection attack principles",
+        "Master safe user input handling",
+        "Learn the importance of parameterized queries"
       ],
-      "estimated_time_minutes": 10
+      "hints": [
+        "eval() can execute arbitrary Python code - very dangerous",
+        "SQL string concatenation leads to SQL injection vulnerabilities",
+        "Consider using ast.literal_eval() instead of eval()",
+        "Use parameterized queries to prevent SQL injection"
+      ],
+      "solution_hint": "Use ast.literal_eval() instead of eval(), use parameterized queries instead of string concatenation",
+      "estimated_time_minutes": 10,
+      "points": 200
     },
     {
       "id": "challenge_3",
-      "title": "降低复杂度",
-      "description": "重构高复杂度代码",
+      "title": "Reduce Cyclomatic Complexity",
+      "description": "Refactor this high complexity code. The nesting is too deep, making it hard to read and maintain.",
+      "category": "complexity",
       "code": "def process_data(data, flag1, flag2, flag3, flag4):\n    result = []\n    if flag1:\n        if flag2:\n            if flag3:\n                if flag4:\n                    for item in data:\n                        if item > 0:\n                            if item < 100:\n                                result.append(item * 2)\n                        else:\n                            if item > -100:\n                                result.append(item * -1)\n    return result\n",
-      "issues": ["deep_nesting", "high_complexity"],
+      "issues": ["deep_nesting", "high_complexity", "long_parameter_list"],
       "difficulty": "hard",
-      "hints": [
-        "考虑使用早返回（early return）模式",
-        "嵌套条件可以如何简化？"
+      "learning_objectives": [
+        "Understand Cyclomatic Complexity concept",
+        "Master Early Return pattern",
+        "Learn to simplify conditional logic with operators"
       ],
-      "estimated_time_minutes": 15
+      "hints": [
+        "Consider using early return pattern",
+        "Nested conditions can be merged into single expressions",
+        "Use and/or operators to simplify nested if statements",
+        "Consider configuration objects when parameters are too many"
+      ],
+      "solution_hint": "Use early returns to reduce nesting, merge conditional expressions, extract functions to reduce complexity",
+      "estimated_time_minutes": 15,
+      "points": 300
     },
     {
       "id": "challenge_4",
-      "title": "修复代码异味",
-      "description": "识别并修复代码中的不良实践",
+      "title": "Fix Code Smells",
+      "description": "Identify and fix bad practices in this code. It has multiple code smell issues.",
+      "category": "code_smell",
       "code": "def calc(x, y, z, a, b, c, d, e):\n    temp = 0\n    data = []\n    result = []\n    for i in range(len(data)):\n        if data[i] > 0:\n            if data[i] < 100:\n                if data[i] % 2 == 0:\n                    temp = temp + data[i] * 2\n    return temp\n",
-      "issues": ["long_parameter_list", "unused_variable", "empty_list_iteration", "string_concat_in_loop"],
+      "issues": ["long_parameter_list", "unused_variable", "empty_list_iteration", "dead_code"],
       "difficulty": "medium",
-      "hints": [
-        "参数数量是否合理？",
-        "是否有未使用的变量？"
+      "learning_objectives": [
+        "Identify common code smells",
+        "Understand the harm of dead code",
+        "Learn to clean up unused variables and parameters"
       ],
-      "estimated_time_minutes": 8
+      "hints": [
+        "Is the number of parameters reasonable? Suggest no more than 5",
+        "Are there unused variables? data, result, multiple parameters",
+        "Does iterating over an empty list make sense?",
+        "temp = temp + x can be simplified to temp += x"
+      ],
+      "solution_hint": "Remove unused parameters and variables, simplify function signature",
+      "estimated_time_minutes": 8,
+      "points": 150
     },
     {
       "id": "challenge_5",
-      "title": "性能优化挑战",
-      "description": "优化低效的数据处理代码",
+      "title": "Performance Optimization",
+      "description": "Optimize this inefficient data processing code. It performs poorly with large datasets.",
+      "category": "performance",
       "code": "def process_items(items):\n    result = \"\"\n    for item in items:\n        result = result + str(item) + \",\"\n    \n    unique_items = []\n    for item in items:\n        if item not in unique_items:\n            unique_items.append(item)\n    \n    return result, unique_items\n",
       "issues": ["string_concat_in_loop", "list_membership_check"],
       "difficulty": "easy",
-      "hints": [
-        "字符串拼接在循环中效率如何？",
-        "成员检查用列表还是集合更好？"
+      "learning_objectives": [
+        "Understand string concatenation performance issues",
+        "Master the join() method",
+        "Learn to use sets for deduplication"
       ],
-      "estimated_time_minutes": 5
+      "hints": [
+        "Strings are immutable in Python, each concatenation creates a new object",
+        "Using str.join() is more efficient",
+        "List membership check is O(n), set is O(1)"
+      ],
+      "solution_hint": "Use ','.join() instead of loop concatenation, use set() for deduplication",
+      "estimated_time_minutes": 5,
+      "points": 100
+    },
+    {
+      "id": "challenge_6",
+      "title": "Exception Handling Best Practices",
+      "description": "Identify and fix improper exception handling. Good exception handling is the foundation of robust programs.",
+      "category": "best_practice",
+      "code": "def read_config(filename):\n    try:\n        file = open(filename, 'r')\n        data = file.read()\n        return data\n    except:\n        pass\n\ndef parse_json(data):\n    try:\n        return eval(data)\n    except Exception:\n        return None\n",
+      "issues": ["bare_except", "eval_usage", "resource_leak", "broad_exception"],
+      "difficulty": "medium",
+      "learning_objectives": [
+        "Understand the dangers of bare except",
+        "Master resource management with 'with' statement",
+        "Learn precise exception type catching"
+      ],
+      "hints": [
+        "Bare except: catches all exceptions including KeyboardInterrupt",
+        "File operations should use 'with' statement for proper resource release",
+        "Should catch specific exception types, not generic Exception",
+        "eval() is not the correct way to parse JSON"
+      ],
+      "solution_hint": "Use 'with' statement, catch specific exception types, use json.loads() instead of eval()",
+      "estimated_time_minutes": 10,
+      "points": 200
+    },
+    {
+      "id": "challenge_7",
+      "title": "Recursion Optimization",
+      "description": "Optimize this inefficient recursive function. It calculates Fibonacci numbers but is extremely slow.",
+      "category": "performance",
+      "code": "def fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n - 1) + fibonacci(n - 2)\n\ndef factorial(n):\n    if n <= 1:\n        return 1\n    return n * factorial(n - 1)\n",
+      "issues": ["inefficient_recursion", "no_memoization"],
+      "difficulty": "medium",
+      "learning_objectives": [
+        "Understand recursion time complexity analysis",
+        "Master Memoization technique",
+        "Learn to identify repeated calculations"
+      ],
+      "hints": [
+        "fibonacci(n) has O(2^n) time complexity",
+        "Same subproblems are calculated repeatedly",
+        "Consider using cache to store calculated results",
+        "Python's @functools.lru_cache decorator is very useful"
+      ],
+      "solution_hint": "Use lru_cache decorator or implement memoization manually, or use iterative approach",
+      "estimated_time_minutes": 10,
+      "points": 200
+    },
+    {
+      "id": "challenge_8",
+      "title": "Type Safety Improvement",
+      "description": "Improve type safety of this code. It lacks type hints and is error-prone.",
+      "category": "best_practice",
+      "code": "def process_data(data, key, default=None):\n    if data is None:\n        return default\n    if isinstance(data, dict):\n        return data.get(key, default)\n    if isinstance(data, list):\n        try:\n            return data[key]\n        except:\n            return default\n    return data\n\ndef calculate(a, b, op):\n    if op == 'add':\n        return a + b\n    elif op == 'sub':\n        return a - b\n    elif op == 'mul':\n        return a * b\n    elif op == 'div':\n        return a / b\n",
+      "issues": ["missing_type_hints", "bare_except", "magic_string", "no_enum"],
+      "difficulty": "medium",
+      "learning_objectives": [
+        "Master Python type hint syntax",
+        "Understand benefits of using Enum instead of magic strings",
+        "Learn to write safer code"
+      ],
+      "hints": [
+        "Use typing module to add type hints",
+        "Consider using Union, Optional, Any types",
+        "Use Enum instead of magic strings",
+        "Avoid bare except, use specific exception types"
+      ],
+      "solution_hint": "Add type hints, use Enum to define operation types, improve exception handling",
+      "estimated_time_minutes": 12,
+      "points": 250
+    },
+    {
+      "id": "challenge_9",
+      "title": "Memory Optimization",
+      "description": "Optimize memory usage. This code consumes a lot of memory when processing large data.",
+      "category": "performance",
+      "code": "def load_large_file(filename):\n    with open(filename, 'r') as f:\n        lines = f.readlines()\n    return lines\n\ndef process_data(filename):\n    data = load_large_file(filename)\n    results = []\n    for line in data:\n        results.append(line.strip().upper())\n    return results\n\ndef find_matches(filename, pattern):\n    data = load_large_file(filename)\n    matches = []\n    for line in data:\n        if pattern in line:\n            matches.append(line)\n    return matches\n",
+      "issues": ["memory_inefficient", "no_generator", "redundant_read"],
+      "difficulty": "hard",
+      "learning_objectives": [
+        "Understand how Generators work",
+        "Master lazy evaluation advantages",
+        "Learn to process large files line by line"
+      ],
+      "hints": [
+        "readlines() loads entire file into memory at once",
+        "Can iterate over file object directly for line-by-line reading",
+        "Consider using generator expressions instead of lists",
+        "yield keyword creates generator functions"
+      ],
+      "solution_hint": "Use generators to read files line by line, avoid loading all content at once",
+      "estimated_time_minutes": 15,
+      "points": 300
+    },
+    {
+      "id": "challenge_10",
+      "title": "Concurrency Safety",
+      "description": "Identify potential issues in concurrent programming. This code has race conditions in multi-threaded environments.",
+      "category": "security",
+      "code": "import threading\n\nclass Counter:\n    def __init__(self):\n        self.value = 0\n    \n    def increment(self):\n        current = self.value\n        current += 1\n        self.value = current\n    \n    def get(self):\n        return self.value\n\nclass Cache:\n    _instance = None\n    _data = {}\n    \n    @classmethod\n    def get_instance(cls):\n        if cls._instance is None:\n            cls._instance = cls()\n        return cls._instance\n    \n    def set(self, key, value):\n        self._data[key] = value\n    \n    def get(self, key):\n        return self._data.get(key)\n",
+      "issues": ["race_condition", "thread_unsafe", "singleton_race"],
+      "difficulty": "hard",
+      "learning_objectives": [
+        "Understand Race Condition concept",
+        "Master thread synchronization mechanisms",
+        "Learn to write thread-safe code"
+      ],
+      "hints": [
+        "increment() method is not atomic",
+        "Read-modify-write process can be interrupted",
+        "Singleton lazy loading is also thread-unsafe",
+        "Consider using threading.Lock or threading.RLock"
+      ],
+      "solution_hint": "Use locks to protect shared resources, use thread-safe singleton implementation",
+      "estimated_time_minutes": 15,
+      "points": 350
+    },
+    {
+      "id": "challenge_11",
+      "title": "Code Testability",
+      "description": "Improve code testability. This code is difficult to unit test.",
+      "category": "best_practice",
+      "code": "import requests\nimport datetime\n\ndef get_user_data(user_id):\n    url = f\"https://api.example.com/users/{user_id}\"\n    response = requests.get(url)\n    if response.status_code == 200:\n        return response.json()\n    return None\n\ndef calculate_age(birth_year):\n    current_year = datetime.datetime.now().year\n    return current_year - birth_year\n\ndef send_notification(user_id, message):\n    user = get_user_data(user_id)\n    if user:\n        email = user['email']\n        # Send email logic\n        print(f\"Sending email to {email}: {message}\")\n        return True\n    return False\n",
+      "issues": ["hardcoded_dependency", "datetime_coupling", "tight_coupling"],
+      "difficulty": "medium",
+      "learning_objectives": [
+        "Understand Dependency Injection concept",
+        "Master how to decouple external dependencies",
+        "Learn to write testable code"
+      ],
+      "hints": [
+        "Direct calls to requests.get() are hard to mock in tests",
+        "datetime.now() is hard to control in tests",
+        "Function does too many things, violates Single Responsibility Principle",
+        "Consider passing dependencies as parameters or using interface abstraction"
+      ],
+      "solution_hint": "Use dependency injection for external services, extract interfaces for easier mocking",
+      "estimated_time_minutes": 12,
+      "points": 250
+    },
+    {
+      "id": "challenge_12",
+      "title": "Data Class Optimization",
+      "description": "Improve this class using modern Python features. It can be implemented more elegantly.",
+      "category": "best_practice",
+      "code": "class Person:\n    def __init__(self, name, age, email):\n        self.name = name\n        self.age = age\n        self.email = email\n    \n    def __eq__(self, other):\n        if not isinstance(other, Person):\n            return False\n        return (self.name == other.name and \n                self.age == other.age and \n                self.email == other.email)\n    \n    def __repr__(self):\n        return f\"Person(name={self.name}, age={self.age}, email={self.email})\"\n    \n    def to_dict(self):\n        return {\n            'name': self.name,\n            'age': self.age,\n            'email': self.email\n        }\n\ndef create_person(name, age, email):\n    return Person(name, age, email)\n\ndef get_person_info(person):\n    return f\"{person.name} ({person.age}) - {person.email}\"\n",
+      "issues": ["boilerplate_code", "missing_dataclass", "manual_methods"],
+      "difficulty": "easy",
+      "learning_objectives": [
+        "Master Python dataclasses module",
+        "Understand @dataclass decorator advantages",
+        "Learn to reduce boilerplate code"
+      ],
+      "hints": [
+        "Python 3.7+ provides @dataclass decorator",
+        "dataclass auto-generates __init__, __eq__, __repr__",
+        "Can use asdict() function to convert to dictionary",
+        "Consider adding type hints for better code quality"
+      ],
+      "solution_hint": "Use @dataclass decorator to simplify class definition, auto-generate special methods",
+      "estimated_time_minutes": 8,
+      "points": 150
+    }
+  ],
+  "categories": [
+    {
+      "id": "performance",
+      "name": "Performance",
+      "description": "Learn to identify and optimize inefficient code",
+      "icon": "speed",
+      "challenges": ["challenge_1", "challenge_5", "challenge_7", "challenge_9"]
+    },
+    {
+      "id": "security",
+      "name": "Security",
+      "description": "Identify and fix common security issues",
+      "icon": "security",
+      "challenges": ["challenge_2", "challenge_10"]
+    },
+    {
+      "id": "complexity",
+      "name": "Complexity",
+      "description": "Reduce code complexity to improve maintainability",
+      "icon": "account_tree",
+      "challenges": ["challenge_3"]
+    },
+    {
+      "id": "code_smell",
+      "name": "Code Smell",
+      "description": "Identify and eliminate code smells",
+      "icon": "warning",
+      "challenges": ["challenge_4"]
+    },
+    {
+      "id": "best_practice",
+      "name": "Best Practice",
+      "description": "Python programming best practices",
+      "icon": "star",
+      "challenges": ["challenge_6", "challenge_8", "challenge_11", "challenge_12"]
     }
   ],
   "metadata": {
-    "version": "1.0",
-    "last_updated": "2026-03-01",
-    "total_challenges": 5
+    "version": "2.0",
+    "last_updated": "2026-03-04",
+    "total_challenges": 12,
+    "total_categories": 5,
+    "difficulty_distribution": {
+      "easy": 3,
+      "medium": 6,
+      "hard": 3
+    },
+    "total_points": 2550
   }
 }

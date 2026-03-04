@@ -6,11 +6,14 @@ import LoadingOverlay from './components/LoadingOverlay';
 import ErrorBoundary from './components/ErrorBoundary';
 import ProjectAnalysisView from './components/ProjectAnalysisView';
 import ProjectVisualization from './components/ProjectVisualization';
+import LearnView from './components/LearnView';
+import ChallengeView from './components/ChallengeView';
 import { analyzeCode, checkServerHealth, getApiBaseUrl } from './api';
 import { setupGlobalErrorHandlers } from './utils/logger';
 import './App.css';
 import './components/components.css';
 import './components/AnalysisPanel.css';
+import './components/LearnChallenge.css';
 
 // Lazy load heavy components for code splitting
 const ASTVisualizer = lazy(() => import('./components/ASTVisualizer'));
@@ -355,8 +358,22 @@ function App() {
           onViewModeChange={setViewMode}
         />
         
-        {/* Project analysis mode */}
-        {analysisMode === 'project' ? (
+        {/* Learn tab content */}
+        {activeTab === 'learn' ? (
+          <main className="main-content learn-mode">
+            <ErrorBoundary>
+              <LearnView theme={theme} />
+            </ErrorBoundary>
+          </main>
+        ) : activeTab === 'challenges' ? (
+          /* Challenges tab content */
+          <main className="main-content challenges-mode">
+            <ErrorBoundary>
+              <ChallengeView theme={theme} />
+            </ErrorBoundary>
+          </main>
+        ) : analysisMode === 'project' ? (
+          /* Project analysis mode */
           <main className="main-content project-mode" ref={mainContentRef}
             style={{ 
               '--split-position': `${splitPosition}%`,
