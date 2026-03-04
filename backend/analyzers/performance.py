@@ -533,44 +533,6 @@ class PerformanceAnalyzer:
         visitor = CompOptVisitor(self)
         visitor.visit(tree)
     
-    def _analyze_function_complexity(self, func_node: ast.AST) -> Dict[str, Any]:
-        """Analyze function complexity"""
-        result = {
-            'has_nested_loops': False,
-            'max_loop_depth': 0,
-            'call_count': 0,
-        }
-        
-        class LoopDepthVisitor(ast.NodeVisitor):
-            def __init__(self):
-                self.current_depth = 0
-                self.max_depth = 0
-            
-            def visit_For(self, node):
-                self.current_depth += 1
-                self.max_depth = max(self.max_depth, self.current_depth)
-                self.generic_visit(node)
-                self.current_depth -= 1
-            
-            def visit_While(self, node):
-                self.current_depth += 1
-                self.max_depth = max(self.max_depth, self.current_depth)
-                self.generic_visit(node)
-                self.current_depth -= 1
-        
-        visitor = LoopDepthVisitor()
-        visitor.visit(func_node)
-        
-        result['max_loop_depth'] = visitor.max_depth
-        result['has_nested_loops'] = visitor.max_depth > 1
-        
-        # Count function calls
-        for node in ast.walk(func_node):
-            if isinstance(node, ast.Call):
-                result['call_count'] += 1
-        
-        return result
-    
     def get_performance_hotspots(self) -> List[PerformanceHotspot]:
         """Get list of performance hotspots"""
         return self.hotspots

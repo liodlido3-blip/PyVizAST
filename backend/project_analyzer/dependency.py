@@ -234,18 +234,24 @@ class DependencyAnalyzer:
             parts = source_module.split('.')
             
             # Go up based on level
+            # If level exceeds parts length, treat as root-level import
             if imp.level > len(parts):
-                return None
-            
-            base_parts = parts[:-imp.level] if imp.level <= len(parts) else []
+                # Attempt to resolve from project root
+                base_parts = []
+                logger.debug(
+                    f"Relative import level {imp.level} exceeds module depth "
+                    f"'{source_module}', treating as root-level import"
+                )
+            else:
+                base_parts = parts[:-imp.level] if imp.level > 0 else parts
             
             if imp.module:
-                target = '.'.join(base_parts + [imp.module])
+                target = '.'.join(base_parts + [imp.module]) if base_parts else imp.module
             else:
-                target = '.'.join(base_parts)
+                target = '.'.join(base_parts) if base_parts else ''
             
             # Check if exists
-            if target in self.module_paths:
+            if target and target in self.module_paths:
                 return target
             
             # Might be a module within a package
@@ -254,6 +260,7 @@ class DependencyAnalyzer:
                 if potential in self.module_paths:
                     return potential
             
+            # Return target if valid, otherwise None
             return target if target else None
         
         else:

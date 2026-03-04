@@ -601,8 +601,8 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
           const dy = targetPos.y - sourcePos.y;
           const edgeLength = Math.sqrt(dx * dx + dy * dy);
           
-          // Create unique particle ID
-          const uniqueParticleId = particleIdCounter.current++;
+          // Create unique particle ID using the generator function
+          const uniqueParticleId = generateParticleId();
           
           const particle = {
             id: uniqueParticleId,

@@ -329,16 +329,14 @@ class CodeSmellDetector:
         class DeadCodeVisitor(ast.NodeVisitor):
             def __init__(self, detector):
                 self.detector = detector
-                self.after_return = False
-                self.after_break = False
-                self.after_continue = False
+                self.after_terminator = False  # After return, raise, etc.
             
             def visit_FunctionDef(self, node):
-                self.after_return = False
+                self.after_terminator = False
                 dead_code_start = None
                 
                 for i, stmt in enumerate(node.body):
-                    if self.after_return:
+                    if self.after_terminator:
                         # Record start of dead code block
                         if dead_code_start is None:
                             dead_code_start = i
@@ -349,13 +347,14 @@ class CodeSmellDetector:
                                 id=self.detector._generate_issue_id("dead_code"),
                                 type="code_smell",
                                 severity=SeverityLevel.WARNING,
-                                message=f"{i - dead_code_start} lines of code after return statement will never execute",
+                                message=f"{i - dead_code_start} lines of code after return/raise statement will never execute",
                                 lineno=getattr(node.body[dead_code_start], 'lineno', node.lineno)
                             ))
                             dead_code_start = None
                     
-                    if isinstance(stmt, ast.Return):
-                        self.after_return = True
+                    # Check for terminating statements
+                    if isinstance(stmt, (ast.Return, ast.Raise)):
+                        self.after_terminator = True
                     
                     self.visit(stmt)
                 
@@ -365,21 +364,15 @@ class CodeSmellDetector:
                         id=self.detector._generate_issue_id("dead_code"),
                         type="code_smell",
                         severity=SeverityLevel.WARNING,
-                        message=f"{len(node.body) - dead_code_start} lines of code after return statement will never execute",
+                        message=f"{len(node.body) - dead_code_start} lines of code after return/raise statement will never execute",
                         lineno=getattr(node.body[dead_code_start], 'lineno', node.lineno)
                     ))
                 
-                self.after_return = False
+                self.after_terminator = False
             
-            def visit_Return(self, node):
-                self.after_return = True
-                self.generic_visit(node)
-            
-            def visit_Break(self, node):
-                self.after_break = True
-            
-            def visit_Continue(self, node):
-                self.after_continue = True
+            def visit_AsyncFunctionDef(self, node):
+                # Handle async functions the same way
+                self.visit_FunctionDef(node)
         
         visitor = DeadCodeVisitor(self)
         visitor.visit(tree)

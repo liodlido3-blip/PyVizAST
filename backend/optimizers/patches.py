@@ -246,11 +246,18 @@ class PatchGenerator:
             current_indent = get_indent(line)
             
             # Track loop entry/exit based on indentation
-            while loop_indent_stack and current_indent <= loop_indent_stack[-1]:
-                if stripped and not stripped.startswith(('for ', 'while ', 'elif ', 'else:', 'except', 'finally:', '#')):
+            # Pop loops that have ended (current indent is less than or equal to loop indent)
+            # But don't pop for same-level continuation keywords
+            continuation_keywords = ('elif ', 'else:', 'except', 'finally:')
+            is_continuation = stripped.startswith(continuation_keywords)
+            
+            while loop_indent_stack and current_indent < loop_indent_stack[-1]:
+                loop_indent_stack.pop()
+            
+            # Handle same-level lines (not continuations) - pop if at same indent
+            if loop_indent_stack and current_indent == loop_indent_stack[-1] and not is_continuation:
+                if stripped and not stripped.startswith('#'):
                     loop_indent_stack.pop()
-                else:
-                    break
             
             # Track new loops
             if stripped.startswith('for ') or stripped.startswith('while '):

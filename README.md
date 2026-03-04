@@ -1,10 +1,10 @@
 # PyVizAST
 
-[![Version](https://img.shields.io/badge/Version-0.4.0--pre-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Version](https://img.shields.io/badge/Version-0.4.0-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ChidcGithub/PyVizAST)
-[![Status](https://img.shields.io/badge/Status-pre--release-orange.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Status](https://img.shields.io/badge/Status-stable-brightgreen.svg)](https://github.com/ChidcGithub/PyVizAST)
 
 A Python AST Visualizer & Static Analyzer that transforms code into interactive graphs. Detect complexity, performance bottlenecks, and code smells with actionable refactoring suggestions.
 
@@ -182,24 +182,46 @@ Contributions are welcome. Please submit pull requests to the main repository.
 
 <details> <summary>Version History</summary>
 
-### v0.4.0-pre (2026-03-04)
-**Bug Fixes:**
-- Fixed temporary directory cleanup timing in project analysis (data loss issue)
-- Fixed boolean detection logic in performance analyzer (nested ternary expression)
-- Fixed string concatenation patch generator (loop tracking, init/join placement)
-- Fixed memory leak in AST visualizer (animation frame cleanup)
-- Fixed retry logic overriding user cancellation (AbortError/CanceledError)
-- Fixed hardcoded secret false positives (now excludes env vars, config objects)
+### v0.4.0 (2026-03-04)
+**Major Release - Project Analysis & Interactive Learning**
+
+This release includes all features and fixes from alpha, beta, and pre releases.
 
 **New Features:**
-- Added Python 3.10+ `match-case` statement support (NodeType.MATCH)
-- ChallengesPanel now fetches real data from API instead of hardcoded values
+- **Project-Level Analysis**: Analyze entire Python projects with dependency tracking
+  - Multi-file analysis with dependency graph visualization
+  - Circular dependency detection (Tarjan's algorithm)
+  - Unused export detection (functions, classes, variables)
+  - Project metrics (LOC, file count, average complexity)
+- **Learn Mode**: Interactive AST learning with node explanations
+  - Write code and visualize AST in real-time
+  - Click on nodes to see detailed explanations
+  - Python documentation and code examples for each node type
+- **Challenges Mode**: Interactive coding challenges
+  - 12 professional challenges across 5 categories
+  - Difficulty levels: Easy, Medium, Hard
+  - Learning objectives and hints
+- **Python 3.10+ Support**: `match-case` statement support (NodeType.MATCH)
+
+**Bug Fixes:**
+- Fixed temporary directory cleanup timing (data loss issue)
+- Fixed boolean detection in performance analyzer (nested ternary)
+- Fixed string concatenation patch generator (loop tracking)
+- Fixed memory leak in AST visualizer (animation frame cleanup)
+- Fixed retry logic overriding user cancellation
+- Fixed hardcoded secret false positives
+- Fixed type inconsistency in CodeIssue construction
+- Fixed dead code detection for raise statements and async functions
+- Fixed relative import resolution edge cases
+- Fixed particle ID generation conflicts
+- Fixed indent stack management in patch generator
 
 **Improvements:**
-- Relaxed CodeIssue.type validation (allows more issue types with logging)
-- Removed `setup.py` from default ignore patterns (may contain important config)
-- Improved hardcoded secret detection with better exclusion patterns
-- Unified API version strings to 0.4.0
+- Relaxed CodeIssue.type validation with logging
+- Removed setup.py from default ignore patterns
+- Improved hardcoded secret detection patterns
+- Better error messages for validation errors
+- Comprehensive logging system (frontend/backend)
 
 ### v0.4.0-beta3 (2026-03-04)
 **New Features:**

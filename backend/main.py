@@ -76,7 +76,6 @@ app = FastAPI(
 )
 
 # Configure CORS
-import os
 ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
 app.add_middleware(
     CORSMiddleware,
@@ -1531,13 +1530,13 @@ async def _analyze_single_file(file_info: FileInfo, project_root: str) -> FileAn
                 lines_of_code=file_info.line_count,
                 issue_count=1,
             ),
-            issues=[{
-                'id': f'syntax_error_{file_info.relative_path}',
-                'type': 'code_smell',
-                'severity': 'error',
-                'message': f"Syntax error: {str(e)}",
-                'lineno': e.lineno,
-            }],
+            issues=[CodeIssue(
+                id=f'syntax_error_{file_info.relative_path}',
+                type='code_smell',
+                severity=SeverityLevel.ERROR,
+                message=f"Syntax error: {str(e)}",
+                lineno=e.lineno,
+            )],
             complexity={},
             performance_hotspots=[],
             suggestions=[],
