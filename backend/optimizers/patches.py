@@ -562,7 +562,8 @@ class PatchGenerator:
                 changes_made = True
                 return 'f' + quote + fstring + quote
                 
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to convert percent format to f-string: {e}")
                 return full_match
         
         # Match "template" % (args) or 'template' % (args)
@@ -595,7 +596,8 @@ class PatchGenerator:
                 changes_made = True
                 return 'f' + quote + fstring + quote
                 
-            except Exception:
+            except Exception as e:
+                logger.debug(f"Failed to convert .format() to f-string: {e}")
                 return full_match
         
         # Match "template".format(args)

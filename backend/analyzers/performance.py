@@ -393,7 +393,7 @@ class PerformanceAnalyzer:
                     try:
                         import ast as ast_module
                         call_repr = ast_module.unparse(node) if hasattr(ast_module, 'unparse') else str(node)
-                    except:
+                    except (ValueError, TypeError, AttributeError):
                         call_repr = str(getattr(node, 'lineno', ''))
                     
                     # Check if we've seen this expression before
@@ -440,7 +440,7 @@ class PerformanceAnalyzer:
                             ))
                         elif expr_repr:
                             self.expressions[expr_repr] = (node, getattr(node, 'lineno', 0))
-                    except:
+                    except (ValueError, TypeError, AttributeError):
                         pass
                 self.generic_visit(node)
         

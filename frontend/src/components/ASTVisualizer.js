@@ -20,18 +20,72 @@ const SECONDARY_TYPES = new Set([
 
 // Helper function to format attribute keys (defined outside component to avoid recreation)
 const ATTR_KEY_MAP = {
+  // Function/Class definitions
   'args': 'Arguments',
   'decorators': 'Decorators',
   'bases': 'Base Classes',
   'is_async': 'Async',
+  'returns': 'Return Annotation',
+  'type_params': 'Type Parameters',
+  
+  // Loop and control flow
   'target': 'Loop Variable',
   'has_else': 'Has Else Branch',
+  'orelse': 'Else Branch',
+  'body': 'Body',
+  
+  // Function calls
   'args_count': 'Argument Count',
   'kwargs': 'Keyword Arguments',
+  'func': 'Function',
+  
+  // Operators
   'operator': 'Operator',
   'operators': 'Operators',
+  'op': 'Operation',
+  
+  // Imports
   'names': 'Import Names',
   'module': 'Module',
+  'level': 'Import Level',
+  'asname': 'Alias Name',
+  
+  // Assignments
+  'targets': 'Targets',
+  'value': 'Value',
+  'annotation': 'Type Annotation',
+  
+  // Comparisons
+  'comparators': 'Comparators',
+  'left': 'Left Operand',
+  'right': 'Right Operand',
+  
+  // Subscript/Attribute
+  'slice': 'Slice',
+  'attr': 'Attribute Name',
+  'ctx': 'Context',
+  
+  // Exception handling
+  'type': 'Exception Type',
+  'exc': 'Exception',
+  'finalbody': 'Finally Block',
+  'handlers': 'Exception Handlers',
+  
+  // Comprehensions
+  'generators': 'Generators',
+  'iter': 'Iterable',
+  'ifs': 'Conditions',
+  
+  // Literals
+  'n': 'Number Value',
+  's': 'String Value',
+  
+  // Other
+  'test': 'Condition',
+  'items': 'Items',
+  'keys': 'Keys',
+  'elt': 'Element',
+  'dims': 'Dimensions',
 };
 
 function ASTVisualizer({ graph, theme, onGoToLine }) {

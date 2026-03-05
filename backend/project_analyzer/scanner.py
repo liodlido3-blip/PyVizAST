@@ -85,9 +85,17 @@ class ProjectScanner:
         temp_dir = tempfile.mkdtemp(prefix='pyvizast_')
         
         try:
-            # Extract ZIP file
+            # Extract ZIP file with path traversal protection
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
-                zip_ref.extractall(temp_dir)
+                # Check for path traversal attacks before extracting
+                for member in zip_ref.namelist():
+                    # Resolve the member path and check if it's within temp_dir
+                    member_path = os.path.realpath(os.path.join(temp_dir, member))
+                    if not member_path.startswith(os.path.realpath(temp_dir) + os.sep) and member_path != os.path.realpath(temp_dir):
+                        logger.warning(f"Skipping potentially malicious path in ZIP: {member}")
+                        continue
+                    # Extract individual member safely
+                    zip_ref.extract(member, temp_dir)
             
             # Find project root directory
             project_root = self._find_project_root(temp_dir)
@@ -230,7 +238,8 @@ class ProjectScanner:
         try:
             content = file_path.read_text(encoding='utf-8', errors='ignore')
             line_count = content.count('\n') + 1
-        except Exception:
+        except Exception as e:
+            logger.debug(f"Failed to read file {relative_path}: {e}")
             line_count = 0
         
         # Check if it's a special file

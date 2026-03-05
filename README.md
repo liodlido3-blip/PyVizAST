@@ -1,6 +1,6 @@
 # PyVizAST
 
-[![Version](https://img.shields.io/badge/Version-0.4.1-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Version](https://img.shields.io/badge/Version-0.4.2-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ChidcGithub/PyVizAST)
@@ -181,6 +181,23 @@ GNU General Public License v3.0
 Contributions are welcome. Please submit pull requests to the main repository.
 
 <details> <summary>Version History</summary>
+
+### v0.4.2 (2026-03-05)
+**Security Fixes:**
+- Fixed ZIP path traversal vulnerability in project scanner - malicious ZIP files can no longer overwrite system files
+- Added path validation before extracting ZIP entries
+
+**Bug Fixes:**
+- Fixed silent exception handling in `main.py` - MemoryError now properly logged
+- Fixed bare `except:` statements in `performance.py` - now uses specific exception types
+- Fixed exception handling in `unused_exports.py` - added debug logging
+- Fixed exception handling in `patches.py` - added debug logging for f-string conversion
+- Fixed exception handling in `scanner.py` - file read errors now logged
+
+**Improvements:**
+- Enhanced JSON parse error logging with line and column numbers
+- Expanded AST attribute key mapping (12 → 50+ mappings) for better visualization labels
+- Improved error messages throughout the codebase
 
 ### v0.4.1 (2026-03-04)
 **Fixed issues**

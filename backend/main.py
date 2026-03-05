@@ -70,7 +70,7 @@ logger = init_logging(level=logging.INFO)
 app = FastAPI(
     title="PyVizAST API",
     description="Python AST Visualization and Static Analysis API",
-    version="0.4.0",
+    version="0.4.2",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -211,7 +211,7 @@ async def root():
     """API root endpoint"""
     return {
         "name": "PyVizAST API",
-        "version": "0.4.0",
+        "version": "0.4.2",
         "description": "Python AST Visualizer and Static Analyzer",
         "status": "running",
         "endpoints": {
@@ -285,8 +285,8 @@ async def analyze_code(input_data: CodeInput):
                     except SyntaxError as e:
                         # Truncated code may have syntax errors, raise directly
                         raise CodeParsingError(f"Syntax error: {str(e)}")
-                    except MemoryError:
-                        pass
+                    except MemoryError as mem_err:
+                        logger.warning(f"Memory error during aggressive truncation: {mem_err}")
                     import gc
                     gc.collect()
                 else:
@@ -677,7 +677,7 @@ def load_challenges() -> List[Dict[str, Any]]:
         logger.warning(f"Challenge data file not found: {challenges_path}")
         return []
     except json.JSONDecodeError as e:
-        logger.error(f"Challenge data JSON parse error: {e}")
+        logger.error(f"Challenge data JSON parse error at line {e.lineno}, column {e.colno}: {e.msg}")
         return []
 
 
@@ -723,7 +723,11 @@ def load_challenge_categories() -> List[Dict[str, Any]]:
         with open(challenges_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
             return data.get("categories", [])
-    except (FileNotFoundError, json.JSONDecodeError):
+    except FileNotFoundError:
+        logger.warning(f"Challenge categories file not found: {challenges_path}")
+        return []
+    except json.JSONDecodeError as e:
+        logger.error(f"Challenge categories JSON parse error at line {e.lineno}, column {e.colno}: {e.msg}")
         return []
 
 
