@@ -239,32 +239,27 @@ class PatchGenerator:
             )
         
         # First pass: detect all string concatenations in loops
-        loop_indent_stack: List[int] = []  # Stack of loop indentation levels
+        # Track loop scopes by (start_line, indent_level) for proper nesting detection
+        loop_scopes: List[Tuple[int, int]] = []  # (start_line, indent_level)
         
         for i, line in enumerate(lines):
             stripped = line.strip()
             current_indent = get_indent(line)
             
-            # Track loop entry/exit based on indentation
-            # Pop loops that have ended (current indent is less than or equal to loop indent)
-            # But don't pop for same-level continuation keywords
-            continuation_keywords = ('elif ', 'else:', 'except', 'finally:')
-            is_continuation = stripped.startswith(continuation_keywords)
+            # Skip empty lines and comments for scope tracking
+            if not stripped or stripped.startswith('#'):
+                continue
             
-            while loop_indent_stack and current_indent < loop_indent_stack[-1]:
-                loop_indent_stack.pop()
-            
-            # Handle same-level lines (not continuations) - pop if at same indent
-            if loop_indent_stack and current_indent == loop_indent_stack[-1] and not is_continuation:
-                if stripped and not stripped.startswith('#'):
-                    loop_indent_stack.pop()
+            # Pop loops that have ended (indent decreased below loop's indent)
+            while loop_scopes and current_indent <= loop_scopes[-1][1]:
+                loop_scopes.pop()
             
             # Track new loops
             if stripped.startswith('for ') or stripped.startswith('while '):
-                loop_indent_stack.append(current_indent)
+                loop_scopes.append((i, current_indent))
             
             # Detect += string concatenation inside loops
-            if '+=' in line and loop_indent_stack:
+            if '+=' in line and loop_scopes:
                 match = re.match(r'^(\s*)(\w+)\s*\+=\s*(.+)$', line)
                 if match:
                     indent, var_name, value = match.groups()
@@ -276,7 +271,7 @@ class PatchGenerator:
                             string_vars_info[var_name] = {
                                 'first_line': i,
                                 'indent': current_indent,
-                                'loop_indent': loop_indent_stack[-1],
+                                'loop_indent': loop_scopes[-1][1],
                                 'parts_name': f'{var_name}_parts',
                                 'lines': [i],
                             }

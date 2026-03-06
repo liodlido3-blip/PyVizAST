@@ -82,52 +82,89 @@ class CycleDetector:
         return issues
     
     def _find_all_cycles(self) -> List[List[str]]:
-        """Find all cycles using iterative DFS (avoid recursion stack overflow)"""
-        cycles = []
-        visited = set()
+        """
+        Find all cycles using strongly connected components (SCC).
         
-        # Use explicit stack for iterative DFS
-        # Stack element: (node, path, rec_stack_set)
-        for start_node in list(self.adjacency.keys()):
-            if start_node in visited:
-                continue
-            
-            # Independent DFS for each starting node
-            stack = [(start_node, [], set())]
-            
-            while stack:
-                node, path, rec_stack = stack.pop()
-                
-                if node in rec_stack:
-                    # Found a cycle: from cycle start to current node
-                    cycle_start = path.index(node) if node in path else -1
-                    if cycle_start >= 0:
-                        cycle = path[cycle_start:] + [node]
-                        cycles.append(cycle)
-                    continue
-                
-                if node in visited and node not in rec_stack:
-                    # Already visited and not in current recursion stack, skip
-                    continue
-                
-                # Mark as visited
-                new_path = path + [node]
-                new_rec_stack = rec_stack | {node}
-                visited.add(node)
-                
-                # Traverse neighbors (reverse order to maintain original order)
-                neighbors = list(self.adjacency.get(node, []))
-                for neighbor in reversed(neighbors):
-                    if neighbor in new_rec_stack:
-                        # Found a cycle
-                        cycle_start = new_path.index(neighbor) if neighbor in new_path else -1
-                        if cycle_start >= 0:
-                            cycle = new_path[cycle_start:] + [neighbor]
-                            cycles.append(cycle)
-                    else:
-                        stack.append((neighbor, new_path, new_rec_stack))
+        This method leverages the Tarjan's algorithm from get_strongly_connected_components()
+        to efficiently detect cycles. Each SCC with more than one node contains at least
+        one cycle.
+        
+        Returns:
+            List of cycles, where each cycle is a list of module names
+        """
+        # Get strongly connected components using Tarjan's algorithm
+        sccs = self.get_strongly_connected_components()
+        
+        cycles = []
+        for scc in sccs:
+            # Each SCC with more than one node contains cycles
+            if len(scc) > 1:
+                # Extract a representative cycle from each SCC
+                cycle = self._extract_cycle_from_scc(scc)
+                if cycle:
+                    cycles.append(cycle)
+        
+        # Also check for self-loops (module depends on itself)
+        for module, deps in self.adjacency.items():
+            if module in deps:
+                cycles.append([module])
         
         return cycles
+    
+    def _extract_cycle_from_scc(self, scc: Set[str]) -> List[str]:
+        """
+        Extract a representative cycle from a strongly connected component.
+        
+        Uses a simple path-following approach within the SCC to find a cycle.
+        
+        Args:
+            scc: Set of nodes in the strongly connected component
+            
+        Returns:
+            A cycle as a list of module names
+        """
+        if len(scc) < 2:
+            return []
+        
+        # Start from any node in the SCC
+        start = next(iter(scc))
+        path = [start]
+        visited_in_path = {start}
+        
+        # Follow edges within SCC until we find a cycle
+        current = start
+        max_iterations = len(scc) * 2  # Prevent infinite loops
+        iterations = 0
+        
+        while iterations < max_iterations:
+            iterations += 1
+            found_next = False
+            
+            for neighbor in self.adjacency.get(current, []):
+                if neighbor in scc:
+                    if neighbor in visited_in_path:
+                        # Found a cycle back to a node in our path
+                        cycle_start = path.index(neighbor)
+                        return path[cycle_start:] + [neighbor]
+                    else:
+                        # Continue exploring
+                        path.append(neighbor)
+                        visited_in_path.add(neighbor)
+                        current = neighbor
+                        found_next = True
+                        break
+            
+            if not found_next:
+                # Dead end, backtrack
+                if len(path) > 1:
+                    path.pop()
+                    visited_in_path.discard(current)
+                    current = path[-1]
+                else:
+                    break
+        
+        # Fallback: return all nodes in SCC as a cycle
+        return list(scc)
     
     def _normalize_cycle(self, cycle: List[str]) -> List[str]:
         """

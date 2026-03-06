@@ -255,17 +255,25 @@ class SuggestionEngine:
                 if context == 'function_arg':
                     description = (
                         f"When used as argument to `{func_name}()`, generator expression is more memory efficient "
-                        f"because the function only iterates once"
+                        f"because the function only iterates once. "
+                        f"Note: Generators can only be iterated once and don't support indexing or len()."
                     )
                     estimated = '50%+ memory reduction'
                 elif context == 'for_iter':
                     description = (
                         "When used as for loop iterator, generator expression enables lazy evaluation, "
-                        "saving memory. But be cautious if loop contains break or multiple iterations"
+                        "saving memory. "
+                        "WARNING: Generators can only be iterated ONCE. Do NOT use if: "
+                        "1) The loop uses 'break' and needs to continue later; "
+                        "2) The same iterator is used in nested loops; "
+                        "3) You need to iterate multiple times over the same data."
                     )
                     estimated = 'Memory reduction, lazy evaluation'
                 else:
-                    description = 'If only iterating over results without random access, generator expression saves memory'
+                    description = (
+                        'If only iterating over results without random access, generator expression saves memory. '
+                        'WARNING: Generators can only be iterated once and do not support len() or indexing.'
+                    )
                     estimated = '50%+ memory reduction'
                 
                 self.engine.suggestions.append(OptimizationSuggestion(

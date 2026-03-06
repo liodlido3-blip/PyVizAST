@@ -1,6 +1,6 @@
 # PyVizAST
 
-[![Version](https://img.shields.io/badge/Version-0.4.2-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Version](https://img.shields.io/badge/Version-0.4.4-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ChidcGithub/PyVizAST)
@@ -181,6 +181,26 @@ GNU General Public License v3.0
 Contributions are welcome. Please submit pull requests to the main repository.
 
 <details> <summary>Version History</summary>
+
+### v0.4.4 (2026-03-06)
+**Frontend UI Redesign:**
+- Premium black & white theme with refined color palette
+- Updated 6 CSS files with cohesive design system
+- Consistent CSS variables for maintainability
+- Smooth transitions and subtle animations
+
+**Search Panel Improvements:**
+- Transparent hover effect: When hovering a search result, the panel background and other results become transparent (20% opacity)
+- The hovered result remains fully visible for clarity
+- Users can now see AST nodes behind the search panel
+
+**Backend Bug Fixes:**
+- Fixed unused `_cognitive_visitor` method in `complexity.py` (removed duplicate code)
+- Fixed nested loop detection in `patches.py` (loop indent stack tracking)
+- Improved hardcoded secret detection in `security.py` (reduced false positives/negatives)
+- Added smart truncation for large files in `main.py` (statement boundary detection)
+- Added generator expression warning in `suggestions.py` (one-time iteration caution)
+- Simplified cycle detection algorithm in `cycle_detector.py` (leveraging Tarjan SCC)
 
 ### v0.4.2 (2026-03-05)
 **Security Fixes:**

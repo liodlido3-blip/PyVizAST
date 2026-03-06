@@ -1,4 +1,4 @@
-/* ProjectAnalysisView.css - 紧凑型左侧面板样式 */
+/* ProjectAnalysisView.css - Premium Black & White Theme */
 
 /* 上传面板 */
 .project-upload-panel {
@@ -12,58 +12,61 @@
 
 .upload-area-compact {
   text-align: center;
-  padding: 40px 30px;
+  padding: 36px 28px;
   border: 1px dashed var(--border-default);
   border-radius: var(--radius-lg);
   background: var(--bg-secondary);
-  transition: all var(--transition-base);
+  transition: all var(--transition-fast);
   max-width: 280px;
 }
 
 .upload-area-compact:hover {
   border-color: var(--border-emphasis);
-  background: var(--bg-tertiary);
+  background: var(--bg-elevated);
 }
 
 .upload-area-compact .upload-icon {
-  margin-bottom: 16px;
-  color: var(--text-tertiary);
+  margin-bottom: 14px;
+  color: var(--text-muted);
 }
 
 .upload-area-compact h3 {
-  margin: 0 0 6px 0;
+  margin: 0 0 5px 0;
   color: var(--text-primary);
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
 .upload-area-compact p {
-  margin: 0 0 20px 0;
-  color: var(--text-tertiary);
-  font-size: 12px;
+  margin: 0 0 18px 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 .upload-area-compact .upload-button {
-  padding: 10px 24px;
-  font-size: 12px;
+  padding: 9px 22px;
+  font-size: 11px;
   font-weight: 500;
   color: #000000;
-  background: linear-gradient(to bottom, #ffffff, #e5e5e5);
+  background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 100%);
   border: none;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all var(--transition-fast);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1) inset, 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .upload-area-compact .upload-button:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.15) inset, 0 4px 16px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .upload-area-compact .upload-button:disabled {
-  opacity: 0.6;
+  opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
 }
 
 /* 文件面板 */
@@ -78,7 +81,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 11px 14px;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-secondary);
 }
@@ -88,11 +91,12 @@
   align-items: center;
   gap: 8px;
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0;
 }
 
 .clear-button {
@@ -100,7 +104,7 @@
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--text-tertiary);
+  color: var(--text-muted);
   cursor: pointer;
   transition: all var(--transition-fast);
 }
@@ -111,7 +115,7 @@
 }
 
 .panel-options {
-  padding: 8px 16px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-secondary);
 }
@@ -120,7 +124,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
   cursor: pointer;
 }
@@ -132,9 +136,9 @@
 .file-stats {
   display: flex;
   gap: 12px;
-  padding: 8px 16px;
-  font-size: 11px;
-  color: var(--text-tertiary);
+  padding: 7px 14px;
+  font-size: 10px;
+  color: var(--text-muted);
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -147,22 +151,23 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
-  background: rgba(59, 130, 246, 0.1);
-  border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-  font-size: 12px;
-  color: #3b82f6;
+  padding: 9px 14px;
+  background: var(--bg-hover);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
 .analyzing-indicator .cancel-btn {
   margin-left: auto;
   padding: 4px 8px;
-  font-size: 11px;
+  font-size: 10px;
   background: transparent;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-xs);
   color: var(--text-secondary);
   cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .analyzing-indicator .cancel-btn:hover {
@@ -174,10 +179,10 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 16px;
-  background: rgba(239, 68, 68, 0.1);
-  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
-  font-size: 12px;
+  padding: 8px 14px;
+  background: rgba(248, 113, 113, 0.06);
+  border-bottom: 1px solid rgba(248, 113, 113, 0.12);
+  font-size: 11px;
   color: var(--error);
 }
 
@@ -193,19 +198,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
-  font-size: 11px;
+  padding: 7px 14px;
+  font-size: 9px;
   font-weight: 500;
-  color: var(--text-tertiary);
+  color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .file-tree-header .hint {
-  font-size: 10px;
-  color: var(--info);
+  font-size: 9px;
+  color: var(--text-tertiary);
   text-transform: none;
   letter-spacing: 0;
 }
@@ -219,8 +224,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  font-size: 12px;
+  padding: 8px 14px;
+  font-size: 11px;
   color: var(--text-primary);
   cursor: default;
   transition: background var(--transition-fast);
@@ -237,13 +242,13 @@
 
 .file-tree-item.selected {
   background: var(--bg-elevated);
-  border-left: 2px solid var(--info);
-  padding-left: 14px;
+  border-left: 2px solid var(--text-primary);
+  padding-left: 12px;
 }
 
 .file-tree-item svg {
   flex-shrink: 0;
-  color: var(--text-tertiary);
+  color: var(--text-muted);
 }
 
 .file-tree-item .file-name {
@@ -251,7 +256,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 .file-tree-item .file-info {
@@ -264,7 +269,7 @@
 .file-tree-item .issue-badge {
   padding: 2px 6px;
   border-radius: var(--radius-xs);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
 }
 
@@ -274,7 +279,7 @@
 }
 
 .file-tree-item .issue-badge {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(248, 113, 113, 0.1);
   color: var(--error);
 }
 
@@ -282,21 +287,21 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 16px;
-  background: rgba(59, 130, 246, 0.1);
-  border-top: 1px solid rgba(59, 130, 246, 0.2);
-  font-size: 12px;
-  color: #3b82f6;
+  padding: 9px 14px;
+  background: var(--bg-hover);
+  border-top: 1px solid var(--border-subtle);
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
 /* 小型加载动画 */
 .loader-spinner.small {
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--border-default);
-  border-top-color: #3b82f6;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--border-subtle);
+  border-top-color: var(--text-primary);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin 0.7s linear infinite;
 }
 
 /* ========== 右侧结果面板样式 ========== */
@@ -304,19 +309,19 @@
 .project-result-panel {
   height: 100%;
   overflow-y: auto;
-  padding: 24px;
+  padding: 20px;
 }
 
 /* 健康评分卡片 */
 .project-result-panel .health-score-card {
   display: flex;
   align-items: center;
-  gap: 32px;
-  padding: 24px;
+  gap: 28px;
+  padding: 20px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .project-result-panel .health-score-circle {
@@ -324,23 +329,26 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 80px;
-  height: 80px;
+  width: 72px;
+  height: 72px;
   border-radius: 50%;
   background: var(--bg-tertiary);
   border: 2px solid var(--border-default);
 }
 
 .project-result-panel .health-score-value {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 600;
   color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .project-result-panel .health-score-grade {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--text-secondary);
   margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .project-result-panel .health-factors {
@@ -350,17 +358,17 @@
 .project-result-panel .health-factors h4 {
   margin: 0 0 10px 0;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 
 .project-result-panel .health-factor {
   display: flex;
   justify-content: space-between;
   padding: 5px 0;
-  font-size: 12px;
+  font-size: 11px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
@@ -392,15 +400,15 @@
 .project-result-panel .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 20px;
 }
 
 .project-result-panel .stat-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 16px;
+  padding: 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -408,109 +416,110 @@
 }
 
 .project-result-panel .stat-value {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
 }
 
 .project-result-panel .stat-label {
-  font-size: 10px;
-  color: var(--text-tertiary);
+  font-size: 9px;
+  color: var(--text-muted);
   margin-top: 4px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
 }
 
 /* 问题统计 */
 .project-result-panel .issues-summary {
-  padding: 16px;
+  padding: 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .project-result-panel .issues-summary h4 {
   margin: 0 0 10px 0;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 
 .project-result-panel .issues-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .project-result-panel .issue-stat {
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 100px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
 }
 
 .project-result-panel .issue-stat.critical {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(248, 113, 113, 0.08);
   color: var(--error);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(248, 113, 113, 0.12);
 }
 
 .project-result-panel .issue-stat.error {
-  background: rgba(249, 115, 22, 0.1);
+  background: rgba(249, 115, 22, 0.08);
   color: #fb923c;
-  border: 1px solid rgba(249, 115, 22, 0.2);
+  border: 1px solid rgba(249, 115, 22, 0.12);
 }
 
 .project-result-panel .issue-stat.warning {
-  background: rgba(234, 179, 8, 0.1);
+  background: rgba(250, 204, 21, 0.08);
   color: var(--warning);
-  border: 1px solid rgba(234, 179, 8, 0.2);
+  border: 1px solid rgba(250, 204, 21, 0.12);
 }
 
 .project-result-panel .issue-stat.info {
-  background: rgba(107, 114, 128, 0.1);
+  background: rgba(148, 163, 184, 0.08);
   color: var(--info);
-  border: 1px solid rgba(107, 114, 128, 0.2);
+  border: 1px solid rgba(148, 163, 184, 0.12);
 }
 
 .project-result-panel .issue-stat.none {
-  background: rgba(34, 197, 94, 0.1);
+  background: rgba(74, 222, 128, 0.08);
   color: var(--success);
-  border: 1px solid rgba(34, 197, 94, 0.2);
+  border: 1px solid rgba(74, 222, 128, 0.12);
 }
 
 /* 文件列表（紧凑） */
 .project-result-panel .files-section {
-  padding: 16px;
+  padding: 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
 }
 
 .project-result-panel .files-header h4 {
-  margin: 0 0 4px 0;
+  margin: 0 0 3px 0;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 
 .project-result-panel .files-hint {
-  margin: 0 0 12px 0;
-  font-size: 11px;
-  color: var(--info);
+  margin: 0 0 10px 0;
+  font-size: 10px;
+  color: var(--text-muted);
 }
 
 .project-result-panel .files-list.compact {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 400px;
+  max-height: 380px;
   overflow-y: auto;
 }
 
@@ -522,16 +531,21 @@
   background: var(--bg-tertiary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 11px;
+  transition: border-color var(--transition-fast);
+}
+
+.project-result-panel .file-item-compact:hover {
+  border-color: var(--border-default);
 }
 
 .project-result-panel .file-item-compact.selected {
   background: var(--bg-elevated);
-  border-color: var(--info);
+  border-color: var(--text-primary);
 }
 
 .project-result-panel .file-item-compact .file-path {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -539,7 +553,7 @@
 }
 
 .project-result-panel .file-item-compact .file-stats {
-  color: var(--text-tertiary);
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -549,7 +563,7 @@
 
 /* 全局问题 */
 .project-result-panel .global-issues-section {
-  padding: 16px;
+  padding: 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -558,14 +572,14 @@
 .project-result-panel .global-issues-section h4 {
   margin: 0 0 12px 0;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 
 .project-result-panel .issue-type-group {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .project-result-panel .issue-type-group:last-child {
@@ -574,10 +588,11 @@
 
 .project-result-panel .issue-type-group h5 {
   margin: 0 0 8px 0;
-  color: var(--text-tertiary);
-  font-size: 11px;
+  color: var(--text-muted);
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  font-weight: 500;
 }
 
 .project-result-panel .issue-type-list {
@@ -603,7 +618,7 @@
 
 .project-result-panel .global-issue-item .issue-message {
   flex: 1;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-primary);
 }
 
@@ -618,14 +633,14 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xs);
-  font-size: 10px;
-  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-family: var(--font-mono);
   color: var(--text-secondary);
 }
 
 /* 依赖分析 */
 .project-result-panel .dependencies-section {
-  padding: 16px;
+  padding: 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -634,14 +649,14 @@
 .project-result-panel .dependencies-section h4 {
   margin: 0 0 12px 0;
   color: var(--text-secondary);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
 }
 
 .project-result-panel .dep-group {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .project-result-panel .dep-group:last-child {
@@ -650,10 +665,11 @@
 
 .project-result-panel .dep-group h5 {
   margin: 0 0 8px 0;
-  color: var(--text-tertiary);
-  font-size: 11px;
+  color: var(--text-muted);
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  font-weight: 500;
 }
 
 .project-result-panel .dep-list {
@@ -663,10 +679,10 @@
 }
 
 .project-result-panel .dep-tag {
-  padding: 4px 10px;
+  padding: 3px 9px;
   border-radius: 100px;
-  font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-family: var(--font-mono);
 }
 
 .project-result-panel .dep-tag.external {
@@ -685,7 +701,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  max-height: 300px;
+  max-height: 280px;
   overflow-y: auto;
 }
 
@@ -697,20 +713,20 @@
   background: var(--bg-tertiary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .project-result-panel .dep-source {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   color: var(--text-primary);
-  min-width: 120px;
+  min-width: 110px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .project-result-panel .dep-arrow {
-  color: var(--text-tertiary);
+  color: var(--text-muted);
 }
 
 .project-result-panel .dep-targets {
@@ -721,6 +737,10 @@
 
 /* 响应式 */
 @media (max-width: 768px) {
+  .project-result-panel {
+    padding: 14px;
+  }
+  
   .project-result-panel .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -728,7 +748,7 @@
   .project-result-panel .health-score-card {
     flex-direction: column;
     text-align: center;
-    gap: 20px;
+    gap: 18px;
   }
 }
 
@@ -736,29 +756,30 @@
 .file-tree-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* 小型保存按钮 */
 .save-btn.small {
   padding: 4px 10px;
-  font-size: 11px;
+  font-size: 10px;
   gap: 4px;
 }
 
 /* 编辑中状态 */
 .file-tree-item.editing {
-  background: rgba(59, 130, 246, 0.1);
-  border-left-color: #3b82f6;
+  background: var(--bg-hover);
+  border-left-color: var(--text-primary);
 }
 
 .edit-badge {
   padding: 2px 6px;
-  background: rgba(59, 130, 246, 0.2);
-  color: #3b82f6;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
   border-radius: var(--radius-xs);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 500;
+  border: 1px solid var(--border-default);
 }
 
 /* ========== 编辑模式面板样式 ========== */
@@ -770,8 +791,8 @@
 .edit-mode-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
+  gap: 10px;
+  padding: 10px 14px;
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -780,8 +801,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   background: transparent;
   border: 1px solid var(--border-default);
@@ -799,12 +820,13 @@
 
 .editing-file-name {
   flex: 1;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  letter-spacing: 0;
 }
 
 .edit-mode-header .save-btn {
@@ -812,31 +834,32 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: var(--text-primary);
+  background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 100%);
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--bg-primary);
-  font-size: 12px;
+  color: #000000;
+  font-size: 11px;
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .edit-mode-header .save-btn:hover {
-  opacity: 0.9;
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .editing-file-path {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 14px;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-subtle);
-  font-size: 11px;
-  font-family: 'JetBrains Mono', monospace;
-  color: var(--text-tertiary);
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
 }
 
 .editing-file-path svg {
@@ -850,17 +873,18 @@
 }
 
 .edit-mode-hint {
-  padding: 16px;
+  padding: 14px;
   text-align: center;
-  color: var(--text-tertiary);
-  font-size: 12px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.6;
 }
 
 /* 面板头部操作区 */
 .panel-header-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 /* 保存按钮（头部） */
@@ -868,8 +892,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   padding: 0;
   background: var(--text-primary);
   border: none;

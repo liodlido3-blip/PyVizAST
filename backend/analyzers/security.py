@@ -228,13 +228,18 @@ class SecurityScanner:
                     value_match = re.search(r'=\s*["\']([^"\']+)["\']', line)
                     if value_match:
                         value = value_match.group(1).lower()
+                        original_value = value_match.group(1)
                         if any(indicator in value for indicator in placeholder_indicators):
                             continue
-                        # Skip values that are too short (likely placeholders)
-                        if len(value) < 4:
+                        # Skip values that are too short and look like placeholders
+                        # (very short values like "123", "abc", "key" are likely placeholders)
+                        if len(value) < 3:
+                            continue
+                        # Skip if value is purely numeric and short (likely placeholder like "12345")
+                        if value.isdigit() and len(value) <= 6:
                             continue
                         # Skip values that look like variable names (no special chars, starts with letter)
-                        if re.match(r'^[a-z_][a-z0-9_]*$', value_match.group(1)):
+                        if re.match(r'^[a-z_][a-z0-9_]*$', original_value):
                             # Could be a variable name being passed, skip
                             continue
                     

@@ -194,32 +194,6 @@ class ComplexityAnalyzer:
         visitor.visit(tree)
         return visitor.complexity
     
-    def _cognitive_visitor(self, node: ast.AST, nesting: int) -> int:
-        """Recursively calculate cognitive complexity (legacy method, kept for compatibility)"""
-        complexity = 0
-        
-        # Structures that increase cognitive complexity
-        cognitive_structures = (
-            ast.If, ast.For, ast.While, ast.ExceptHandler,
-            ast.With, ast.IfExp, ast.comprehension
-        )
-        
-        if isinstance(node, cognitive_structures):
-            complexity += nesting + 1
-            new_nesting = nesting + 1
-        else:
-            new_nesting = nesting
-        
-        # Boolean operators increase complexity
-        if isinstance(node, ast.BoolOp):
-            complexity += len(node.values) - 1
-        
-        # Recursively process child nodes
-        for child in ast.iter_child_nodes(node):
-            complexity += self._cognitive_visitor(child, new_nesting)
-        
-        return complexity
-    
     def _calculate_max_nesting_depth(self, tree: ast.AST) -> int:
         """Calculate maximum nesting depth"""
         max_depth = [0]

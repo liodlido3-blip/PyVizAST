@@ -247,11 +247,20 @@ async def analyze_code(input_data: CodeInput):
         
         # Detect code size, automatically enable simplified mode
         code_lines = len(code.splitlines())
+        code_size = len(code)
+        
+        # Pre-check: warn about extremely large files
+        MAX_RECOMMENDED_LINES = 3000
+        MAX_SAFE_LINES = 10000
+        if code_lines > MAX_SAFE_LINES:
+            logger.warning(f"Very large file ({code_lines} lines, {code_size} bytes)")
+        
         auto_simplified = code_lines > 500
         logger.debug(f"Code lines: {code_lines}, simplified mode: {auto_simplified}")
         
         # Parse AST - use progressive strategy for large files
         tree = None
+        truncation_warning = None
         simplification_level = 0  # 0=normal, 1=simplified, 2=aggressive simplification
         
         while tree is None and simplification_level <= 2:
@@ -262,37 +271,49 @@ async def analyze_code(input_data: CodeInput):
                 raise CodeParsingError(f"Syntax error: {str(e)}")
             except MemoryError:
                 simplification_level += 1
+                import gc
+                gc.collect()  # Force garbage collection
+                
                 if simplification_level == 1:
                     # First memory error: try simplified mode
                     logger.warning(f"Code too large ({code_lines} lines), trying simplified mode...")
                     auto_simplified = True
-                    import gc
-                    gc.collect()  # Force garbage collection
                 elif simplification_level == 2:
-                    # Second memory error: try aggressive simplification
-                    logger.warning("Simplified mode insufficient, trying aggressive simplification...")
-                    # Try to parse only code structure (remove function body content)
+                    # Second memory error: try aggressive truncation
+                    logger.warning("Simplified mode insufficient, trying smart truncation...")
                     try:
-                        # Keep only code structure framework
                         lines = code.splitlines()
-                        if len(lines) > 2000:
-                            # For very large files, only analyze first 2000 lines
-                            code = '\n'.join(lines[:2000])
-                            code_lines = 2000
+                        if len(lines) > MAX_RECOMMENDED_LINES:
+                            # Smart truncation: find a good cut point
+                            # Try to end at a complete statement (line ending with :, blank line, or return)
+                            cut_line = MAX_RECOMMENDED_LINES
+                            for i in range(MAX_RECOMMENDED_LINES - 1, max(0, MAX_RECOMMENDED_LINES - 100), -1):
+                                line = lines[i].rstrip()
+                                if not line or line.endswith(':') or line.startswith('return ') or line.startswith('break'):
+                                    cut_line = i + 1
+                                    break
+                            
+                            truncated_lines = len(lines) - cut_line
+                            code = '\n'.join(lines[:cut_line])
+                            code_lines = cut_line
+                            truncation_warning = f"Large file truncated: analyzed first {cut_line} lines ({truncated_lines} lines omitted for performance)"
+                            logger.info(f"Smart truncation: keeping {cut_line} lines, omitting {truncated_lines}")
                             tree = ast.parse(code)
-                            logger.info(f"Truncated to first 2000 lines for analysis")
                             break
                     except SyntaxError as e:
-                        # Truncated code may have syntax errors, raise directly
-                        raise CodeParsingError(f"Syntax error: {str(e)}")
+                        # Truncated code may have syntax errors, provide helpful message
+                        raise CodeParsingError(
+                            f"Syntax error after truncation: {str(e)}. "
+                            f"The file is very large and was truncated for analysis. "
+                            f"Consider splitting into smaller files."
+                        )
                     except MemoryError as mem_err:
-                        logger.warning(f"Memory error during aggressive truncation: {mem_err}")
-                    import gc
-                    gc.collect()
+                        logger.error(f"Memory error during aggressive truncation: {mem_err}")
+                        gc.collect()
                 else:
                     # Final failure
                     raise CodeTooLargeError(
-                        f"Code too large ({code_lines} lines), cannot parse. "
+                        f"Code too large ({code_lines} lines, {code_size} bytes), cannot parse. "
                         f"Suggestions: 1) Split code into multiple files; "
                         f"2) Use a more powerful machine; "
                         f"3) Analyze only part of the code."
@@ -348,7 +369,8 @@ async def analyze_code(input_data: CodeInput):
             "performance_hotspots": len(performance_hotspots),
             "suggestions_count": len(suggestions),
             "security_summary": security_scanner.get_security_summary(),
-            "node_statistics": node_mapper.get_statistics(ast_graph)
+            "node_statistics": node_mapper.get_statistics(ast_graph),
+            "truncation_warning": truncation_warning
         }
         
         logger.info(f"Analysis complete, found {len(all_issues)} issues")
