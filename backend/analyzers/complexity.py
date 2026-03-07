@@ -132,6 +132,7 @@ class ComplexityAnalyzer:
                 self.complexity = 0
                 self.nesting = 0
                 self.current_function = None  # Track current function name
+                self.current_class = None     # Track current class name for method recursion
             
             def _visit_with_nesting(self, node, visit_body=True):
                 """Visit a node that increases nesting"""
@@ -140,17 +141,29 @@ class ComplexityAnalyzer:
                 self.generic_visit(node)
                 self.nesting -= 1
             
+            def visit_ClassDef(self, node):
+                old_class = self.current_class
+                self.current_class = node.name
+                self.generic_visit(node)
+                self.current_class = old_class
+            
             def visit_FunctionDef(self, node):
                 old_func = self.current_function
+                old_nesting = self.nesting  # Save nesting level
                 self.current_function = node.name
+                self.nesting = 0  # Reset nesting for nested functions
                 self.generic_visit(node)
                 self.current_function = old_func
+                self.nesting = old_nesting  # Restore nesting level
             
             def visit_AsyncFunctionDef(self, node):
                 old_func = self.current_function
+                old_nesting = self.nesting  # Save nesting level
                 self.current_function = node.name
+                self.nesting = 0  # Reset nesting for nested functions
                 self.generic_visit(node)
                 self.current_function = old_func
+                self.nesting = old_nesting  # Restore nesting level
             
             def visit_If(self, node):
                 self._visit_with_nesting(node)
@@ -180,14 +193,34 @@ class ComplexityAnalyzer:
                 # Check for recursive calls
                 if self.current_function:
                     func_name = None
+                    is_self_call = False
+                    
                     if isinstance(node.func, ast.Name):
+                        # Direct function call: func()
                         func_name = node.func.id
                     elif isinstance(node.func, ast.Attribute):
-                        # Method call like self.func()
-                        if node.func.attr == self.current_function:
-                            self.complexity += 1  # Recursive call
+                        # Method call: self.func() or obj.func()
+                        if isinstance(node.func.value, ast.Name):
+                            if node.func.value.id == 'self':
+                                # self.method() - potential method recursion
+                                is_self_call = True
+                                func_name = node.func.attr
+                            elif node.func.value.id == 'cls':
+                                # cls.method() - class method recursion
+                                is_self_call = True
+                                func_name = node.func.attr
+                    
+                    # Add complexity for recursive calls
+                    # For self.method(), only count if we're inside a class and method name matches
                     if func_name == self.current_function:
-                        self.complexity += 1  # Direct recursion
+                        if is_self_call:
+                            # self.current_method() inside the same method = definite recursion
+                            if self.current_class is not None:
+                                self.complexity += 1
+                        else:
+                            # Direct function call with matching name = definite recursion
+                            self.complexity += 1
+                
                 self.generic_visit(node)
         
         visitor = CognitiveVisitor()

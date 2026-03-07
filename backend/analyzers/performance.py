@@ -411,18 +411,23 @@ class PerformanceAnalyzer:
                 self.loop_lineno = 0
                 # Track expressions by their source representation
                 self.expressions: Dict[str, Tuple[ast.AST, int]] = {}
+                # Track already reported expressions to avoid duplicates
+                self.reported: set = set()
             
             def _enter_loop(self, node):
                 old_in_loop = self.in_loop
                 old_lineno = self.loop_lineno
                 old_expressions = self.expressions.copy()
+                old_reported = self.reported.copy()
                 self.in_loop = True
                 self.loop_lineno = getattr(node, 'lineno', 0)
                 self.expressions = {}
+                self.reported = set()
                 self.generic_visit(node)
                 self.in_loop = old_in_loop
                 self.loop_lineno = old_lineno
                 self.expressions = old_expressions
+                self.reported = old_reported
             
             def visit_For(self, node):
                 self._enter_loop(node)
@@ -439,8 +444,8 @@ class PerformanceAnalyzer:
                     except (ValueError, TypeError, AttributeError):
                         call_repr = str(getattr(node, 'lineno', ''))
                     
-                    # Check if we've seen this expression before
-                    if call_repr in self.expressions:
+                    # Check if we've seen this expression before and not already reported
+                    if call_repr in self.expressions and call_repr not in self.reported:
                         first_node, first_lineno = self.expressions[call_repr]
                         # Only report once per unique expression
                         if first_lineno != getattr(node, 'lineno', 0):
@@ -461,6 +466,8 @@ class PerformanceAnalyzer:
                                     lineno=getattr(node, 'lineno', None),
                                     suggestion="Consider caching the result in a variable outside or at the start of the loop"
                                 ))
+                                # Mark as reported to avoid duplicate reports
+                                self.reported.add(call_repr)
                     else:
                         self.expressions[call_repr] = (node, getattr(node, 'lineno', 0))
                 
@@ -472,7 +479,7 @@ class PerformanceAnalyzer:
                     try:
                         import ast as ast_module
                         expr_repr = ast_module.unparse(node) if hasattr(ast_module, 'unparse') else None
-                        if expr_repr and expr_repr in self.expressions:
+                        if expr_repr and expr_repr in self.expressions and expr_repr not in self.reported:
                             self.detector.issues.append(CodeIssue(
                                 id=self.detector._generate_issue_id("redundant_binop"),
                                 type="performance",
@@ -481,6 +488,7 @@ class PerformanceAnalyzer:
                                 lineno=getattr(node, 'lineno', None),
                                 suggestion="Cache: result = calculation  # outside loop"
                             ))
+                            self.reported.add(expr_repr)
                         elif expr_repr:
                             self.expressions[expr_repr] = (node, getattr(node, 'lineno', 0))
                     except (ValueError, TypeError, AttributeError):
@@ -509,21 +517,27 @@ class PerformanceAnalyzer:
                             suggestion="Use generator: (... for ... for ...) instead of [... for ... for ...]"
                         ))
             
-            # Range in Python 2 style (if using xrange)
+            # Check for list(range(...)) which materializes the entire range into memory
             if isinstance(node, ast.Call):
                 if isinstance(node.func, ast.Name):
-                    # Large range
-                    if node.func.id == 'range':
-                        for arg in node.args:
-                            if isinstance(arg, ast.Constant) and isinstance(arg.value, int):
-                                if arg.value > 10000:
-                                    self.issues.append(CodeIssue(
-                                        id=self._generate_issue_id("large_range"),
-                                        type="performance",
-                                        severity=SeverityLevel.INFO,
-                                        message=f"Large range({arg.value}) may consume a lot of memory, consider using generator",
-                                        lineno=node.lineno
-                                    ))
+                    # list(range(...)) - this creates a full list in memory
+                    if node.func.id == 'list' and node.args:
+                        arg = node.args[0]
+                        if isinstance(arg, ast.Call) and isinstance(arg.func, ast.Name):
+                            if arg.func.id == 'range' and arg.args:
+                                # Check if range is large
+                                for range_arg in arg.args:
+                                    if isinstance(range_arg, ast.Constant) and isinstance(range_arg.value, int):
+                                        if abs(range_arg.value) > 100000:
+                                            self.issues.append(CodeIssue(
+                                                id=self._generate_issue_id("list_range_large"),
+                                                type="performance",
+                                                severity=SeverityLevel.WARNING,
+                                                message=f"list(range({range_arg.value})) creates a large list in memory, consider iterating directly",
+                                                lineno=node.lineno,
+                                                suggestion="Iterate over range() directly without converting to list"
+                                            ))
+                                            break
     
     def _detect_unoptimized_comprehensions(self, tree: ast.AST):
         """Detect unoptimized comprehension patterns"""

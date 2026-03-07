@@ -1,6 +1,6 @@
 # PyVizAST
 
-[![Version](https://img.shields.io/badge/Version-0.5.0--pre-orange.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Version](https://img.shields.io/badge/Version-0.5.0--pre.2-orange.svg)](https://github.com/ChidcGithub/PyVizAST)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ChidcGithub/PyVizAST)
@@ -185,9 +185,33 @@ GNU General Public License v3.0
 
 Contributions are welcome. Please submit pull requests to the main repository.
 
-<details> <summary>Version History</summary>
+---
 
-### v0.5.0-pre (2026-03-07)
+## Version History
+
+<details>
+<summary>v0.5.0-pre.2 (2026-03-07)</summary>
+
+**3D Visualization Improvements:**
+- Signal particle theme adaptation: white in dark mode, black in light mode
+- Node detail panel icon theme adaptation
+- Signal edge colors adapt to theme
+- Search result hover now dims the node detail panel
+
+**Search Panel UX:**
+- When hovering search results, the panel background becomes transparent
+- Non-hovered results fade to 20% opacity
+- Node detail panel also fades when search result is hovered (JavaScript-based)
+
+**Bug Fixes:**
+- Fixed CSS `:has()` selector not working for cross-element opacity control
+- Fixed animation `opacity` override issue with `!important`
+
+</details>
+
+<details>
+<summary>v0.5.0-pre (2026-03-07)</summary>
+
 **New Features:**
 - **Easter Egg**: Hidden surprise!
 - **Progress Tracking**: Real-time progress display for large project analysis
@@ -224,7 +248,11 @@ Contributions are welcome. Please submit pull requests to the main repository.
 - Fixed thread safety in progress notification system
 - Fixed progress generator waiting for task creation
 
-### v0.4.4 (2026-03-06)
+</details>
+
+<details>
+<summary>v0.4.4 (2026-03-06)</summary>
+
 **Frontend UI Redesign:**
 - Premium black & white theme with refined color palette
 - Updated 6 CSS files with cohesive design system
@@ -244,7 +272,11 @@ Contributions are welcome. Please submit pull requests to the main repository.
 - Added generator expression warning in `suggestions.py` (one-time iteration caution)
 - Simplified cycle detection algorithm in `cycle_detector.py` (leveraging Tarjan SCC)
 
-### v0.4.2 (2026-03-05)
+</details>
+
+<details>
+<summary>v0.4.2 (2026-03-05)</summary>
+
 **Security Fixes:**
 - Fixed ZIP path traversal vulnerability in project scanner - malicious ZIP files can no longer overwrite system files
 - Added path validation before extracting ZIP entries
@@ -261,12 +293,20 @@ Contributions are welcome. Please submit pull requests to the main repository.
 - Expanded AST attribute key mapping (12 → 50+ mappings) for better visualization labels
 - Improved error messages throughout the codebase
 
-### v0.4.1 (2026-03-04)
-**Fixed issues**
+</details>
+
+<details>
+<summary>v0.4.1 (2026-03-04)</summary>
+
+**Fixed issues:**
 - Fixed the issue where the front-end web page could not start correctly
 - Updated translations.
 
-### v0.4.0 (2026-03-04)
+</details>
+
+<details>
+<summary>v0.4.0 (2026-03-04)</summary>
+
 **Major Release - Project Analysis & Interactive Learning**
 
 This release includes all features and fixes from alpha, beta, and pre releases.
@@ -307,7 +347,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Better error messages for validation errors
 - Comprehensive logging system (frontend/backend)
 
-### v0.4.0-beta3 (2026-03-04)
+</details>
+
+<details>
+<summary>v0.4.0-beta3 (2026-03-04)</summary>
+
 **New Features:**
 - **Learn Mode**: Interactive AST learning with node explanations
   - Write code and visualize AST in real-time
@@ -337,7 +381,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - All content translated to English for consistency
 - Professional challenge descriptions and learning objectives
 
-### v0.4.0-beta2 (2026-03-04)
+</details>
+
+<details>
+<summary>v0.4.0-beta2 (2026-03-04)</summary>
+
 **Bug Fixes:**
 - Fixed `PerformanceAnalyzer` missing `hotspots` attribute causing validation errors
 - Fixed `main.py` incorrectly assigning `issues` to `performance_hotspots` in single-file analysis
@@ -361,7 +409,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - String concatenation in loops now generates performance hotspots
 - Big O complexity estimation for detected issues
 
-### v0.4.0-beta (2026-03-03)
+</details>
+
+<details>
+<summary>v0.4.0-beta (2026-03-03)</summary>
+
 **Project-Level Analysis:**
 - **Multi-file Analysis**: Analyze entire Python projects with dependency tracking
 - **Dependency Graph**: Visualize module imports and relationships
@@ -398,7 +450,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - `POST /api/project/analyze` - Analyze entire project
 - `POST /api/project/file` - Analyze single file in project context
 
-### v0.4.0-alpha3 (2026-03-03)
+</details>
+
+<details>
+<summary>v0.4.0-alpha3 (2026-03-03)</summary>
+
 **Bug Fixes:**
 - Fixed infinite loop in `main.py` when encountering SyntaxError during memory optimization
 - Fixed CSRF detection logic in `security.py` (condition was always true)
@@ -429,7 +485,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Improved error handling in security scanner
 - Added CSS variables for font system
 
-### v0.3.4 (2026-03-02)
+</details>
+
+<details>
+<summary>v0.3.4 (2026-03-02)</summary>
+
 **Bug Fixes:**
 - Fixed 422 validation error showing `[object Object]` instead of readable message
   - Added `extractErrorMessage` function to properly parse Pydantic validation errors
@@ -458,7 +518,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
   - Performance slowdown in visualization with many nodes
   - Consider splitting large projects into separate files for analysis
 
-### v0.3.3 (2026-03-02)
+</details>
+
+<details>
+<summary>v0.3.3 (2026-03-02)</summary>
+
 **New Features:**
 - **Search Functionality**: Search nodes in 2D/3D AST view
   - Search by function name, variable name, or node type
@@ -485,7 +549,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Improved optional chaining consistency in `AnalysisPanel.js`
 - Enhanced diff parsing in `PatchPanel.js` with better edge case handling
 
-### v0.3.2 (2026-03-01)
+</details>
+
+<details>
+<summary>v0.3.2 (2026-03-01)</summary>
+
 **Animation Redesign:**
 - Redesigned particle animations with clean white theme
 - Simplified particle rendering for better performance
@@ -508,7 +576,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Fixed signal propagation animation not playing (removed `isMountedRef` checks)
 - Fixed animation conflicts between reset and keyboard/focus animations
 
-### v0.3.1 (2026-03-01)
+</details>
+
+<details>
+<summary>v0.3.1 (2026-03-01)</summary>
+
 **Bug Fixes:**
 - Fixed mutable default arguments in Pydantic models (`schemas.py`)
   - Changed `= {}` and `= []` to `Field(default_factory=dict/list)`
@@ -539,7 +611,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Added `LazyLoadErrorBoundary` for lazy-loaded components
 - Improved development mode error logging
 
-### v0.3.0 (2026-03-01)
+</details>
+
+<details>
+<summary>v0.3.0 (2026-03-01)</summary>
+
 **3D Visualization:**
 - Added 3D AST view with Three.js and React Three Fiber
 - Custom 3D force-directed layout algorithm for automatic node positioning
@@ -573,7 +649,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Fixed particle position offset issue (positions now fetched at animation time)
 - Fixed 3D particle reference issue (positions now copied, not referenced)
 
-### v0.2.2 (2026-03-01)
+</details>
+
+<details>
+<summary>v0.2.2 (2026-03-01)</summary>
+
 **New Features:**
 - **Patch Application UI**: Interactive interface to preview and apply auto-fix patches
   - Unified diff preview with syntax highlighting
@@ -592,7 +672,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Fixed f-string syntax error in parser.py (escape `{}` to `{{}}`)
 - Fixed dictionary syntax error in suggestions.py
 
-### v0.2.1 (2026-03-01)
+</details>
+
+<details>
+<summary>v0.2.1 (2026-03-01)</summary>
+
 **Bug Fixes:**
 - Fixed CORS security configuration - now uses environment variable `ALLOWED_ORIGINS`
 - Fixed analyzer state pollution between requests - each request now creates fresh instances
@@ -637,7 +721,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Added `AnalyzerFactory` for clean instance creation
 - Removed hardcoded data from main.py
 
-### v0.2.0 (2026-03-01)
+</details>
+
+<details>
+<summary>v0.2.0 (2026-03-01)</summary>
+
 - Redesigned UI with monochrome minimalist theme
 - Optimized AST visualization for large codebases:
   - Node filtering by priority types
@@ -648,7 +736,11 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Added layout algorithm selection (hierarchical, force-directed, breadth-first)
 - Added detail level control (overview, normal, detail)
 
-### v0.1.0 (2026-02-28)
+</details>
+
+<details>
+<summary>v0.1.0 (2026-02-28)</summary>
+
 - Initial release
 - AST parsing and visualization
 - Complexity analysis
@@ -656,4 +748,5 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Security scanning
 - Optimization suggestions
 - Interactive learning mode
+
 </details>

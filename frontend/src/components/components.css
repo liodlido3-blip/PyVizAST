@@ -834,6 +834,7 @@
 .node-icon {
   font-size: 18px;
   line-height: 1;
+  color: var(--text-primary);
 }
 
 .panel-header h4 {
@@ -1168,6 +1169,11 @@
 /* 悬停的结果项保持清晰 */
 .search-panel:has(.search-result-item:hover) .search-result-item:hover {
   background: var(--bg-hover);
+}
+
+/* 搜索结果悬停时，详细信息面板淡化 */
+.node-detail-panel.dimmed {
+  opacity: 0.2 !important;
 }
 
 @keyframes slideDown {

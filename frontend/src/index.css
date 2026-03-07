@@ -147,6 +147,12 @@
   border: 1px solid var(--border-default);
 }
 
+/* Light theme search panel fade */
+.app.light .search-panel:has(.search-result-item:hover) {
+  background: rgba(250, 250, 250, 0.2);
+  border-color: rgba(0, 0, 0, 0.03);
+}
+
 * {
   margin: 0;
   padding: 0;

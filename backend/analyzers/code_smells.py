@@ -326,53 +326,70 @@ class CodeSmellDetector:
     def _detect_dead_code(self, tree: ast.AST):
         """Detect dead code"""
         
+        # Terminating statements that make following code unreachable
+        TERMINATORS = (ast.Return, ast.Raise, ast.Break, ast.Continue)
+        
         class DeadCodeVisitor(ast.NodeVisitor):
             def __init__(self, detector):
                 self.detector = detector
-                self.after_terminator = False  # After return, raise, etc.
             
             def visit_FunctionDef(self, node):
-                self.after_terminator = False
+                self._check_body_for_dead_code(node.body, node.lineno)
+                self.generic_visit(node)
+            
+            def visit_AsyncFunctionDef(self, node):
+                self._check_body_for_dead_code(node.body, node.lineno)
+                self.generic_visit(node)
+            
+            def _check_body_for_dead_code(self, body: List[ast.stmt], func_lineno: int):
+                """Check a body of statements for dead code"""
                 dead_code_start = None
+                dead_code_end = None
                 
-                for i, stmt in enumerate(node.body):
-                    if self.after_terminator:
-                        # Record start of dead code block
-                        if dead_code_start is None:
-                            dead_code_start = i
-                    else:
-                        # If there was a dead code block before and now encountered non-dead code, report the previous dead code block
-                        if dead_code_start is not None:
-                            self.detector.issues.append(CodeIssue(
-                                id=self.detector._generate_issue_id("dead_code"),
-                                type="code_smell",
-                                severity=SeverityLevel.WARNING,
-                                message=f"{i - dead_code_start} lines of code after return/raise statement will never execute",
-                                lineno=getattr(node.body[dead_code_start], 'lineno', node.lineno)
-                            ))
-                            dead_code_start = None
+                for i, stmt in enumerate(body):
+                    if dead_code_start is not None:
+                        # We're in a dead code section
+                        dead_code_end = i
                     
                     # Check for terminating statements
-                    if isinstance(stmt, (ast.Return, ast.Raise)):
-                        self.after_terminator = True
+                    if isinstance(stmt, TERMINATORS):
+                        if dead_code_start is None:
+                            # Mark start of potential dead code (next statement)
+                            if i + 1 < len(body):
+                                dead_code_start = i + 1
+                                dead_code_end = i + 1
                     
-                    self.visit(stmt)
+                    # Recursively check nested structures (but don't propagate terminator state)
+                    if isinstance(stmt, ast.If):
+                        self._check_body_for_dead_code(stmt.body, stmt.lineno)
+                        if stmt.orelse:
+                            self._check_body_for_dead_code(stmt.orelse, stmt.lineno)
+                    elif isinstance(stmt, (ast.For, ast.While)):
+                        self._check_body_for_dead_code(stmt.body, stmt.lineno)
+                        if stmt.orelse:
+                            self._check_body_for_dead_code(stmt.orelse, stmt.lineno)
+                    elif isinstance(stmt, ast.Try):
+                        self._check_body_for_dead_code(stmt.body, stmt.lineno)
+                        for handler in stmt.handlers:
+                            self._check_body_for_dead_code(handler.body, handler.lineno)
+                        if stmt.orelse:
+                            self._check_body_for_dead_code(stmt.orelse, stmt.lineno)
+                        if stmt.finalbody:
+                            self._check_body_for_dead_code(stmt.finalbody, stmt.lineno)
+                    elif isinstance(stmt, ast.With):
+                        self._check_body_for_dead_code(stmt.body, stmt.lineno)
                 
-                # Handle dead code block at end of function
-                if dead_code_start is not None:
+                # Report dead code if found
+                if dead_code_start is not None and dead_code_end is not None:
+                    dead_code_count = dead_code_end - dead_code_start + 1
+                    first_dead_stmt = body[dead_code_start]
                     self.detector.issues.append(CodeIssue(
                         id=self.detector._generate_issue_id("dead_code"),
                         type="code_smell",
                         severity=SeverityLevel.WARNING,
-                        message=f"{len(node.body) - dead_code_start} lines of code after return/raise statement will never execute",
-                        lineno=getattr(node.body[dead_code_start], 'lineno', node.lineno)
+                        message=f"{dead_code_count} lines of unreachable code after return/raise/break/continue statement",
+                        lineno=getattr(first_dead_stmt, 'lineno', func_lineno)
                     ))
-                
-                self.after_terminator = False
-            
-            def visit_AsyncFunctionDef(self, node):
-                # Handle async functions the same way
-                self.visit_FunctionDef(node)
         
         visitor = DeadCodeVisitor(self)
         visitor.visit(tree)

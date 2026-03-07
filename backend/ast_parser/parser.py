@@ -32,6 +32,9 @@ PRIORITY_NODE_TYPES = {
 class ASTParser:
     """Python AST Parser - Supports performance optimization mode"""
     
+    # Maximum depth for AST traversal
+    MAX_DEPTH = 50
+    
     # Mapping of node types to colors, shapes, and icons/descriptions
     NODE_STYLES = {
         # Structural nodes
@@ -85,6 +88,7 @@ class ASTParser:
         self.simplified = simplified
         self._node_count = 0
         self._skipped_count = 0
+        self._lineno_index: Dict[int, List[str]] = {}  # Line number to node IDs index
     
     def _generate_id(self, node_type: str) -> str:
         """Generate unique node ID"""
@@ -486,13 +490,14 @@ class ASTParser:
             label=label
         )
     
-    def parse(self, code: str, source_lines: Optional[List[str]] = None) -> ASTGraph:
+    def parse(self, code: str, source_lines: Optional[List[str]] = None, tree: Optional[ast.AST] = None) -> ASTGraph:
         """
         Parse Python code and generate AST graph
         
         Args:
             code: Python source code string
             source_lines: Source code line list (optional, for extracting code snippets)
+            tree: Pre-parsed AST tree (optional, to avoid double parsing)
         
         Returns:
             ASTGraph: Visualizable graph structure
@@ -503,17 +508,22 @@ class ASTParser:
         self.node_counter = {}
         self._node_count = 0
         self._skipped_count = 0
+        self._lineno_index: Dict[int, List[str]] = {}  # Line number to node IDs index
         
-        try:
-            tree = ast.parse(code)
-        except SyntaxError as e:
-            raise ValueError(f"Syntax error in code: {e}")
+        # Use pre-parsed tree if provided, otherwise parse
+        if tree is not None:
+            ast_tree = tree
+        else:
+            try:
+                ast_tree = ast.parse(code)
+            except SyntaxError as e:
+                raise ValueError(f"Syntax error in code: {e}")
         
         if source_lines is None:
             source_lines = code.splitlines()
         
         # Traverse AST and build graph
-        self._traverse(tree, None, source_lines)
+        self._traverse(ast_tree, None, source_lines)
         
         # Build call relationships
         self._build_call_relationships()
@@ -556,13 +566,22 @@ class ASTParser:
     
     def _traverse(self, ast_node: ast.AST, parent_id: Optional[str], source_lines: List[str], depth: int = 0):
         """Recursively traverse AST"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        # Check depth limit and log warning
+        if depth >= self.MAX_DEPTH:
+            if depth == self.MAX_DEPTH:  # Only log once per traversal path
+                logger.warning(f"AST traversal reached max depth {self.MAX_DEPTH}, some nodes may be skipped")
+            self._skipped_count += 1
+            return
+        
         # Check if we should skip this node
         if self._should_skip_node(ast_node):
             self._skipped_count += 1
-            # Still traverse children if not at max depth
-            if depth < 50:  # Max depth limit
-                for child in ast.iter_child_nodes(ast_node):
-                    self._traverse(child, parent_id, source_lines, depth + 1)
+            # Still traverse children
+            for child in ast.iter_child_nodes(ast_node):
+                self._traverse(child, parent_id, source_lines, depth + 1)
             return
         
         # Check node limit
@@ -582,6 +601,12 @@ class ASTParser:
             node.source_code = "\n".join(source_lines[start:end])
         
         self.nodes[node.id] = node
+        
+        # Build line number index for fast lookup
+        if node.lineno:
+            if node.lineno not in self._lineno_index:
+                self._lineno_index[node.lineno] = []
+            self._lineno_index[node.lineno].append(node.id)
         
         # Add parent-child edge
         if parent_id:
@@ -638,11 +663,23 @@ class ASTParser:
         return counts
     
     def get_node_by_lineno(self, lineno: int) -> Optional[ASTNode]:
-        """Get node by line number"""
+        """Get node by line number (uses index for O(1) lookup)"""
+        # Use index if available
+        if hasattr(self, '_lineno_index') and lineno in self._lineno_index:
+            node_ids = self._lineno_index[lineno]
+            if node_ids:
+                return self.nodes.get(node_ids[0])
+        # Fallback to linear search (for backwards compatibility)
         for node in self.nodes.values():
             if node.lineno == lineno:
                 return node
         return None
+    
+    def get_nodes_by_lineno(self, lineno: int) -> List[ASTNode]:
+        """Get all nodes by line number"""
+        if hasattr(self, '_lineno_index') and lineno in self._lineno_index:
+            return [self.nodes[nid] for nid in self._lineno_index[lineno] if nid in self.nodes]
+        return []
     
     def get_function_nodes(self) -> List[ASTNode]:
         """Get all function nodes"""

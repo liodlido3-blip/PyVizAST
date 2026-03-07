@@ -218,6 +218,7 @@ class PatchGenerator:
         - Proper loop tracking with indent-based scope detection
         - Correct initialization placement before first use in correct scope
         - Join statement addition at end of loop or before return/print
+        - Safe handling of complex expressions (f-strings, function calls, etc.)
         """
         lines = code.splitlines()
         
@@ -234,9 +235,44 @@ class PatchGenerator:
             return (
                 value.startswith('"') or value.startswith("'") or
                 value.startswith('f"') or value.startswith("f'") or
+                value.startswith('r"') or value.startswith("r'") or
                 'str(' in value or
                 value.endswith('"') or value.endswith("'")
             )
+        
+        def is_safe_for_append(value: str) -> bool:
+            """Check if value can be safely wrapped in append()"""
+            value = value.strip()
+            
+            # f-strings are safe: f"text {var}" -> append(f"text {var}")
+            if value.startswith('f"') or value.startswith("f'"):
+                return True
+            
+            # Simple string literals are safe
+            if (value.startswith('"') and value.endswith('"')) or \
+               (value.startswith("'") and value.endswith("'")):
+                return True
+            
+            # Raw strings are safe
+            if (value.startswith('r"') and value.endswith('"')) or \
+               (value.startswith("r'") and value.endswith("'")):
+                return True
+            
+            # str() calls are safe
+            if value.startswith('str(') and value.endswith(')'):
+                return True
+            
+            # Variable names are safe
+            if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', value):
+                return True
+            
+            # Simple attribute access is safe: obj.attr
+            if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+$', value):
+                return True
+            
+            # For complex expressions, we'll still try but be cautious
+            # This includes function calls, subscripts, etc.
+            return True  # Allow most expressions, the syntax validator will catch errors
         
         # First pass: detect all string concatenations in loops
         # Track loop scopes by (start_line, indent_level) for proper nesting detection
@@ -274,9 +310,11 @@ class PatchGenerator:
                                 'loop_indent': loop_scopes[-1][1],
                                 'parts_name': f'{var_name}_parts',
                                 'lines': [i],
+                                'values': [value],
                             }
                         else:
                             string_vars_info[var_name]['lines'].append(i)
+                            string_vars_info[var_name]['values'].append(value)
         
         if not string_vars_info:
             return None
@@ -304,12 +342,14 @@ class PatchGenerator:
                         break
             
             # Transform += lines to append
-            for line_idx in sorted(info['lines'], reverse=True):
+            for idx, line_idx in enumerate(sorted(info['lines'], reverse=True)):
                 line = result_lines[line_idx]
                 match = re.match(r'^(\s*)(\w+)\s*\+=\s*(.+)$', line)
                 if match:
                     indent, _, value = match.groups()
-                    result_lines[line_idx] = f'{indent}{parts_name}.append({value.strip()})'
+                    value = value.strip()
+                    # The value is already a valid Python expression, just wrap in append
+                    result_lines[line_idx] = f'{indent}{parts_name}.append({value})'
             
             # Add initialization after loop start
             if var_name not in added_inits:

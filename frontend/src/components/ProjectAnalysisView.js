@@ -42,6 +42,7 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
 
   const fileInputRef = useRef(null);
   const abortControllerRef = useRef(null);
+  const eventSourceRef = useRef(null);  // Track EventSource for proper cleanup
   
   // Cleanup on component unmount
   useEffect(() => {
@@ -49,6 +50,11 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
       // Cancel ongoing requests
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
+      }
+      // Close EventSource connection
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
     };
   }, []);
@@ -82,9 +88,8 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
     // Generate task ID for progress tracking
     const taskId = generateTaskId();
     
-    // Start progress stream (SSE)
-    let eventSource = null;
-    eventSource = createProgressStream(
+    // Start progress stream (SSE) - store in ref for cleanup
+    eventSourceRef.current = createProgressStream(
       taskId,
       (progressData) => {
         if (onProgressChange) {
@@ -137,8 +142,9 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
     } finally {
       setIsAnalyzing(false);
       // Close progress stream
-      if (eventSource) {
-        eventSource.close();
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
       }
       // Clear progress state
       if (onProgressChange) {

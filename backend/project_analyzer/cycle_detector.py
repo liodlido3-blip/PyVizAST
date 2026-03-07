@@ -163,7 +163,10 @@ class CycleDetector:
                 else:
                     break
         
-        # Fallback: return all nodes in SCC as a cycle
+        # Could not extract a specific cycle - return the SCC as a group
+        # This indicates mutual dependencies exist but exact cycle is complex
+        # Log this situation for debugging
+        logger.debug(f"Could not extract specific cycle from SCC of size {len(scc)}, returning as module group")
         return list(scc)
     
     def _normalize_cycle(self, cycle: List[str]) -> List[str]:
@@ -172,7 +175,10 @@ class CycleDetector:
         Start from smallest module name, maintain cycle direction
         """
         if len(cycle) <= 1:
-            return cycle
+            return list(cycle)  # Return a copy, don't modify original
+        
+        # Create a copy to avoid modifying the input
+        cycle = list(cycle)
         
         # Remove duplicate trailing element
         if cycle[0] == cycle[-1]:

@@ -233,34 +233,48 @@ class DependencyAnalyzer:
             # Relative import
             parts = source_module.split('.')
             
-            # Go up based on level
-            # If level exceeds parts length, treat as root-level import
+            # Calculate the base package path
+            # level=1 means current package, level=2 means parent package, etc.
             if imp.level > len(parts):
-                # Attempt to resolve from project root
+                # Relative import level exceeds module depth
+                # This can happen in __init__.py or when module structure is unusual
+                # Try to resolve from project root with warning
                 base_parts = []
-                logger.debug(
+                logger.warning(
                     f"Relative import level {imp.level} exceeds module depth "
-                    f"'{source_module}', treating as root-level import"
+                    f"'{source_module}', attempting to resolve from project root"
                 )
             else:
+                # Go up 'level' packages
+                # For level=1 from 'pkg.sub.mod', base_parts should be ['pkg', 'sub']
+                # For level=2 from 'pkg.sub.mod', base_parts should be ['pkg']
                 base_parts = parts[:-imp.level] if imp.level > 0 else parts
             
+            # Build target module name
             if imp.module:
                 target = '.'.join(base_parts + [imp.module]) if base_parts else imp.module
             else:
+                # from . import name (level > 0, module is empty)
                 target = '.'.join(base_parts) if base_parts else ''
             
-            # Check if exists
+            # Check if the target module exists in our known modules
             if target and target in self.module_paths:
                 return target
             
-            # Might be a module within a package
+            # The import might be importing a specific name from a package
+            # e.g., 'from . import submodule' where submodule is a package
             for name in imp.names:
                 potential = f"{target}.{name}" if target else name
                 if potential in self.module_paths:
                     return potential
             
-            # Return target if valid, otherwise None
+            # Try partial matches for packages
+            if target:
+                for known_module in self.module_paths:
+                    if known_module.startswith(target + '.') or known_module == target:
+                        return target
+            
+            # Return the resolved target even if not found (for external detection)
             return target if target else None
         
         else:
@@ -276,7 +290,7 @@ class DependencyAnalyzer:
             if module in self.module_paths:
                 return module
             
-            # Check partial match
+            # Check partial match (importing from a package)
             for known_module in self.module_paths:
                 if known_module.startswith(module + '.') or known_module == module:
                     return module

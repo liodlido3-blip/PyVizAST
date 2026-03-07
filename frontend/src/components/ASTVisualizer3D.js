@@ -297,12 +297,15 @@ function Node3D({ position, node, isSelected, isFocused, isDimmed, isSignal, onC
   // Calculate opacity
   const opacity = isDimmed ? 0.2 : 1;
   
-  // Determine colors based on signal intensity (white glow theme)
+  // Determine colors based on signal intensity (theme-adaptive)
   const hasSignal = signalIntensity > 0;
+  const signalColor = theme === 'dark' ? '#ffffff' : '#1a1a1a';
+  const signalEmissive = theme === 'dark' ? '#ffffff' : '#666666';
+  
   const nodeColor = hasSignal 
-    ? '#ffffff'
-    : isFocused ? '#ffffff' : isSelected ? '#e0e0e0' : hovered ? '#d0d0d0' : color;
-  const emissiveColor = hasSignal ? '#ffffff' : (isFocused || isSelected || hovered) ? '#888888' : '#000000';
+    ? signalColor
+    : isFocused ? signalColor : isSelected ? '#e0e0e0' : hovered ? '#d0d0d0' : color;
+  const emissiveColor = hasSignal ? signalEmissive : (isFocused || isSelected || hovered) ? '#888888' : '#000000';
   const emissiveIntensityValue = hasSignal 
     ? 0.6 + signalIntensity * 0.6 
     : isFocused ? 0.6 : isSelected ? 0.4 : hovered ? 0.2 : 0;
@@ -329,12 +332,12 @@ function Node3D({ position, node, isSelected, isFocused, isDimmed, isSignal, onC
         />
       </mesh>
       
-      {/* Signal glow effect - single optimized mesh with white color */}
+      {/* Signal glow effect - single optimized mesh with theme-adaptive color */}
       {signalIntensity > 0 && (
         <mesh scale={1.4 + signalIntensity * 0.4}>
           <sphereGeometry args={[0.5, 8, 8]} />
           <meshBasicMaterial 
-            color="#ffffff" 
+            color={theme === 'dark' ? '#ffffff' : '#1a1a1a'} 
             transparent 
             opacity={0.35 * signalIntensity} 
           />
@@ -362,7 +365,7 @@ function Node3D({ position, node, isSelected, isFocused, isDimmed, isSignal, onC
 /**
  * 3D Edge component
  */
-function Edge3D({ start, end, isHighlighted, isDimmed, isSignal }) {
+function Edge3D({ start, end, isHighlighted, isDimmed, isSignal, theme }) {
   const points = useMemo(() => {
     return [
       new THREE.Vector3(start.x, start.y, start.z),
@@ -370,8 +373,12 @@ function Edge3D({ start, end, isHighlighted, isDimmed, isSignal }) {
     ];
   }, [start, end]);
   
-  // White/gray theme for edges
-  const color = isSignal ? '#ffffff' : isHighlighted ? '#cccccc' : 'rgba(255,255,255,0.15)';
+  // Theme-adaptive colors for edges
+  const signalColor = theme === 'dark' ? '#ffffff' : '#1a1a1a';
+  const highlightColor = theme === 'dark' ? '#cccccc' : '#444444';
+  const defaultColor = theme === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)';
+  
+  const color = isSignal ? signalColor : isHighlighted ? highlightColor : defaultColor;
   const opacity = isDimmed ? 0.1 : isSignal ? 1 : isHighlighted ? 0.8 : 0.3;
   const lineWidth = isSignal ? 2 : isHighlighted ? 2 : 1;
   
@@ -388,9 +395,9 @@ function Edge3D({ start, end, isHighlighted, isDimmed, isSignal }) {
 
 /**
  * Signal particle that travels along edges (optimized)
- * White particle with simple glow trail
+ * Particle color adapts to theme: white in dark mode, black in light mode
  */
-function SignalParticle({ start, end, progress }) {
+function SignalParticle({ start, end, progress, theme }) {
   // Calculate current position (no useMemo to reduce overhead)
   const x = start.x + (end.x - start.x) * progress;
   const y = start.y + (end.y - start.y) * progress;
@@ -400,18 +407,22 @@ function SignalParticle({ start, end, progress }) {
   const trailOpacity = Math.max(0, 0.8 - progress * 0.5);
   const glowSize = 0.12 + progress * 0.08;
   
+  // Theme-adaptive colors
+  const coreColor = theme === 'dark' ? '#ffffff' : '#1a1a1a';
+  const glowColor = theme === 'dark' ? '#ffffff' : '#333333';
+  
   return (
     <group position={[x, y, z]}>
-      {/* Core white particle - low poly sphere */}
+      {/* Core particle - low poly sphere */}
       <mesh>
         <sphereGeometry args={[0.08, 8, 8]} />
-        <meshBasicMaterial color="#ffffff" />
+        <meshBasicMaterial color={coreColor} />
       </mesh>
       
       {/* Outer glow - single mesh instead of multiple */}
       <mesh scale={glowSize * 8}>
         <sphereGeometry args={[0.1, 8, 8]} />
-        <meshBasicMaterial color="#ffffff" transparent opacity={trailOpacity * 0.6} />
+        <meshBasicMaterial color={glowColor} transparent opacity={trailOpacity * 0.6} />
       </mesh>
     </group>
   );
@@ -688,6 +699,7 @@ const Scene = forwardRef(({ nodes, edges, positions, selectedNode, focusedNode, 
             isHighlighted={isConnectedToFocused}
             isDimmed={isDimmed}
             isSignal={false}
+            theme={theme}
           />
         );
       })}
@@ -699,6 +711,7 @@ const Scene = forwardRef(({ nodes, edges, positions, selectedNode, focusedNode, 
           start={particle.startPos}
           end={particle.endPos}
           progress={particle.progress}
+          theme={theme}
         />
       ))}
       
@@ -742,6 +755,7 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedSearchIndex, setSelectedSearchIndex] = useState(-1);
   const [highlightedNodeIds, setHighlightedNodeIds] = useState(new Set());
+  const [isSearchResultHovered, setIsSearchResultHovered] = useState(false); // 跟踪搜索结果悬停
   const searchInputRef = useRef(null);
   
   // Cleanup on unmount
@@ -1145,10 +1159,16 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
                     }}
                     onMouseEnter={() => {
                       try {
-                        if (node && node.id) focusSearchResult(node, index);
+                        if (node && node.id) {
+                          focusSearchResult(node, index);
+                          setIsSearchResultHovered(true);
+                        }
                       } catch (e) {
                         console.warn('Search result hover error:', e);
                       }
+                    }}
+                    onMouseLeave={() => {
+                      setIsSearchResultHovered(false);
                     }}
                   >
                     <span className="result-icon">{node.icon || '•'}</span>
@@ -1200,7 +1220,7 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
         
         {/* Node detail panel */}
         {(selectedNode || focusedNode) && (
-          <div className={`node-detail-panel ${focusedNode ? 'focused-panel' : ''}`}>
+          <div className={`node-detail-panel ${focusedNode ? 'focused-panel' : ''} ${isSearchResultHovered ? 'dimmed' : ''}`}>
             <div className="panel-header">
               <div className="panel-header-main">
                 <span className="node-icon">{(focusedNode || selectedNode)?.icon || '•'}</span>

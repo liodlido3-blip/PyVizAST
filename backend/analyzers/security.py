@@ -36,14 +36,15 @@ class SecurityScanner:
     }
     
     # Sensitive word patterns (for detecting hardcoded secrets)
+    # Updated to handle escaped quotes in string values
     SENSITIVE_PATTERNS = [
-        (r'(?i)(password|passwd|pwd)\s*=\s*[\'"][^\'"]+[\'"]', 'password'),
-        (r'(?i)(api_key|apikey|api_secret)\s*=\s*[\'"][^\'"]+[\'"]', 'API key'),
-        (r'(?i)(secret|secret_key)\s*=\s*[\'"][^\'"]+[\'"]', 'secret key'),
-        (r'(?i)(token|auth_token|access_token)\s*=\s*[\'"][^\'"]+[\'"]', 'token'),
-        (r'(?i)(private_key|privatekey)\s*=\s*[\'"][^\'"]+[\'"]', 'private key'),
-        (r'(?i)(aws_access_key|aws_secret)\s*=\s*[\'"][^\'"]+[\'"]', 'AWS credential'),
-        (r'(?i)(database_url|db_password)\s*=\s*[\'"][^\'"]+[\'"]', 'database credential'),
+        (r'(?i)(password|passwd|pwd)\s*=\s*[\'"](?:[^\'"\\]|\\.)*[\'"]', 'password'),
+        (r'(?i)(api_key|apikey|api_secret)\s*=\s*[\'"](?:[^\'"\\]|\\.)*[\'"]', 'API key'),
+        (r'(?i)(secret|secret_key)\s*=\s*[\'"](?:[^\'"\\]|\\.)*[\'"]', 'secret key'),
+        (r'(?i)(token|auth_token|access_token)\s*=\s*[\'"](?:[^\'"\\]|\\.)*[\'"]', 'token'),
+        (r'(?i)(private_key|privatekey)\s*=\s*[\'"](?:[^\'"\\]|\\.)*[\'"]', 'private key'),
+        (r'(?i)(aws_access_key|aws_secret)\s*=\s*[\'"](?:[^\'"\\]|\\.)*[\'"]', 'AWS credential'),
+        (r'(?i)(database_url|db_password)\s*=\s*[\'"](?:[^\'"\\]|\\.)*[\'"]', 'database credential'),
     ]
     
     # SQL injection risk patterns
@@ -296,17 +297,28 @@ class SecurityScanner:
                 if func_full_name.startswith('os.'):
                     # Ensure node.func is ast.Attribute type before accessing attr
                     if isinstance(node.func, ast.Attribute) and node.func.attr in os_functions:
-                        # Check arguments
+                        # Check arguments - report for both dynamic and constant args with different severity
                         if node.args:
                             arg = node.args[0]
-                            if not isinstance(arg, ast.Constant):
+                            if isinstance(arg, ast.Constant):
+                                # Constant string - lower severity warning
+                                self.issues.append(CodeIssue(
+                                    id=self._generate_issue_id("command_func"),
+                                    type="security",
+                                    severity=SeverityLevel.INFO,
+                                    message=f"Using os.{node.func.attr}() is discouraged, prefer subprocess module",
+                                    lineno=node.lineno,
+                                    suggestion="Use subprocess module with shell=False"
+                                ))
+                            else:
+                                # Dynamic argument - higher severity
                                 self.issues.append(CodeIssue(
                                     id=self._generate_issue_id("command_injection"),
                                     type="security",
                                     severity=SeverityLevel.ERROR,
-                                    message=f"Using os.{node.func.attr}() may lead to command injection",
+                                    message=f"Using os.{node.func.attr}() with dynamic argument may lead to command injection",
                                     lineno=node.lineno,
-                                    suggestion="Use subprocess module with shell=False"
+                                    suggestion="Use subprocess module with shell=False and pass arguments as list"
                                 ))
                 
                 # subprocess with shell=True
@@ -331,6 +343,9 @@ class SecurityScanner:
         
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
+                func_full_name = self._get_func_full_name(node.func)
+                
+                # Direct file operations with user input
                 if isinstance(node.func, ast.Name) and node.func.id in file_operations:
                     if node.args:
                         arg = node.args[0]
@@ -344,6 +359,41 @@ class SecurityScanner:
                                 lineno=node.lineno,
                                 suggestion="Validate and sanitize user-input paths"
                             ))
+                
+                # os.path.join with potential user input
+                elif func_full_name == 'os.path.join':
+                    # Check if any argument might be user-controlled
+                    has_user_input = False
+                    for arg in node.args:
+                        # Check for Name nodes that might be user input
+                        if isinstance(arg, ast.Name):
+                            # Variables like 'filename', 'user_input', 'path' might be user-controlled
+                            name_lower = arg.id.lower()
+                            suspicious_names = ['filename', 'filepath', 'user', 'input', 'path', 
+                                               'name', 'file', 'dir', 'directory']
+                            if any(suspicious in name_lower for suspicious in suspicious_names):
+                                has_user_input = True
+                                break
+                        elif isinstance(arg, ast.Subscript):
+                            # Dict/list access like request.args['file']
+                            has_user_input = True
+                            break
+                    
+                    if has_user_input:
+                        self.issues.append(CodeIssue(
+                            id=self._generate_issue_id("path_traversal_join"),
+                            type="security",
+                            severity=SeverityLevel.WARNING,
+                            message="os.path.join with user input may still be vulnerable to path traversal",
+                            lineno=node.lineno,
+                            suggestion="Use os.path.realpath and validate the result is within expected directory"
+                        ))
+                
+                # Path with f-string or format
+                elif isinstance(node.func, ast.Attribute):
+                    if node.func.attr in ('format', 'join'):
+                        # Check if used on a path-like string
+                        pass  # Complex to analyze, skip for now
     
     def _check_weak_crypto(self, tree: ast.AST):
         """Check for weak encryption algorithms"""

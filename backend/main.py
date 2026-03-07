@@ -14,9 +14,9 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime
 
 import uvicorn
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, HTTPException, Request, status, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, ValidationError
 
 from .models.schemas import (
@@ -256,8 +256,6 @@ async def progress_stream(task_id: str):
     SSE endpoint for real-time progress updates
     Returns Server-Sent Events stream
     """
-    from fastapi.responses import StreamingResponse
-    
     async def event_generator():
         # First, send current state if exists
         current_state = progress_tracker.get_state(task_id)
@@ -367,7 +365,7 @@ async def analyze_code(input_data: CodeInput):
                     )
         
         parser = get_parser({'simplified': auto_simplified, **options})
-        ast_graph = parser.parse(code)
+        ast_graph = parser.parse(code, tree=tree)  # Pass pre-parsed tree to avoid double parsing
         
         # Create new analyzer instances
         theme = options.get('theme', 'default')
@@ -1312,7 +1310,8 @@ class ProjectStorage:
         now = time.time()
         expired_keys = []
         
-        for key, entry in self._storage.items():
+        # Use list() to create a copy for safe iteration during modification
+        for key, entry in list(self._storage.items()):
             if now - entry.last_accessed > self._ttl_seconds:
                 expired_keys.append(key)
         
@@ -1627,16 +1626,28 @@ async def _analyze_single_file(file_info: FileInfo, project_root: str) -> FileAn
     from pathlib import Path as PathlibPath
     
     file_path = PathlibPath(file_info.path)
+    code_content = ""  # Initialize upfront to avoid undefined variable
+    tree = None
     
+    # First, read file content
     try:
-        code = file_path.read_text(encoding='utf-8', errors='ignore')
-        tree = ast.parse(code)
+        code_content = file_path.read_text(encoding='utf-8', errors='ignore')
+    except Exception as e:
+        logger.warning(f"Failed to read file {file_info.relative_path}: {e}")
+        return FileAnalysisResult(
+            file=file_info,
+            content="",
+            summary=FileSummary(lines_of_code=file_info.line_count),
+            issues=[],
+            complexity={},
+            performance_hotspots=[],
+            suggestions=[],
+        )
+    
+    # Parse AST
+    try:
+        tree = ast.parse(code_content)
     except SyntaxError as e:
-        # Read file content for editing
-        try:
-            code_content = file_path.read_text(encoding='utf-8', errors='ignore')
-        except Exception:
-            code_content = ""
         return FileAnalysisResult(
             file=file_info,
             content=code_content,
@@ -1656,11 +1667,7 @@ async def _analyze_single_file(file_info: FileInfo, project_root: str) -> FileAn
             suggestions=[],
         )
     except Exception as e:
-        # Read file content for editing
-        try:
-            code_content = file_path.read_text(encoding='utf-8', errors='ignore')
-        except Exception:
-            code_content = ""
+        logger.warning(f"Failed to parse AST for {file_info.relative_path}: {e}")
         return FileAnalysisResult(
             file=file_info,
             content=code_content,
@@ -1678,16 +1685,16 @@ async def _analyze_single_file(file_info: FileInfo, project_root: str) -> FileAn
     security_scanner = SecurityScanner()
     
     # Complexity analysis
-    complexity = complexity_analyzer.analyze(code, tree)
+    complexity = complexity_analyzer.analyze(code_content, tree)
     
     # Performance analysis
-    performance_analyzer.analyze(code, tree)
+    performance_analyzer.analyze(code_content, tree)
     
     # Code smell detection
-    code_smell_detector.analyze(code, tree)
+    code_smell_detector.analyze(code_content, tree)
     
     # Security scan
-    security_scanner.scan(code, tree)
+    security_scanner.scan(code_content, tree)
     
     # Merge issues
     all_issues = (
@@ -1709,7 +1716,7 @@ async def _analyze_single_file(file_info: FileInfo, project_root: str) -> FileAn
     
     return FileAnalysisResult(
         file=file_info,
-        content=code,  # Include file content
+        content=code_content,  # Use the already defined variable
         summary=summary,
         issues=[issue.model_dump() for issue in all_issues],
         complexity=complexity.model_dump(),
