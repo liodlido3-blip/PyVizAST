@@ -34,6 +34,11 @@ A Python AST Visualizer & Static Analyzer that transforms code into interactive 
 - **Beginner Mode**: Display Python documentation when hovering over AST nodes
 - **Challenge Mode**: Identify performance issues in provided code samples
 
+### Easter Egg
+- Click the "PV" logo 5 times within 2 seconds to discover a hidden surprise
+- Features a physics-based confetti animation with 300 realistic paper particles
+- Particles spray from screen corners with natural flutter, bend, and fold effects
+
 ## Architecture
 
 ```
@@ -184,6 +189,10 @@ Contributions are welcome. Please submit pull requests to the main repository.
 
 ### v0.5.0-pre (2026-03-07)
 **New Features:**
+- **Easter Egg**: Hidden surprise triggered by clicking the "PV" logo 5 times
+  - Physics-based confetti animation with 300 paper particles
+  - Realistic paper flutter with bend and fold effects
+  - Particles spray from corners with natural falling motion
 - **Progress Tracking**: Real-time progress display for large project analysis
   - SSE-based progress streaming with percentage and current stage
   - Shows current file being analyzed and file count progress

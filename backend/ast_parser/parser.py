@@ -1,6 +1,9 @@
 """
 AST Parser - Parse Python source code into visualizable graph structure
 Supports performance optimization mode for large codebases
+
+@author: Chidc
+@link: github.com/chidcGithub
 """
 import ast
 import uuid

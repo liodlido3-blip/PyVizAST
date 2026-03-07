@@ -1,6 +1,9 @@
 """
 PyVizAST - FastAPI Backend
 AST-based Python Code Visualizer and Optimization Analyzer
+
+@author: Chidc
+@link: github.com/chidcGithub
 """
 import ast
 import json

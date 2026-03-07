@@ -1,6 +1,9 @@
 """
 PyVizAST - Python AST Visualizer & Static Analyzer
 Startup Script
+
+@author: Chidc
+@link: github.com/chidcGithub
 """
 import os
 import sys

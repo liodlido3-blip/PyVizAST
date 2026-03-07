@@ -1,3 +1,9 @@
+/**
+ * PyVizAST Frontend Entry Point
+ * 
+ * @author Chidc
+ * @link github.com/chidcGithub
+ */
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
