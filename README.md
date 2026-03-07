@@ -189,10 +189,7 @@ Contributions are welcome. Please submit pull requests to the main repository.
 
 ### v0.5.0-pre (2026-03-07)
 **New Features:**
-- **Easter Egg**: Hidden surprise triggered by clicking the "PV" logo 5 times
-  - Physics-based confetti animation with 300 paper particles
-  - Realistic paper flutter with bend and fold effects
-  - Particles spray from corners with natural falling motion
+- **Easter Egg**: Hidden surprise!
 - **Progress Tracking**: Real-time progress display for large project analysis
   - SSE-based progress streaming with percentage and current stage
   - Shows current file being analyzed and file count progress
