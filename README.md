@@ -187,7 +187,9 @@ Contributions are welcome. Please submit pull requests to the main repository.
 
 ---
 
-## Version History
+<details>
+
+<summary>Version History</summary>
 
 <details>
 <summary>v0.5.0-pre.2 (2026-03-07)</summary>
@@ -748,5 +750,7 @@ This release includes all features and fixes from alpha, beta, and pre releases.
 - Security scanning
 - Optimization suggestions
 - Interactive learning mode
+
+</details>
 
 </details>
