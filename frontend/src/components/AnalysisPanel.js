@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import PatchPanel from './PatchPanel';
 
-function AnalysisPanel({ result, activeTab, code, onApplyPatch }) {
+function AnalysisPanel({ result, activeTab, code, onApplyPatch, onNavigateToChallenges }) {
   if (!result) return null;
 
   const renderContent = () => {
@@ -28,7 +28,7 @@ function AnalysisPanel({ result, activeTab, code, onApplyPatch }) {
       case 'learn':
         return <LearnPanel result={result} />;
       case 'challenges':
-        return <ChallengesPanel />;
+        return <ChallengesPanel onNavigateToChallenges={onNavigateToChallenges} />;
       default:
         return null;
     }
@@ -264,7 +264,7 @@ function LearnPanel({ result }) {
   );
 }
 
-function ChallengesPanel() {
+function ChallengesPanel({ onNavigateToChallenges }) {
   const [challenges, setChallenges] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
@@ -290,6 +290,12 @@ function ChallengesPanel() {
 
     fetchChallenges();
   }, []);
+
+  const handleStartChallenge = () => {
+    if (onNavigateToChallenges) {
+      onNavigateToChallenges();
+    }
+  };
 
   return (
     <div className="panel-content">
@@ -327,7 +333,7 @@ function ChallengesPanel() {
                     <span className="challenge-points">{challenge.points} pts</span>
                   )}
                 </div>
-                <button className="btn btn-secondary">
+                <button className="btn btn-secondary" onClick={handleStartChallenge}>
                   Start Challenge
                 </button>
               </div>

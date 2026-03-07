@@ -266,9 +266,52 @@ class PerformanceAnalyzer:
                 self.generic_visit(node)
             
             def visit_Call(self, node):
-                if self.in_loop:
-                    # list.count() in loop - O(n^2) potential
-                    if isinstance(node.func, ast.Attribute):
+                if isinstance(node.func, ast.Attribute):
+                    # list.pop(0) - O(n) operation at list start
+                    if node.func.attr == 'pop':
+                        if not node.args or (len(node.args) == 1 and 
+                            isinstance(node.args[0], ast.Constant) and 
+                            node.args[0].value == 0):
+                            self.detector.issues.append(CodeIssue(
+                                id=self.detector._generate_issue_id("pop_zero"),
+                                type="performance",
+                                severity=SeverityLevel.WARNING,
+                                message="list.pop(0) has O(n) complexity, consider using collections.deque with popleft() for O(1)",
+                                lineno=getattr(node, 'lineno', None),
+                                suggestion="Use: from collections import deque; d = deque(lst); d.popleft()"
+                            ))
+                            # Also add hotspot
+                            self.detector._add_hotspot(
+                                hotspot_type="inefficient_operation",
+                                description="list.pop(0) at list start has O(n) complexity",
+                                lineno=getattr(node, 'lineno', None),
+                                estimated_complexity="O(n)",
+                                suggestion="Use collections.deque.popleft() for O(1) operation"
+                            )
+                    
+                    # list.insert(0, x) - O(n) operation at list start
+                    elif node.func.attr == 'insert':
+                        if node.args and len(node.args) >= 2:
+                            first_arg = node.args[0]
+                            if isinstance(first_arg, ast.Constant) and first_arg.value == 0:
+                                self.detector.issues.append(CodeIssue(
+                                    id=self.detector._generate_issue_id("insert_zero"),
+                                    type="performance",
+                                    severity=SeverityLevel.WARNING,
+                                    message="list.insert(0, x) has O(n) complexity, consider using collections.deque with appendleft() for O(1)",
+                                    lineno=getattr(node, 'lineno', None),
+                                    suggestion="Use: from collections import deque; d = deque(); d.appendleft(x)"
+                                ))
+                                self.detector._add_hotspot(
+                                    hotspot_type="inefficient_operation",
+                                    description="list.insert(0, x) at list start has O(n) complexity",
+                                    lineno=getattr(node, 'lineno', None),
+                                    estimated_complexity="O(n)",
+                                    suggestion="Use collections.deque.appendleft() for O(1) operation"
+                                )
+                    
+                    if self.in_loop:
+                        # list.count() in loop - O(n^2) potential
                         if node.func.attr == 'count':
                             self.detector.issues.append(CodeIssue(
                                 id=self.detector._generate_issue_id("count_in_loop"),

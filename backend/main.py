@@ -26,6 +26,7 @@ from .ast_parser import ASTParser, NodeMapper
 from .analyzers import ComplexityAnalyzer, PerformanceAnalyzer, CodeSmellDetector, SecurityScanner
 from .optimizers import SuggestionEngine, PatchGenerator
 from .utils.logger import get_logger, log_exception, init_logging
+from .utils.progress import progress_tracker, ProgressStage
 from .project_analyzer import (
     ProjectScanner,
     DependencyAnalyzer,
@@ -82,7 +83,7 @@ app.add_middleware(
     allow_origins=ALLOWED_ORIGINS,  # Read allowed origins from environment variable
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization"],
+    allow_headers=["Content-Type", "Authorization", "Accept", "Cache-Control"],
 )
 
 
@@ -230,6 +231,49 @@ async def root():
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "PyVizAST API"}
+
+
+# ============== Progress Tracking Endpoints ==============
+
+from fastapi.responses import StreamingResponse
+
+
+@app.get("/api/progress/{task_id}")
+async def get_progress(task_id: str):
+    """Get current progress state for a task"""
+    state = progress_tracker.get_state(task_id)
+    if not state:
+        return {"error": "Task not found", "task_id": task_id}
+    return state.to_dict()
+
+
+@app.get("/api/progress/{task_id}/stream")
+async def progress_stream(task_id: str):
+    """
+    SSE endpoint for real-time progress updates
+    Returns Server-Sent Events stream
+    """
+    from fastapi.responses import StreamingResponse
+    
+    async def event_generator():
+        # First, send current state if exists
+        current_state = progress_tracker.get_state(task_id)
+        if current_state:
+            yield current_state.to_sse()
+        
+        # Then stream updates
+        async for event in progress_tracker.progress_generator(task_id):
+            yield event
+    
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
 
 
 @app.post("/api/analyze", response_model=AnalysisResult)
@@ -1420,11 +1464,13 @@ async def upload_project(file: UploadFile = File(...)):
 @app.post("/api/project/analyze")
 async def analyze_project(
     file: UploadFile = File(...),
-    quick_mode: bool = Form(False)
+    quick_mode: bool = Form(False),
+    task_id: Optional[str] = Form(None)
 ):
     """
     Analyze uploaded project
     Receive ZIP file directly and analyze, single step
+    Supports optional task_id for progress tracking
     """
     logger.info(f"Analyzing project: {file.filename}, quick mode: {quick_mode}")
     
@@ -1438,28 +1484,47 @@ async def analyze_project(
     temp_dir = tempfile.mkdtemp(prefix='pyvizast_analyze_')
     temp_file = Path(temp_dir) / file.filename
     
+    # Initialize progress tracking if task_id provided
+    if task_id:
+        progress_tracker.create_task(task_id, "Initializing project analysis...")
+    
     try:
         # Write uploaded file
+        if task_id:
+            progress_tracker.update(task_id, ProgressStage.UPLOADING, 5, "Uploading project files...")
+        
         content = await file.read()
         with open(temp_file, 'wb') as f:
             f.write(content)
         
         # Scan project
+        if task_id:
+            progress_tracker.update(task_id, ProgressStage.SCANNING, 10, "Scanning project structure...")
+        
         scanner = ProjectScanner()
         scan_result, project_root = scanner.scan_zip(str(temp_file), Path(file.filename).stem)
         
+        if task_id:
+            progress_tracker.update(task_id, ProgressStage.PARSING, 20, f"Found {scan_result.total_files} Python files")
+        
         # Analyze dependencies
+        if task_id:
+            progress_tracker.update(task_id, ProgressStage.DEPENDENCIES, 25, "Analyzing dependencies...")
         logger.debug("Analyzing dependencies...")
         dependency_analyzer = DependencyAnalyzer(project_root)
         module_files = {f.relative_path: f.path for f in scan_result.file_infos}
         dependency_graph = dependency_analyzer.analyze(list(module_files.values()))
         
         # Detect circular dependencies
+        if task_id:
+            progress_tracker.update(task_id, ProgressStage.DEPENDENCIES, 35, "Detecting circular dependencies...")
         logger.debug("Detecting circular dependencies...")
         cycle_detector = CycleDetector(dependency_graph.adjacency_list)
         circular_issues = cycle_detector.detect()
         
         # Detect unused exports
+        if task_id:
+            progress_tracker.update(task_id, ProgressStage.DEPENDENCIES, 40, "Detecting unused exports...")
         logger.debug("Detecting unused exports...")
         unused_detector = UnusedExportDetector(dependency_analyzer)
         unused_issues = unused_detector.detect(module_files) if not quick_mode else []
@@ -1469,11 +1534,23 @@ async def analyze_project(
         
         # Analyze each file
         file_results: List[FileAnalysisResult] = []
+        total_files = len(scan_result.file_infos)
         
-        for file_info in scan_result.file_infos:
+        for idx, file_info in enumerate(scan_result.file_infos):
             if quick_mode and file_info.is_test:
                 # Skip test files in quick mode
                 continue
+            
+            # Update progress
+            if task_id and total_files > 0:
+                file_progress = 40 + (idx + 1) / total_files * 50
+                progress_tracker.update(
+                    task_id, 
+                    ProgressStage.ANALYZING, 
+                    file_progress,
+                    f"Analyzing {file_info.relative_path}...",
+                    {"current_file": file_info.relative_path, "file_index": idx + 1, "total_files": total_files}
+                )
             
             try:
                 file_result = await _analyze_single_file(file_info, project_root)
@@ -1491,6 +1568,8 @@ async def analyze_project(
                 ))
         
         # Aggregate project metrics
+        if task_id:
+            progress_tracker.update(task_id, ProgressStage.FINALIZING, 95, "Aggregating metrics...")
         metrics_aggregator = ProjectMetricsAggregator()
         metrics = metrics_aggregator.aggregate(file_results, scan_result, global_issues)
         
@@ -1511,6 +1590,10 @@ async def analyze_project(
                    f"{len(global_issues)} global issues, "
                    f"took {analysis_time_ms:.2f}ms")
         
+        # Mark complete
+        if task_id:
+            progress_tracker.complete(task_id, f"Analysis complete! {len(file_results)} files analyzed.")
+        
         return {
             'scan_result': scan_result.model_dump(),
             'files': [f.model_dump() for f in file_results],
@@ -1522,6 +1605,8 @@ async def analyze_project(
     
     except Exception as e:
         logger.error(f"Project analysis failed: {e}")
+        if task_id:
+            progress_tracker.error(task_id, f"Analysis failed: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Project analysis failed: {str(e)}"

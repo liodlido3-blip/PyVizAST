@@ -1,10 +1,10 @@
 # PyVizAST
 
-[![Version](https://img.shields.io/badge/Version-0.4.4-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Version](https://img.shields.io/badge/Version-0.5.0--pre-orange.svg)](https://github.com/ChidcGithub/PyVizAST)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ChidcGithub/PyVizAST)
-[![Status](https://img.shields.io/badge/Status-stable--release-brightgreen.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Status](https://img.shields.io/badge/Status-pre--release-orange.svg)](https://github.com/ChidcGithub/PyVizAST)
 
 A Python AST Visualizer & Static Analyzer that transforms code into interactive graphs. Detect complexity, performance bottlenecks, and code smells with actionable refactoring suggestions.
 
@@ -181,6 +181,42 @@ GNU General Public License v3.0
 Contributions are welcome. Please submit pull requests to the main repository.
 
 <details> <summary>Version History</summary>
+
+### v0.5.0-pre (2026-03-07)
+**New Features:**
+- **Progress Tracking**: Real-time progress display for large project analysis
+  - SSE-based progress streaming with percentage and current stage
+  - Shows current file being analyzed and file count progress
+  - Loading overlay with animated progress bar
+- **Code Sharing**: Share code snippets via URL
+  - Base64 encoded code in URL hash parameter
+  - One-click copy share link
+  - Auto-restore code from URL on page load
+- **Theme Switching**: Enhanced dark/light theme toggle
+  - Prominent toggle switch in header
+  - Theme preference saved to localStorage
+  - Moon icon turns black in light mode for visibility
+- **Export Reports**: Export analysis results
+  - HTML report with styled analysis summary
+  - JSON export for raw analysis data
+
+**Backend Improvements:**
+- New progress tracking module (`backend/utils/progress.py`)
+- SSE endpoint for real-time progress updates (`/api/progress/{task_id}/stream`)
+- Enhanced CORS configuration for SSE support
+- Thread-safe progress notification system
+
+**Frontend Improvements:**
+- Updated `LoadingOverlay` with progress percentage and stage display
+- New `shareUrl` state and share dialog in `Header`
+- Export dialog with HTML/JSON options
+- Enhanced theme toggle with visual feedback
+
+**Bug Fixes:**
+- Fixed loading overlay CSS conflicts (removed duplicate pseudo-elements)
+- Fixed `eventSource` variable scope in `ProjectAnalysisView`
+- Fixed thread safety in progress notification system
+- Fixed progress generator waiting for task creation
 
 ### v0.4.4 (2026-03-06)
 **Frontend UI Redesign:**

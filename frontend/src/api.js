@@ -343,12 +343,16 @@ export const uploadProject = async (file, signal = null) => {
  * @param {File} file - ZIP file object
  * @param {boolean} quickMode - Whether to use quick mode
  * @param {AbortSignal} signal - Optional cancel signal
+ * @param {string} taskId - Optional task ID for progress tracking
  * @returns {Promise<Object>} Project analysis result
  */
-export const analyzeProject = async (file, quickMode = false, signal = null) => {
+export const analyzeProject = async (file, quickMode = false, signal = null, taskId = null) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('quick_mode', quickMode.toString());
+  if (taskId) {
+    formData.append('task_id', taskId);
+  }
   
   const response = await api.post('/api/project/analyze', formData, {
     headers: {
@@ -359,6 +363,59 @@ export const analyzeProject = async (file, quickMode = false, signal = null) => 
   });
   
   return response.data;
+};
+
+/**
+ * Get current progress for a task
+ * @param {string} taskId - Task ID
+ * @returns {Promise<Object>} Progress state
+ */
+export const getProgress = async (taskId) => {
+  const response = await api.get(`/api/progress/${taskId}`, { timeout: 5000 });
+  return response.data;
+};
+
+/**
+ * Create EventSource for SSE progress updates
+ * @param {string} taskId - Task ID
+ * @param {function} onProgress - Callback for progress updates
+ * @param {function} onError - Callback for errors
+ * @returns {EventSource} EventSource instance
+ */
+export const createProgressStream = (taskId, onProgress, onError) => {
+  const eventSource = new EventSource(`${API_BASE_URL}/api/progress/${taskId}/stream`);
+  
+  eventSource.onmessage = (event) => {
+    try {
+      const data = JSON.parse(event.data);
+      onProgress(data);
+      
+      // Close connection when complete or error
+      if (data.stage === 'complete' || data.stage === 'error') {
+        eventSource.close();
+      }
+    } catch (e) {
+      console.error('Failed to parse progress data:', e);
+    }
+  };
+  
+  eventSource.onerror = (error) => {
+    console.error('SSE error:', error);
+    if (onError) {
+      onError(error);
+    }
+    eventSource.close();
+  };
+  
+  return eventSource;
+};
+
+/**
+ * Generate a unique task ID
+ * @returns {string} Unique task ID
+ */
+export const generateTaskId = () => {
+  return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 };
 
 export default api;

@@ -169,6 +169,7 @@ class SuggestionEngine:
         self._detect_set_lookup_opportunities(tree, source_lines)
         self._detect_dataclass_opportunities(tree, source_lines)
         self._detect_context_manager_opportunities(tree, source_lines)
+        self._detect_comparison_style_issues(tree, source_lines)
         
         # Generate targeted suggestions based on issue list
         if issues:
@@ -486,6 +487,81 @@ class SuggestionEngine:
                         auto_fixable=False,
                         priority=2
                     ))
+    
+    def _detect_comparison_style_issues(self, tree: ast.AST, source_lines: List[str]):
+        """Detect comparison style issues like 'if x is True:', 'if x == None:'"""
+        
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Compare):
+                # Check for 'x == None' or 'x != None' - should use 'is' / 'is not'
+                for i, op in enumerate(node.ops):
+                    if isinstance(op, (ast.Eq, ast.NotEq)):
+                        comparator = node.comparators[i] if i < len(node.comparators) else None
+                        if isinstance(comparator, ast.Constant) and comparator.value is None:
+                            # Check if same suggestion already exists
+                            if self._is_duplicate('Use "is None" instead of "== None"', node.lineno):
+                                continue
+                            op_str = '==' if isinstance(op, ast.Eq) else '!='
+                            correct_op = 'is' if isinstance(op, ast.Eq) else 'is not'
+                            self.suggestions.append(OptimizationSuggestion(
+                                id=self._generate_suggestion_id(),
+                                category='best_practice',
+                                title=f'Use "{correct_op} None" instead of "{op_str} None"',
+                                description='None is a singleton, identity comparison is more Pythonic and reliable',
+                                before_code=self._get_source_segment(node, source_lines),
+                                after_code=f"# Use: x {correct_op} None",
+                                estimated_improvement='More Pythonic, handles edge cases',
+                                auto_fixable=True,
+                                priority=3
+                            ))
+                
+                # Check for 'x is True' or 'x is False' - should use direct boolean check
+                for i, op in enumerate(node.ops):
+                    if isinstance(op, (ast.Is, ast.IsNot)):
+                        comparator = node.comparators[i] if i < len(node.comparators) else None
+                        if isinstance(comparator, ast.Constant) and comparator.value in (True, False):
+                            # Check if same suggestion already exists
+                            bool_val = comparator.value
+                            if self._is_duplicate(f'Avoid "is {bool_val}" comparison', node.lineno):
+                                continue
+                            op_str = 'is' if isinstance(op, ast.Is) else 'is not'
+                            if isinstance(op, ast.Is):
+                                # 'x is True' -> 'x == True' or just 'if x:' for truthy check
+                                self.suggestions.append(OptimizationSuggestion(
+                                    id=self._generate_suggestion_id(),
+                                    category='best_practice',
+                                    title=f'Avoid "{op_str} {bool_val}" comparison',
+                                    description=f'Using "is {bool_val}" is overly strict. Use direct boolean check or "==" for value comparison.',
+                                    before_code=self._get_source_segment(node, source_lines),
+                                    after_code=f"# Use: if x:  # for truthy check\n# or: if x == {bool_val}:  # for exact value",
+                                    estimated_improvement='More flexible, handles truthy/falsy values correctly',
+                                    auto_fixable=False,
+                                    priority=4
+                                ))
+            
+            # Check for 'not x is None' - should use 'x is not None'
+            elif isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+                if isinstance(node.operand, ast.Compare):
+                    compare = node.operand
+                    if (len(compare.ops) == 1 and 
+                        isinstance(compare.ops[0], ast.Is) and
+                        len(compare.comparators) == 1 and
+                        isinstance(compare.comparators[0], ast.Constant) and
+                        compare.comparators[0].value is None):
+                        # Check if same suggestion already exists
+                        if self._is_duplicate('Use "is not None" instead of "not ... is None"', node.lineno):
+                            continue
+                        self.suggestions.append(OptimizationSuggestion(
+                            id=self._generate_suggestion_id(),
+                            category='readability',
+                            title='Use "is not None" instead of "not ... is None"',
+                            description='"is not None" is more readable and Pythonic than "not x is None"',
+                            before_code=self._get_source_segment(node, source_lines),
+                            after_code="# Use: x is not None",
+                            estimated_improvement='More readable',
+                            auto_fixable=True,
+                            priority=3
+                        ))
     
     def _generate_issue_based_suggestions(self, issues: List[CodeIssue]):
         """Generate targeted suggestions based on issue list"""

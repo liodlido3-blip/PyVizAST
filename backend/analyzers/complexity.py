@@ -501,8 +501,8 @@ class ComplexityAnalyzer:
         # Calculate function nesting depth
         result["nesting_depth"] = self._calculate_max_nesting_depth(func_node)
         
-        # Calculate cognitive complexity
-        result["cognitive_complexity"] = self._cognitive_visitor(func_node, 0)
+        # Calculate cognitive complexity using the same visitor pattern
+        result["cognitive_complexity"] = self._calculate_cognitive_complexity(func_node)
         
         # Function line count
         if hasattr(func_node, 'end_lineno'):

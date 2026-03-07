@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { analyzeProject } from '../api';
+import { analyzeProject, generateTaskId, createProgressStream } from '../api';
 import './ProjectAnalysisView.css';
 
 /**
@@ -22,6 +22,7 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
     editedFilePath = null, // Currently edited file path
     hasUnsavedChanges = false, // Whether there are unsaved changes
     onSaveFile,  // Save file callback
+    onProgressChange, // Progress state change callback
   }, 
   ref
 ) {
@@ -77,6 +78,23 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
 
     setIsAnalyzing(true);
     setError(null);
+    
+    // Generate task ID for progress tracking
+    const taskId = generateTaskId();
+    
+    // Start progress stream (SSE)
+    let eventSource = null;
+    eventSource = createProgressStream(
+      taskId,
+      (progressData) => {
+        if (onProgressChange) {
+          onProgressChange(progressData);
+        }
+      },
+      (error) => {
+        console.error('Progress stream error:', error);
+      }
+    );
 
     if (onAnalysisStateChange) {
       onAnalysisStateChange(true);
@@ -92,7 +110,8 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
       const result = await analyzeProject(
         uploadedFile,
         quickMode,
-        abortControllerRef.current.signal
+        abortControllerRef.current.signal,
+        taskId  // Pass task ID for progress tracking
       );
       
       setAnalysisResult(result);
@@ -117,11 +136,19 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
       setError(err.message || 'Analysis failed');
     } finally {
       setIsAnalyzing(false);
+      // Close progress stream
+      if (eventSource) {
+        eventSource.close();
+      }
+      // Clear progress state
+      if (onProgressChange) {
+        onProgressChange(null);
+      }
       if (onAnalysisStateChange) {
         onAnalysisStateChange(false);
       }
     }
-  }, [uploadedFile, quickMode, onAnalysisStateChange, onResultChange]);
+  }, [uploadedFile, quickMode, onAnalysisStateChange, onResultChange, onProgressChange]);
 
   // Handle file selection
   const handleFileSelect = useCallback(async (event) => {
