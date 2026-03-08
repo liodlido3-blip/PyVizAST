@@ -1,11 +1,5 @@
 name: PyVizAST Code Analyzer
 
-# This action can be used in other projects to analyze Python code
-# Usage:
-#   - uses: ChidcGithub/PyVizAST/.github/workflows/analyze.yml@main
-#     with:
-#       path: 'src'  # Directory to analyze
-
 on:
   workflow_call:
     inputs:
@@ -40,82 +34,76 @@ jobs:
     
     - name: Analyze code
       id: analyze
+      env:
+        ANALYZE_PATH: ${{ inputs.path }}
       run: |
-        python -c "
-import os
-import json
-import ast
-import sys
-sys.path.insert(0, os.getcwd())
-
-# Simple analysis script
-path = '${{ inputs.path }}'
-results = {
-    'total_files': 0,
-    'total_lines': 0,
-    'issues': [],
-    'metrics': {}
-}
-
-for root, dirs, files in os.walk(path):
-    # Skip hidden and common ignore directories
-    dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['node_modules', '__pycache__', 'venv', 'env']]
-    
-    for file in files:
-        if file.endswith('.py'):
-            filepath = os.path.join(root, file)
-            results['total_files'] += 1
+        python << 'EOF'
+        import os
+        import json
+        import ast
+        import sys
+        
+        path = os.environ.get('ANALYZE_PATH', '.')
+        results = {
+            'total_files': 0,
+            'total_lines': 0,
+            'issues': [],
+            'metrics': {}
+        }
+        
+        for root, dirs, files in os.walk(path):
+            dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['node_modules', '__pycache__', 'venv', 'env']]
             
-            try:
-                with open(filepath, 'r', encoding='utf-8') as f:
-                    content = f.read()
-                    lines = content.splitlines()
-                    results['total_lines'] += len(lines)
+            for file in files:
+                if file.endswith('.py'):
+                    filepath = os.path.join(root, file)
+                    results['total_files'] += 1
                     
-                # Parse AST
-                tree = ast.parse(content)
-                
-                # Count functions and classes
-                for node in ast.walk(tree):
-                    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                        if len(node.body) > 50:
-                            results['issues'].append({
-                                'file': filepath,
-                                'line': node.lineno,
-                                'type': 'long_function',
-                                'message': f\"Function '{node.name}' has {len(node.body)} lines\"
-                            })
-                    elif isinstance(node, ast.ClassDef):
-                        methods = [n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
-                        if len(methods) > 15:
-                            results['issues'].append({
-                                'file': filepath,
-                                'line': node.lineno,
-                                'type': 'large_class',
-                                'message': f\"Class '{node.name}' has {len(methods)} methods\"
-                            })
-                            
-            except SyntaxError as e:
-                results['issues'].append({
-                    'file': filepath,
-                    'line': e.lineno,
-                    'type': 'syntax_error',
-                    'message': str(e)
-                })
-
-# Output results
-print(json.dumps(results, indent=2))
-
-# Save to file
-with open('analysis-results.json', 'w') as f:
-    json.dump(results, f, indent=2)
-
-# Print summary
-print(f'\n=== PyVizAST Analysis Summary ===')
-print(f'Files analyzed: {results[\"total_files\"]}')
-print(f'Total lines: {results[\"total_lines\"]}')
-print(f'Issues found: {len(results[\"issues\"])}')
-"
+                    try:
+                        with open(filepath, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            lines = content.splitlines()
+                            results['total_lines'] += len(lines)
+                        
+                        tree = ast.parse(content)
+                        
+                        for node in ast.walk(tree):
+                            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                                if len(node.body) > 50:
+                                    results['issues'].append({
+                                        'file': filepath,
+                                        'line': node.lineno,
+                                        'type': 'long_function',
+                                        'message': f"Function '{node.name}' has {len(node.body)} lines"
+                                    })
+                            elif isinstance(node, ast.ClassDef):
+                                methods = [n for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
+                                if len(methods) > 15:
+                                    results['issues'].append({
+                                        'file': filepath,
+                                        'line': node.lineno,
+                                        'type': 'large_class',
+                                        'message': f"Class '{node.name}' has {len(methods)} methods"
+                                    })
+                                    
+                    except SyntaxError as e:
+                        results['issues'].append({
+                            'file': filepath,
+                            'line': e.lineno or 0,
+                            'type': 'syntax_error',
+                            'message': str(e)
+                        })
+        
+        print(json.dumps(results, indent=2))
+        
+        with open('analysis-results.json', 'w') as f:
+            json.dump(results, f, indent=2)
+        
+        print('\n=== PyVizAST Analysis Summary ===')
+        print(f"Files analyzed: {results['total_files']}")
+        print(f"Total lines: {results['total_lines']}")
+        print(f"Issues found: {len(results['issues'])}")
+        EOF
     
     - name: Upload results
       uses: actions/upload-artifact@v4
