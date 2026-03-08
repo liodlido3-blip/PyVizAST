@@ -1,66 +1,85 @@
-/* ProjectAnalysisView.css - Premium Black & White Theme */
+/* ProjectAnalysisView.css - Premium Refined Design */
 
-/* 上传面板 */
+/* ========== 上传面板 ========== */
 .project-upload-panel {
   height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 24px;
 }
 
 .upload-area-compact {
   text-align: center;
-  padding: 36px 28px;
+  padding: 42px 32px;
   border: 1px dashed var(--border-default);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   background: var(--bg-secondary);
   transition: all var(--transition-fast);
-  max-width: 280px;
+  max-width: 300px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 微质感 */
+.upload-area-compact::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
 }
 
 .upload-area-compact:hover {
   border-color: var(--border-emphasis);
   background: var(--bg-elevated);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .upload-area-compact .upload-icon {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
   color: var(--text-muted);
 }
 
 .upload-area-compact h3 {
-  margin: 0 0 5px 0;
+  margin: 0 0 6px 0;
   color: var(--text-primary);
-  font-size: 0.95rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 600;
   letter-spacing: -0.01em;
 }
 
 .upload-area-compact p {
-  margin: 0 0 18px 0;
+  margin: 0 0 20px 0;
   color: var(--text-muted);
   font-size: 11px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .upload-area-compact .upload-button {
-  padding: 9px 22px;
+  padding: 10px 26px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   color: #000000;
   background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 100%);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: all var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .upload-area-compact .upload-button:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .upload-area-compact .upload-button:disabled {
@@ -69,7 +88,7 @@
   transform: none;
 }
 
-/* 文件面板 */
+/* ========== 文件面板 ========== */
 .project-file-panel {
   height: 100%;
   display: flex;
@@ -81,18 +100,19 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 11px 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-secondary);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+  box-shadow: var(--shadow-inset);
 }
 
 .project-name {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   color: var(--text-primary);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -100,7 +120,7 @@
 }
 
 .clear-button {
-  padding: 4px;
+  padding: 6px;
   background: transparent;
   border: none;
   border-radius: var(--radius-sm);
@@ -115,7 +135,7 @@
 }
 
 .panel-options {
-  padding: 8px 14px;
+  padding: 10px 16px;
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-secondary);
 }
@@ -123,7 +143,7 @@
 .quick-mode-toggle {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   font-size: 11px;
   color: var(--text-secondary);
   cursor: pointer;
@@ -135,8 +155,8 @@
 
 .file-stats {
   display: flex;
-  gap: 12px;
-  padding: 7px 14px;
+  gap: 14px;
+  padding: 8px 16px;
   font-size: 10px;
   color: var(--text-muted);
   background: var(--bg-tertiary);
@@ -150,8 +170,8 @@
 .analyzing-indicator {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 9px 14px;
+  gap: 10px;
+  padding: 10px 16px;
   background: var(--bg-hover);
   border-bottom: 1px solid var(--border-subtle);
   font-size: 11px;
@@ -160,11 +180,11 @@
 
 .analyzing-indicator .cancel-btn {
   margin-left: auto;
-  padding: 4px 8px;
+  padding: 5px 10px;
   font-size: 10px;
   background: transparent;
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-sm);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -178,15 +198,15 @@
 .error-message-compact {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: rgba(248, 113, 113, 0.06);
-  border-bottom: 1px solid rgba(248, 113, 113, 0.12);
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(248, 113, 113, 0.08), rgba(248, 113, 113, 0.02));
+  border-bottom: 1px solid rgba(248, 113, 113, 0.15);
   font-size: 11px;
   color: var(--error);
 }
 
-/* 文件树 */
+/* ========== 文件树 ========== */
 .file-tree {
   flex: 1;
   display: flex;
@@ -198,12 +218,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 7px 14px;
+  padding: 8px 16px;
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   background: var(--bg-secondary);
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -223,8 +243,8 @@
 .file-tree-item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: 10px;
+  padding: 10px 16px;
   font-size: 11px;
   color: var(--text-primary);
   cursor: default;
@@ -242,8 +262,9 @@
 
 .file-tree-item.selected {
   background: var(--bg-elevated);
-  border-left: 2px solid var(--text-primary);
-  padding-left: 12px;
+  border-left: 3px solid var(--text-primary);
+  padding-left: 13px;
+  box-shadow: var(--shadow-inset);
 }
 
 .file-tree-item svg {
@@ -261,16 +282,16 @@
 
 .file-tree-item .file-info {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
 .file-tree-item .complexity-badge,
 .file-tree-item .issue-badge {
-  padding: 2px 6px;
+  padding: 3px 7px;
   border-radius: var(--radius-xs);
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .file-tree-item .complexity-badge {
@@ -279,15 +300,15 @@
 }
 
 .file-tree-item .issue-badge {
-  background: rgba(248, 113, 113, 0.1);
+  background: rgba(248, 113, 113, 0.12);
   color: var(--error);
 }
 
 .analyze-hint-compact {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 9px 14px;
+  gap: 8px;
+  padding: 10px 16px;
   background: var(--bg-hover);
   border-top: 1px solid var(--border-subtle);
   font-size: 11px;
@@ -296,8 +317,8 @@
 
 /* 小型加载动画 */
 .loader-spinner.small {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border: 2px solid var(--border-subtle);
   border-top-color: var(--text-primary);
   border-radius: 50%;
@@ -309,19 +330,33 @@
 .project-result-panel {
   height: 100%;
   overflow-y: auto;
-  padding: 20px;
+  padding: 24px;
+  background: var(--bg-primary);
 }
 
-/* 健康评分卡片 */
+/* 健康评分卡片 - 黄金视角 */
 .project-result-panel .health-score-card {
   display: flex;
   align-items: center;
-  gap: 28px;
-  padding: 20px;
+  gap: 32px;
+  padding: 24px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  margin-bottom: 20px;
+  border-radius: var(--radius-xl);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.project-result-panel .health-score-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.04), transparent);
 }
 
 .project-result-panel .health-score-circle {
@@ -329,26 +364,28 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   background: var(--bg-tertiary);
-  border: 2px solid var(--border-default);
+  border: 3px solid var(--border-default);
+  box-shadow: var(--shadow-inset);
 }
 
 .project-result-panel .health-score-value {
-  font-size: 1.35rem;
-  font-weight: 600;
+  font-size: 1.5rem;
+  font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .project-result-panel .health-score-grade {
   font-size: 10px;
   color: var(--text-secondary);
-  margin-top: 2px;
+  margin-top: 3px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  font-weight: 600;
 }
 
 .project-result-panel .health-factors {
@@ -356,18 +393,18 @@
 }
 
 .project-result-panel .health-factors h4 {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   color: var(--text-secondary);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 .project-result-panel .health-factor {
   display: flex;
   justify-content: space-between;
-  padding: 5px 0;
+  padding: 6px 0;
   font-size: 11px;
   border-bottom: 1px solid var(--border-subtle);
 }
@@ -396,121 +433,132 @@
 .project-result-panel .health-score-circle.grade-f { border-color: var(--error); }
 .project-result-panel .health-score-circle.grade-f .health-score-value { color: var(--error); }
 
-/* 统计卡片 */
+/* 统计卡片 - KPI 设计 */
 .project-result-panel .stats-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .project-result-panel .stat-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 14px;
+  padding: 18px 14px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   text-align: center;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-inset);
+}
+
+.project-result-panel .stat-card:hover {
+  border-color: var(--border-default);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
 .project-result-panel .stat-value {
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
 }
 
 .project-result-panel .stat-label {
   font-size: 9px;
   color: var(--text-muted);
-  margin-top: 4px;
+  margin-top: 6px;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
+  font-weight: 500;
 }
 
-/* 问题统计 */
+/* 问题统计 - 状态颜色 */
 .project-result-panel .issues-summary {
-  padding: 14px;
+  padding: 16px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  margin-bottom: 20px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-inset);
 }
 
 .project-result-panel .issues-summary h4 {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   color: var(--text-secondary);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 .project-result-panel .issues-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .project-result-panel .issue-stat {
-  padding: 3px 9px;
+  padding: 4px 12px;
   border-radius: 100px;
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .project-result-panel .issue-stat.critical {
-  background: rgba(248, 113, 113, 0.08);
+  background: rgba(248, 113, 113, 0.1);
   color: var(--error);
-  border: 1px solid rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.15);
 }
 
 .project-result-panel .issue-stat.error {
-  background: rgba(249, 115, 22, 0.08);
+  background: rgba(249, 115, 22, 0.1);
   color: #fb923c;
-  border: 1px solid rgba(249, 115, 22, 0.12);
+  border: 1px solid rgba(249, 115, 22, 0.15);
 }
 
 .project-result-panel .issue-stat.warning {
-  background: rgba(250, 204, 21, 0.08);
+  background: rgba(250, 204, 21, 0.1);
   color: var(--warning);
-  border: 1px solid rgba(250, 204, 21, 0.12);
+  border: 1px solid rgba(250, 204, 21, 0.15);
 }
 
 .project-result-panel .issue-stat.info {
-  background: rgba(148, 163, 184, 0.08);
+  background: rgba(148, 163, 184, 0.1);
   color: var(--info);
-  border: 1px solid rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.15);
 }
 
 .project-result-panel .issue-stat.none {
-  background: rgba(74, 222, 128, 0.08);
+  background: rgba(74, 222, 128, 0.1);
   color: var(--success);
-  border: 1px solid rgba(74, 222, 128, 0.12);
+  border: 1px solid rgba(74, 222, 128, 0.15);
 }
 
 /* 文件列表（紧凑） */
 .project-result-panel .files-section {
-  padding: 14px;
+  padding: 16px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-inset);
 }
 
 .project-result-panel .files-header h4 {
-  margin: 0 0 3px 0;
+  margin: 0 0 4px 0;
   color: var(--text-secondary);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 .project-result-panel .files-hint {
-  margin: 0 0 10px 0;
+  margin: 0 0 12px 0;
   font-size: 10px;
   color: var(--text-muted);
 }
@@ -518,8 +566,8 @@
 .project-result-panel .files-list.compact {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  max-height: 380px;
+  gap: 3px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
@@ -527,21 +575,23 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
+  padding: 10px 12px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: 11px;
-  transition: border-color var(--transition-fast);
+  transition: all var(--transition-fast);
 }
 
 .project-result-panel .file-item-compact:hover {
   border-color: var(--border-default);
+  background: var(--bg-elevated);
 }
 
 .project-result-panel .file-item-compact.selected {
   background: var(--bg-elevated);
   border-color: var(--text-primary);
+  box-shadow: var(--shadow-inset);
 }
 
 .project-result-panel .file-item-compact .file-path {
@@ -563,23 +613,24 @@
 
 /* 全局问题 */
 .project-result-panel .global-issues-section {
-  padding: 14px;
+  padding: 16px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-inset);
 }
 
 .project-result-panel .global-issues-section h4 {
-  margin: 0 0 12px 0;
+  margin: 0 0 14px 0;
   color: var(--text-secondary);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 .project-result-panel .issue-type-group {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .project-result-panel .issue-type-group:last-child {
@@ -587,49 +638,50 @@
 }
 
 .project-result-panel .issue-type-group h5 {
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
   color: var(--text-muted);
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 500;
+  letter-spacing: 0.1em;
+  font-weight: 600;
 }
 
 .project-result-panel .issue-type-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .project-result-panel .global-issue-item {
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-subtle);
-  border-left: 2px solid var(--border-default);
-  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--border-default);
+  border-radius: var(--radius-md);
 }
 
 .project-result-panel .global-issue-item .issue-header {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 10px;
+  margin-bottom: 6px;
 }
 
 .project-result-panel .global-issue-item .issue-message {
   flex: 1;
   font-size: 11px;
   color: var(--text-primary);
+  font-weight: 500;
 }
 
 .project-result-panel .issue-locations {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .project-result-panel .issue-location {
-  padding: 2px 6px;
+  padding: 3px 8px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xs);
@@ -640,23 +692,24 @@
 
 /* 依赖分析 */
 .project-result-panel .dependencies-section {
-  padding: 14px;
+  padding: 16px;
   background: var(--bg-secondary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-inset);
 }
 
 .project-result-panel .dependencies-section h4 {
-  margin: 0 0 12px 0;
+  margin: 0 0 14px 0;
   color: var(--text-secondary);
   font-size: 10px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
 }
 
 .project-result-panel .dep-group {
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .project-result-panel .dep-group:last-child {
@@ -664,25 +717,26 @@
 }
 
 .project-result-panel .dep-group h5 {
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
   color: var(--text-muted);
   font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 500;
+  letter-spacing: 0.1em;
+  font-weight: 600;
 }
 
 .project-result-panel .dep-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
 .project-result-panel .dep-tag {
-  padding: 3px 9px;
+  padding: 4px 12px;
   border-radius: 100px;
   font-size: 10px;
   font-family: var(--font-mono);
+  font-weight: 500;
 }
 
 .project-result-panel .dep-tag.external {
@@ -700,26 +754,26 @@
 .project-result-panel .dependency-graph {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  max-height: 280px;
+  gap: 6px;
+  max-height: 300px;
   overflow-y: auto;
 }
 
 .project-result-panel .dependency-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
+  gap: 12px;
+  padding: 10px 12px;
   background: var(--bg-tertiary);
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   font-size: 10px;
 }
 
 .project-result-panel .dep-source {
   font-family: var(--font-mono);
   color: var(--text-primary);
-  min-width: 110px;
+  min-width: 120px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -732,13 +786,13 @@
 .project-result-panel .dep-targets {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
 }
 
-/* 响应式 */
+/* ========== 响应式 ========== */
 @media (max-width: 768px) {
   .project-result-panel {
-    padding: 14px;
+    padding: 18px;
   }
   
   .project-result-panel .stats-grid {
@@ -748,7 +802,7 @@
   .project-result-panel .health-score-card {
     flex-direction: column;
     text-align: center;
-    gap: 18px;
+    gap: 20px;
   }
 }
 
@@ -756,14 +810,15 @@
 .file-tree-header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 /* 小型保存按钮 */
 .save-btn.small {
-  padding: 4px 10px;
+  padding: 5px 12px;
   font-size: 10px;
-  gap: 4px;
+  gap: 5px;
+  font-weight: 600;
 }
 
 /* 编辑中状态 */
@@ -773,12 +828,12 @@
 }
 
 .edit-badge {
-  padding: 2px 6px;
+  padding: 3px 8px;
   background: var(--bg-hover);
   color: var(--text-secondary);
   border-radius: var(--radius-xs);
   font-size: 9px;
-  font-weight: 500;
+  font-weight: 600;
   border: 1px solid var(--border-default);
 }
 
@@ -791,22 +846,23 @@
 .edit-mode-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
+  gap: 12px;
+  padding: 12px 16px;
   background: var(--bg-tertiary);
   border-bottom: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-inset);
 }
 
 .exit-edit-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   padding: 0;
   background: transparent;
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: var(--text-secondary);
   cursor: pointer;
   transition: all var(--transition-fast);
@@ -820,8 +876,8 @@
 
 .editing-file-name {
   flex: 1;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -832,29 +888,33 @@
 .edit-mode-header .save-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 8px;
+  padding: 8px 16px;
   background: linear-gradient(180deg, #ffffff 0%, #e8e8e8 100%);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   color: #000000;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-fast);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .edit-mode-header .save-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .editing-file-path {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
+  gap: 10px;
+  padding: 10px 16px;
   background: var(--bg-primary);
   border-bottom: 1px solid var(--border-subtle);
   font-size: 10px;
@@ -873,18 +933,18 @@
 }
 
 .edit-mode-hint {
-  padding: 14px;
+  padding: 16px;
   text-align: center;
   color: var(--text-muted);
   font-size: 11px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 /* 面板头部操作区 */
 .panel-header-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
 /* 保存按钮（头部） */
@@ -892,8 +952,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   background: var(--text-primary);
   border: none;

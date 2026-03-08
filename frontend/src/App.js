@@ -248,7 +248,6 @@ function App() {
   
   // Selected file in project mode
   const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedFileIndex, setSelectedFileIndex] = useState(null);
   const [isFileEditMode, setIsFileEditMode] = useState(false);
   
   // Splitter drag state
@@ -426,14 +425,12 @@ function App() {
   // File selection callback (single click)
   const handleFileSelect = useCallback((fileAnalysis, index) => {
     setSelectedFile(fileAnalysis);
-    setSelectedFileIndex(index);
     setIsFileEditMode(false);
   }, []);
 
   // File double-click callback (enter edit mode)
   const handleFileDoubleClick = useCallback((fileAnalysis, index) => {
     setSelectedFile(fileAnalysis);
-    setSelectedFileIndex(index);
     setIsFileEditMode(true);
     // Set file content to editor (content is at fileAnalysis root level)
     if (fileAnalysis?.content) {
@@ -445,7 +442,6 @@ function App() {
   const handleExitEditMode = useCallback(() => {
     setIsFileEditMode(false);
     setSelectedFile(null);
-    setSelectedFileIndex(null);
   }, []);
 
   // Switch analysis mode
@@ -706,13 +702,21 @@ function App() {
                   )}
                   
                   {error && (
-                    <div className="error-message">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <line x1="12" y1="8" x2="12" y2="12" />
-                        <line x1="12" y1="16" x2="12.01" y2="16" />
-                      </svg>
-                      {error}
+                    <div className="error-message error-detailed">
+                      <div className="error-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="12" y1="8" x2="12" y2="12" />
+                          <line x1="12" y1="16" x2="12.01" y2="16" />
+                        </svg>
+                      </div>
+                      <div className="error-content">
+                        <div className="error-title">Analysis Error</div>
+                        <div className="error-text">{error}</div>
+                        <div className="error-hint">
+                          Tip: Check your Python code syntax, or try with a simpler example.
+                        </div>
+                      </div>
                     </div>
                   )}
                   

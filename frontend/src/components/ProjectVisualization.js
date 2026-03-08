@@ -9,26 +9,6 @@ import './components.css';
 cytoscape.use(dagre);
 cytoscape.use(fcose);
 
-// Color mapping - black and white gray tones
-const NODE_COLORS = {
-  file: '#ffffff',      // White fill - regular module
-  module: '#f3f4f6',    // Light gray - module
-  external: '#9ca3af',  // Gray - external dependency
-  circular: '#fecaca',  // Light red - circular dependency
-};
-
-const NODE_BORDER_COLORS = {
-  file: '#374151',      // Dark gray border - regular module
-  module: '#4b5563',    // Gray border
-  external: '#6b7280',  // Gray border
-  circular: '#dc2626',  // Red border - circular dependency
-};
-
-const EDGE_COLORS = {
-  import: '#4b5563',    // Dark gray - regular import
-  circular: '#dc2626',  // Red - circular dependency
-};
-
 /**
  * Project Dependency Visualization Component
  * Uses Cytoscape.js to display project file dependency graphs
@@ -37,8 +17,6 @@ function ProjectVisualization({ projectResult, theme, viewMode = '2d' }) {
   const containerRef = useRef(null);
   const cyRef = useRef(null);
   const [selectedNode, setSelectedNode] = useState(null);
-  const [hoverNode, setHoverNode] = useState(null);
-  const [isReady, setIsReady] = useState(false);
 
   // Process dependency data into graph data
   const graphData = useMemo(() => {
@@ -237,21 +215,7 @@ function ProjectVisualization({ projectResult, theme, viewMode = '2d' }) {
         });
       });
 
-      cy.on('mouseover', 'node', (evt) => {
-        const node = evt.target;
-        setHoverNode({
-          id: node.id(),
-          label: node.data('label'),
-          fullPath: node.data('fullPath'),
-        });
-      });
-
-      cy.on('mouseout', 'node', () => {
-        setHoverNode(null);
-      });
-
       cyRef.current = cy;
-      setIsReady(true);
       return true;
     } catch (error) {
       console.error('Cytoscape initialization error:', error);
@@ -300,7 +264,6 @@ function ProjectVisualization({ projectResult, theme, viewMode = '2d' }) {
         } catch (e) {}
         cyRef.current = null;
       }
-      setIsReady(false);
     };
   }, [initCytoscape, graphData.nodes.length]);
 

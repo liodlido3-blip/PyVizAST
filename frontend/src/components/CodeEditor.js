@@ -93,7 +93,6 @@ const CodeEditor = forwardRef(function CodeEditor({ code, onChange, theme }, ref
       // Ensure line number is within valid range
       const lineCount = model.getLineCount();
       const targetLine = Math.max(1, Math.min(lineNumber, lineCount));
-      const targetColumn = Math.max(1, column);
       
       // Set selection
       if (endLine && endLine > targetLine) {

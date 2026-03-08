@@ -107,8 +107,6 @@ Write-Host " The service has started. Press Ctrl+C to stop all services." -Foreg
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-start http://localhost:3000
-
 # Waiting for user interruption
 try {
     while ($true) {

@@ -75,8 +75,6 @@ function applyPatchFallback(originalCode, patchContent) {
     // Parse hunks - consistent with backend patches.py
     const hunks = [];
     let currentHunk = null;
-    let oldLineNum = 0;
-    let newLineNum = 0;
     
     for (let i = 0; i < patchLines.length; i++) {
       const line = patchLines[i];
@@ -102,8 +100,6 @@ function applyPatchFallback(originalCode, patchContent) {
             added: 0,
             lines: [],
           };
-          oldLineNum = currentHunk.oldStart;
-          newLineNum = currentHunk.newStart;
         } else {
           console.error(`Invalid hunk header format: ${line}`);
           return null;
@@ -118,13 +114,11 @@ function applyPatchFallback(originalCode, patchContent) {
           currentHunk.additions.push(content);
           currentHunk.lines.push(content);
           currentHunk.added++;
-          newLineNum++;
         } else if (line.startsWith('-')) {
           // Deleted line
           const content = line.substring(1);
           currentHunk.removals.push(content);
           currentHunk.deleted++;
-          oldLineNum++;
         } else if (line.startsWith('\\')) {
           // Continuation indicator, ignore
           continue;
@@ -133,13 +127,9 @@ function applyPatchFallback(originalCode, patchContent) {
           const content = line.startsWith(' ') ? line.substring(1) : line;
           currentHunk.context.push(content);
           currentHunk.lines.push(content);
-          oldLineNum++;
-          newLineNum++;
         } else if (line === '') {
           // Empty line as context
           currentHunk.lines.push('');
-          oldLineNum++;
-          newLineNum++;
         }
       }
     }

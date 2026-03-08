@@ -35,7 +35,6 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
   const [analysisResult, setAnalysisResult] = useState(null);
   
   // UI state
-  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState(null);
   const [quickMode, setQuickMode] = useState(false);
   const [selectedFileIndex, setSelectedFileIndex] = useState(null);
@@ -73,8 +72,7 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
       hasFile: !!uploadedFile,
       hasScanResult: !!scanResult,
       hasAnalysisResult: !!analysisResult,
-      isAnalyzing,
-      isUploading
+      isAnalyzing
     })
   }));
 
@@ -277,9 +275,8 @@ const ProjectAnalysisView = forwardRef(function ProjectAnalysisView(
           <button 
             className="upload-button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
           >
-            {isUploading ? 'Uploading...' : 'Select File'}
+            Select File
           </button>
         </div>
 

@@ -147,12 +147,12 @@ class ASTParser:
             elif isinstance(ast_node.func, ast.Attribute):
                 return f"{self._get_attribute_name(ast_node.func)}"
         elif isinstance(ast_node, (ast.Import, ast.ImportFrom)):
-            names = [n.name for n in ast_node.names]
-            return ", ".join(names)
+            names = [n.name for n in ast_node.names if n.name]
+            return ", ".join(names) if names else None
         elif isinstance(ast_node, ast.Assign):
             targets = []
             for t in ast_node.targets:
-                if isinstance(t, ast.Name):
+                if isinstance(t, ast.Name) and t.id:
                     targets.append(t.id)
             return " = ".join(targets) if targets else None
         return None
@@ -270,16 +270,16 @@ class ASTParser:
         type_desc = self.NODE_STYLES.get(node_type, {}).get("description", node_type.value)
         
         if node_type == NodeType.FUNCTION:
-            args = attributes.get('args', [])
+            args = [a for a in attributes.get('args', []) if a]
             args_str = ', '.join(args[:3]) + ('...' if len(args) > 3 else '')
-            decorators = attributes.get('decorators', [])
+            decorators = [d for d in attributes.get('decorators', []) if d]
             dec_str = '@' + ' @'.join(decorators) + ' ' if decorators else ''
             return f"{dec_str}def {name}({args_str})"
         
         elif node_type == NodeType.CLASS:
-            bases = attributes.get('bases', [])
+            bases = [b for b in attributes.get('bases', []) if b]
             bases_str = '(' + ', '.join(bases) + ')' if bases else ''
-            decorators = attributes.get('decorators', [])
+            decorators = [d for d in attributes.get('decorators', []) if d]
             dec_str = '@' + ' @'.join(decorators) + ' ' if decorators else ''
             return f"{dec_str}class {name}{bases_str}"
         
@@ -296,6 +296,8 @@ class ASTParser:
         elif node_type == NodeType.CALL:
             args_count = attributes.get('args_count', 0)
             kwargs = attributes.get('kwargs', [])
+            # Filter out None values before joining
+            kwargs = [k for k in kwargs if k is not None]
             params = []
             if args_count > 0:
                 params.append(f"{args_count} args")
@@ -310,8 +312,11 @@ class ASTParser:
         elif node_type == NodeType.IMPORT:
             names = attributes.get('names', [])
             if names:
-                import_names = [n[0] if n[1] is None else f"{n[0]} as {n[1]}" for n in names[:3]]
-                return f"import {', '.join(import_names)}" + ('...' if len(names) > 3 else '')
+                import_names = []
+                for n in names[:3]:
+                    if n[0]:  # Skip if module name is None or empty
+                        import_names.append(n[0] if n[1] is None else f"{n[0]} as {n[1]}")
+                return f"import {', '.join(import_names)}" + ('...' if len(names) > 3 else '') if import_names else "import ..."
             return "import ..."
         
         elif node_type == NodeType.RETURN:
@@ -365,13 +370,13 @@ class ASTParser:
         explanations = {
             NodeType.FUNCTION: lambda: (
                 f"Function Definition: Defines a function named '{name}'.\n"
-                f"Parameters: {', '.join(attributes.get('args', [])) or 'none'}\n"
-                f"Decorators: {', '.join(attributes.get('decorators', [])) or 'none'}\n"
+                f"Parameters: {', '.join([a for a in attributes.get('args', []) if a]) or 'none'}\n"
+                f"Decorators: {', '.join([d for d in attributes.get('decorators', []) if d]) or 'none'}\n"
                 f"Tip: Functions are the basic units of code organization and can be called to perform specific tasks."
             ),
             NodeType.CLASS: lambda: (
                 f"Class Definition: Defines a class named '{name}'.\n"
-                f"Inherits from: {', '.join(attributes.get('bases', [])) or 'no base class'}\n"
+                f"Inherits from: {', '.join([b for b in attributes.get('bases', []) if b]) or 'no base class'}\n"
                 f"Tip: Classes are the core of object-oriented programming, encapsulating data and methods."
             ),
             NodeType.FOR: lambda: (
@@ -391,7 +396,7 @@ class ASTParser:
             NodeType.CALL: lambda: (
                 f"Function Call: Calls the '{name}' function.\n"
                 f"Argument Count: {attributes.get('args_count', 0)}\n"
-                f"Keyword Arguments: {', '.join(attributes.get('kwargs', [])) or 'none'}\n"
+                f"Keyword Arguments: {', '.join([k for k in attributes.get('kwargs', []) if k]) or 'none'}\n"
                 f"Tip: Function calls execute the code in the function body."
             ),
             NodeType.ASSIGN: lambda: (
@@ -447,7 +452,7 @@ class ASTParser:
             ),
             NodeType.COMPARE: lambda: (
                 f"Comparison: Compares two values.\n"
-                f"Operators: {', '.join(attributes.get('operators', ['?']))}\n"
+                f"Operators: {', '.join([o for o in attributes.get('operators', ['?']) if o])}\n"
                 f"Tip: Comparison operators include ==, !=, <, >, <=, >=, in, is, etc."
             ),
             NodeType.NAME: lambda: (
@@ -528,7 +533,7 @@ class ASTParser:
         
         elif isinstance(ast_node, ast.Call):
             attrs['args_count'] = len(ast_node.args)
-            attrs['kwargs'] = [kw.arg for kw in ast_node.keywords]
+            attrs['kwargs'] = [kw.arg if kw.arg is not None else "**kw.arg" for kw in ast_node.keywords]
         
         elif isinstance(ast_node, ast.BinOp):
             attrs['operator'] = type(ast_node.op).__name__
@@ -581,7 +586,7 @@ class ASTParser:
             return f"{value}[{slice_str}]"
         elif isinstance(annotation, ast.Tuple):
             elements = [self._get_annotation_string(el) for el in annotation.elts]
-            return ', '.join(elements)
+            return ', '.join([e for e in elements if e])
         return "Any"
     
     def _get_default_value_string(self, default: ast.AST) -> str:
@@ -771,8 +776,24 @@ class ASTParser:
         
         self._node_count += 1
         
-        # Create current node
-        node = self._create_ast_node(ast_node, parent_id)
+        # Create current node with error handling
+        try:
+            node = self._create_ast_node(ast_node, parent_id)
+        except Exception as e:
+            # Log the error but continue processing other nodes
+            node_type_name = type(ast_node).__name__
+            logger.warning(f"Error creating node for {node_type_name}: {e}")
+            # Create a fallback node to continue traversal
+            node = ASTNode(
+                id=f"fallback_{self._node_count}",
+                type=NodeType.UNKNOWN,
+                name=f"<error: {node_type_name}>",
+                label=f"Error in {node_type_name}",
+                lineno=getattr(ast_node, 'lineno', 0),
+                end_lineno=getattr(ast_node, 'end_lineno', 0),
+                col_offset=getattr(ast_node, 'col_offset', 0),
+                end_col_offset=getattr(ast_node, 'end_col_offset', 0),
+            )
         
         # Extract source code snippet
         if node.lineno and node.end_lineno:

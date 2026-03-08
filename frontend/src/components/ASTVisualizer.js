@@ -114,7 +114,6 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedSearchIndex, setSelectedSearchIndex] = useState(-1);
-  const [highlightedNodeIds, setHighlightedNodeIds] = useState(new Set());
   const searchInputRef = useRef(null);
 
   // Format attribute key using memoized map
@@ -145,7 +144,6 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
     // Empty query clears immediately
     if (!query.trim() || !graph) {
       setSearchResults([]);
-      setHighlightedNodeIds(new Set());
       return;
     }
     
@@ -168,7 +166,6 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
       }).slice(0, 20); // Limit result count
       
       setSearchResults(results);
-      setHighlightedNodeIds(new Set(results.filter(n => n && n.id).map(n => n.id)));
     }, 200);
   }, [graph]);
   
@@ -178,7 +175,6 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
     setSearchResults([]);
     setSelectedSearchIndex(-1);
     setIsSearchOpen(false);
-    setHighlightedNodeIds(new Set());
     
     // Remove all highlights
     if (cyRef.current) {

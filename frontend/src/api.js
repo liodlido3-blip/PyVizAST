@@ -15,7 +15,7 @@ const shouldRetry = (error, method) => {
   
   // Don't retry if user cancelled the request (AbortError, CanceledError)
   if (error.name === 'AbortError' || error.name === 'CanceledError' || 
-      error.code === 'ERR_CANCELED' || error.code === 'ECONNABORTED' && error.message?.includes('cancel')) {
+      error.code === 'ERR_CANCELED' || (error.code === 'ECONNABORTED' && error.message?.includes('cancel'))) {
     return false;
   }
   
@@ -97,8 +97,12 @@ const extractErrorMessage = (detail) => {
     return messages.join('; ');
   }
   
-  // Object format
+  // Object format (new error format from backend)
   if (typeof detail === 'object') {
+    // New format: {detail: string, error_type: string}
+    if (detail.detail && typeof detail.detail === 'string') {
+      return detail.detail;
+    }
     // Try to extract common fields
     if (detail.message) return detail.message;
     if (detail.msg) return detail.msg;

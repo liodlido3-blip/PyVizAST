@@ -50,124 +50,6 @@ const TYPE_CATEGORIES = {
 };
 
 /**
- * 3D Force-directed layout algorithm
- */
-function compute3DLayout(nodes, edges, iterations = LAYOUT_ITERATIONS) {
-  if (nodes.length === 0) return [];
-  
-  const positions = new Map();
-  const nodeMap = new Map();
-  
-  // Initialize positions
-  nodes.forEach((node, i) => {
-    // Spherical initialization based on hierarchy
-    const level = getNodeLevel(node, nodes);
-    const angle = (i / nodes.length) * Math.PI * 2;
-    const radius = level * NODE_SPACING;
-    
-    positions.set(node.id, {
-      x: Math.cos(angle) * radius + (Math.random() - 0.5) * 2,
-      y: level * NODE_SPACING * 0.5,
-      z: Math.sin(angle) * radius + (Math.random() - 0.5) * 2,
-      vx: 0,
-      vy: 0,
-      vz: 0
-    });
-    nodeMap.set(node.id, node);
-  });
-  
-  // Build adjacency list
-  const adjacency = new Map();
-  nodes.forEach(node => adjacency.set(node.id, new Set()));
-  
-  edges.forEach(edge => {
-    if (adjacency.has(edge.source)) {
-      adjacency.get(edge.source).add(edge.target);
-    }
-    if (adjacency.has(edge.target)) {
-      adjacency.get(edge.target).add(edge.source);
-    }
-  });
-  
-  // Force simulation
-  const repulsion = 15;
-  const attraction = 0.05;
-  const damping = 0.9;
-  const gravity = 0.01;
-  
-  for (let iter = 0; iter < iterations; iter++) {
-    // Repulsion between all nodes
-    const posArray = Array.from(positions.entries());
-    for (let i = 0; i < posArray.length; i++) {
-      for (let j = i + 1; j < posArray.length; j++) {
-        const [, p1] = posArray[i];
-        const [, p2] = posArray[j];
-        
-        const dx = p1.x - p2.x;
-        const dy = p1.y - p2.y;
-        const dz = p1.z - p2.z;
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.1;
-        
-        const force = repulsion / (dist * dist);
-        const fx = (dx / dist) * force;
-        const fy = (dy / dist) * force;
-        const fz = (dz / dist) * force;
-        
-        p1.vx += fx;
-        p1.vy += fy;
-        p1.vz += fz;
-        p2.vx -= fx;
-        p2.vy -= fy;
-        p2.vz -= fz;
-      }
-    }
-    
-    // Attraction along edges
-    edges.forEach(edge => {
-      const p1 = positions.get(edge.source);
-      const p2 = positions.get(edge.target);
-      if (!p1 || !p2) return;
-      
-      const dx = p2.x - p1.x;
-      const dy = p2.y - p1.y;
-      const dz = p2.z - p1.z;
-      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz) || 0.1;
-      
-      const force = (dist - NODE_SPACING * 2) * attraction;
-      const fx = (dx / dist) * force;
-      const fy = (dy / dist) * force;
-      const fz = (dz / dist) * force;
-      
-      p1.vx += fx;
-      p1.vy += fy;
-      p1.vz += fz;
-      p2.vx -= fx;
-      p2.vy -= fy;
-      p2.vz -= fz;
-    });
-    
-    // Gravity toward center
-    positions.forEach(p => {
-      p.vx -= p.x * gravity;
-      p.vy -= p.y * gravity;
-      p.vz -= p.z * gravity;
-    });
-    
-    // Apply velocity with damping
-    positions.forEach(p => {
-      p.vx *= damping;
-      p.vy *= damping;
-      p.vz *= damping;
-      p.x += p.vx;
-      p.y += p.vy;
-      p.z += p.vz;
-    });
-  }
-  
-  return positions;
-}
-
-/**
  * Get node hierarchy level
  */
 function getNodeLevel(node, allNodes) {
@@ -237,7 +119,6 @@ function computeHierarchicalLayout(nodes, edges) {
   
   // Position nodes using Reingold-Tilford style algorithm
   function positionNode(nodeId, x, y, z, leftBound, rightBound) {
-    const node = nodeMap.get(nodeId);
     const children = childrenMap.get(nodeId) || [];
     
     // Position current node
@@ -245,7 +126,6 @@ function computeHierarchicalLayout(nodes, edges) {
     
     if (children.length === 0) return;
     
-    const totalWidth = subtreeWidths.get(nodeId) || children.length;
     const childSpacing = (rightBound - leftBound) / children.length;
     const levelHeight = NODE_SPACING * 1.5;
     
@@ -287,7 +167,6 @@ function computeScopeGroupedLayout(nodes, edges) {
   if (nodes.length === 0) return new Map();
   
   const positions = new Map();
-  const nodeMap = new Map(nodes.map(n => [n.id, n]));
   
   // Group nodes by scope
   const scopeGroups = new Map(); // scope_name -> [nodes]
@@ -1042,7 +921,6 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
   const [searchResults, setSearchResults] = useState([]);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [selectedSearchIndex, setSelectedSearchIndex] = useState(-1);
-  const [highlightedNodeIds, setHighlightedNodeIds] = useState(new Set());
   const [isSearchResultHovered, setIsSearchResultHovered] = useState(false); // 跟踪搜索结果悬停
   const [isPanelExpanded, setIsPanelExpanded] = useState(false); // 详细面板放大状态
   const searchInputRef = useRef(null);
@@ -1073,7 +951,6 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
     
     if (!query.trim() || !graph) {
       setSearchResults([]);
-      setHighlightedNodeIds(new Set());
       return;
     }
     
@@ -1094,7 +971,6 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
     }).slice(0, 20);
     
     setSearchResults(results);
-    setHighlightedNodeIds(new Set(results.filter(n => n && n.id).map(n => n.id)));
   }, [graph]);
   
   // Clear search
@@ -1103,7 +979,6 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
     setSearchResults([]);
     setSelectedSearchIndex(-1);
     setIsSearchOpen(false);
-    setHighlightedNodeIds(new Set());
     setFocusedNode(null);
     setIsSearchResultHovered(false);
   }, []);

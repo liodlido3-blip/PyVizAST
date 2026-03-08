@@ -1,40 +1,12 @@
-```
-     ___           ___           ___                       ___           ___           ___           ___     
-    /\  \         |\__\         /\__\          ___        /\  \         /\  \         /\  \         /\  \    
-   /::\  \        |:|  |       /:/  /         /\  \      /::\  \       /::\  \       /::\  \        \:\  \   
-  /:/\:\  \       |:|  |      /:/  /          \:\  \    /:/\ \  \     /:/\:\  \     /:/\ \  \        \:\  \  
- /::\~\:\  \      |:|__|__   /:/__/  ___      /::\__\  _\:\~\ \  \   /::\~\:\  \   _\:\~\ \  \       /::\  \ 
-/:/\:\ \:\__\     /::::\__\  |:|  | /\__\  __/:/\/__/ /\ \:\ \ \__\ /:/\:\ \:\__\ /\ \:\ \ \__\     /:/\:\__\
-\/__\:\/:/  /    /:/~~/~     |:|  |/:/  / /\/:/  /    \:\ \:\ \/__/ \/__\:\/:/  / \:\ \:\ \/__/    /:/  \/__/
-     \::/  /    /:/  /       |:|__/:/  /  \::/__/      \:\ \:\__\        \::/  /   \:\ \:\__\     /:/  /     
-      \/__/     \/__/         \::::/__/    \:\__\       \:\/:/  /        /:/  /     \:\/:/  /     \/__/      
-                               ~~~~         \/__/        \::/  /        /:/  /       \::/  /                 
-                                                          \/__/         \/__/         \/__/                  
-```
-
 # PyVizAST
 
-[![Version](https://img.shields.io/badge/Version-0.5.0-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Version](https://img.shields.io/badge/Version-0.5.1-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ChidcGithub/PyVizAST)
 [![Status](https://img.shields.io/badge/Status-stable-brightgreen.svg)](https://github.com/ChidcGithub/PyVizAST)
 
 A Python AST Visualizer & Static Analyzer that transforms code into interactive graphs. Detect complexity, performance bottlenecks, and code smells with actionable refactoring suggestions.
-
-## Screenshots
-
-### Single File Analyze
-![img.png](img/img.png)
-![img_4.png](img/img_4.png)
-![img_2.png](img/img_2.png)
-![img_3.png](img/img_3.png)
-
----
-
-### Project & Multiple Files Analyze
-
-![img_1.png](img/img_1.png)
 
 ## Features
 
@@ -218,6 +190,47 @@ Contributions are welcome. Please submit pull requests to the main repository.
 <details>
 
 <summary>Version History</summary>
+
+<details>
+<summary>v0.5.1 (2026-03-08)</summary>
+
+**UI/UX Improvements:**
+- Premium card design with micro-texture effects:
+  - Subtle radial gradients and top light strips
+  - KPI cards with large primary values (32px/700 weight)
+  - Secondary info dimmed with `text-muted` color
+  - Status color borders (success/warning/error indicators)
+- Enhanced table styling with zebra striping
+- Refined button system with gradient backgrounds and hover effects
+- Improved shadow and border consistency across all components
+
+**Error Handling Overhaul:**
+- Backend returns detailed, user-friendly error messages:
+  - Error type classification (TypeError, AttributeError, etc.)
+  - Specific suggestions for common issues
+  - Recursion/Memory error handling with clear guidance
+- Frontend displays structured error panels:
+  - Error icon, title, and detailed message
+  - Helpful tips for resolution
+- AST parser robustness:
+  - Graceful handling of unexpected node types
+  - Fallback nodes for unparseable structures
+  - None value filtering in all `.join()` operations
+
+**Bug Fixes:**
+- Fixed `TypeError: sequence item 0: expected str instance, NoneType found`
+- Fixed all `.join()` operations to filter None values
+- Fixed node creation errors causing analysis crashes
+- Fixed ESLint warnings in frontend components
+
+**Files Updated:**
+- `AnalysisPanel.css`, `components.css`, `App.css` - UI polish
+- `ProjectAnalysisView.css`, `LearnChallenge.css` - Layout refinements
+- `parser.py` - Error handling and None filtering
+- `main.py` - Enhanced exception handlers
+- `api.js`, `App.js` - Frontend error display
+
+</details>
 
 <details>
 <summary>v0.5.0 (2026-03-07)</summary>

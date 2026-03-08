@@ -276,6 +276,10 @@ function Confetti({ show }) {
         case 2: // Wavy ribbon
           drawWavyRibbon(ctx, w, h, currentBend, p.bendPhase);
           break;
+          
+        default:
+          drawCurvedStrip(ctx, w, h, currentBend, currentFold);
+          break;
       }
     }
     
