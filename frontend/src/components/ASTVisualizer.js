@@ -768,7 +768,7 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
       isInitializedRef.current = false;
       pendingElementsRef.current = null;
     };
-  }, []); // Only run once on mount
+  }, [getLayoutConfig]); // Include getLayoutConfig since it's used inside
 
   // Update elements when data changes (incremental update)
   useEffect(() => {
