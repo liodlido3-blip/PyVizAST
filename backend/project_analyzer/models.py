@@ -2,7 +2,7 @@
 Data models for project-level analysis
 Using Pydantic BaseModel consistently for type system consistency
 """
-from typing import Optional, List, Dict, Any, Set
+from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field, ConfigDict
 
 

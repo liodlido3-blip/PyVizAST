@@ -3,11 +3,11 @@ Dependency Analyzer - Analyze module dependencies
 """
 import ast
 from pathlib import Path
-from typing import Dict, List, Set, Optional, Tuple
+from typing import Dict, List, Set, Optional
 from dataclasses import dataclass, field
 from collections import defaultdict
 
-from .models import ImportInfo, DependencyEdge, DependencyGraph
+from .models import ImportInfo, DependencyGraph
 from ..utils.logger import get_logger
 
 logger = get_logger(__name__)

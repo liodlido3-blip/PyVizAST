@@ -9,7 +9,6 @@ import time
 import ast
 from pathlib import Path
 from typing import List, Optional, Set, Tuple
-from dataclasses import dataclass
 
 from .models import FileInfo, ProjectScanResult
 from ..utils.logger import get_logger
@@ -262,11 +261,10 @@ class ProjectScanner:
     def count_lines(content: str) -> int:
         """Count code lines (excluding empty lines and comments)"""
         try:
-            tree = ast.parse(content)
+            ast.parse(content)  # Validate syntax
             # Simple count: total lines - empty lines - pure comment lines
             lines = content.split('\n')
             code_lines = 0
-            in_multiline_string = False
             
             for line in lines:
                 stripped = line.strip()
@@ -284,4 +282,4 @@ class ProjectScanner:
             return code_lines
         except SyntaxError:
             # If parsing fails, return simple line count
-            return len([l for l in content.split('\n') if l.strip() and not l.strip().startswith('#')])
+            return len([line for line in content.split('\n') if line.strip() and not line.strip().startswith('#')])

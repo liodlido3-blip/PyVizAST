@@ -9,9 +9,14 @@ import ast
 import json
 import logging
 import os
+import tempfile
+import shutil
+import time
+import threading
 from pathlib import Path
-from typing import Optional, Dict, Any, List
 from datetime import datetime
+from dataclasses import dataclass
+from typing import Optional, Dict, Any, List
 
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request, status, UploadFile, File, Form
@@ -20,25 +25,21 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, ValidationError
 
 from .models.schemas import (
-    CodeInput, AnalysisResult, ASTGraph,
+    CodeInput, AnalysisResult,
     ComplexityMetrics, CodeIssue, SeverityLevel,
-    PerformanceHotspot, OptimizationSuggestion,
     LearningModeResult, ChallengeResult
 )
 from .ast_parser import ASTParser, NodeMapper
 from .analyzers import ComplexityAnalyzer, PerformanceAnalyzer, CodeSmellDetector, SecurityScanner
 from .optimizers import SuggestionEngine, PatchGenerator
-from .utils.logger import get_logger, log_exception, init_logging
+from .utils.logger import log_exception, init_logging
 from .utils.progress import progress_tracker, ProgressStage
 from .project_analyzer import (
     ProjectScanner,
     DependencyAnalyzer,
     CycleDetector,
-    SymbolExtractor,
     UnusedExportDetector,
     ProjectMetricsAggregator,
-    ProjectScanResult,
-    ProjectAnalysisResult,
     FileAnalysisResult,
     FileSummary,
     FileInfo,
@@ -258,9 +259,6 @@ async def health_check():
 
 # ============== Progress Tracking Endpoints ==============
 
-from fastapi.responses import StreamingResponse
-
-
 @app.get("/api/progress/{task_id}")
 async def get_progress(task_id: str):
     """Get current progress state for a task"""
@@ -468,7 +466,7 @@ async def get_ast(input_data: CodeInput):
     Get AST graph structure
     For visualization
     """
-    logger.debug(f"Getting AST graph structure")
+    logger.debug("Getting AST graph structure")
     
     try:
         code = input_data.code
@@ -1278,17 +1276,7 @@ async def receive_frontend_logs(request: FrontendLogsRequest):
         logger.error(f"Failed to save frontend logs: {e}")
         return {"status": "error", "message": str(e)}
 
-
 # ============== Project-level Analysis Endpoints ==============
-
-import tempfile
-import shutil
-import time
-import threading
-from fastapi import UploadFile, File, Form
-from dataclasses import dataclass
-from typing import Optional
-
 
 @dataclass
 class ProjectStorageEntry:

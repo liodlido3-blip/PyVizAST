@@ -153,11 +153,11 @@ def init_logging(level: int = logging.INFO):
     index_file = LOG_DIR / "index.txt"
     if not index_file.exists():
         with open(index_file, 'w', encoding='utf-8') as f:
-            f.write(f"PyVizAST Log Files\n")
+            f.write("PyVizAST Log Files\n")
             f.write(f"Created: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"{'='*50}\n\n")
-            f.write(f"app.log - Application log\n")
-            f.write(f"error.log - Error log\n")
+            f.write("app.log - Application log\n")
+            f.write("error.log - Error log\n")
     
     main_logger.info("Logging system initialized")
     return main_logger

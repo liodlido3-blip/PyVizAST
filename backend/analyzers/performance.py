@@ -3,7 +3,7 @@ Performance Analyzer - Performance hotspot detection
 Analyzes potential performance issues in code
 """
 import ast
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Optional, Tuple
 from ..models.schemas import CodeIssue, SeverityLevel, PerformanceHotspot
 
 
@@ -68,8 +68,6 @@ class PerformanceAnalyzer:
         
         if tree is None:
             tree = ast.parse(code)
-        
-        source_lines = code.splitlines()
         
         # Execute various performance checks
         self._detect_inefficient_loops(tree)
@@ -462,7 +460,7 @@ class PerformanceAnalyzer:
                                     id=self.detector._generate_issue_id("redundant_calc"),
                                     type="performance",
                                     severity=SeverityLevel.INFO,
-                                    message=f"Potentially redundant calculation detected, same expression called multiple times in loop",
+                                    message="Potentially redundant calculation detected, same expression called multiple times in loop",
                                     lineno=getattr(node, 'lineno', None),
                                     suggestion="Consider caching the result in a variable outside or at the start of the loop"
                                 ))

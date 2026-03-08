@@ -3,7 +3,7 @@ Code Smell Detector - Code smell detection
 Detects long functions, god classes, duplicate code, etc.
 """
 import ast
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Optional
 from collections import Counter
 from ..models.schemas import CodeIssue, SeverityLevel
 
@@ -313,7 +313,7 @@ class CodeSmellDetector:
         for line, count in line_count.items():
             if count > 3 and len(line) > 20:  # Exclude short lines and comments
                 # Find positions of these lines
-                positions = [i + 1 for i, l in enumerate(source_lines) if l.strip() == line.strip()]
+                positions = [i + 1 for i, line_item in enumerate(source_lines) if line_item.strip() == line.strip()]
                 
                 self.issues.append(CodeIssue(
                     id=self._generate_issue_id("duplicate"),

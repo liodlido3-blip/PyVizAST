@@ -3,7 +3,7 @@ Unused Export Detector - Detect unused exported symbols
 """
 import ast
 from pathlib import Path
-from typing import Dict, List, Set, Tuple, Optional
+from typing import Dict, List, Set
 from collections import defaultdict
 from dataclasses import dataclass
 
@@ -147,9 +147,6 @@ class UnusedExportDetector:
             for usage in usage_list:
                 # Try to resolve symbol source
                 source_module = usage.source_module
-                
-                # Get dependencies of this module
-                deps = self.dependency_analyzer.get_dependencies(source_module)
                 
                 # Record usage
                 self.used_symbols[symbol_name].add(source_module)

@@ -6,8 +6,7 @@ Supports performance optimization mode for large codebases
 @link: github.com/chidcGithub
 """
 import ast
-import uuid
-from typing import Dict, List, Optional, Any, Set
+from typing import Dict, List, Optional, Any
 from ..models.schemas import (
     ASTNode, ASTEdge, ASTGraph, NodeType
 )
@@ -380,89 +379,89 @@ class ASTParser:
                 f"Tip: Classes are the core of object-oriented programming, encapsulating data and methods."
             ),
             NodeType.FOR: lambda: (
-                f"For Loop: Iterates over an iterable object.\n"
+                "For Loop: Iterates over an iterable object.\n"
                 f"Loop Variable: {attributes.get('target', 'item')}\n"
-                f"Tip: for loops are used to iterate over sequences (lists, tuples, strings) or other iterable objects."
+                "Tip: for loops are used to iterate over sequences (lists, tuples, strings) or other iterable objects."
             ),
             NodeType.WHILE: lambda: (
-                f"While Loop: Repeatedly executes while condition is true.\n"
-                f"Tip: while loops continue until the condition becomes false. Be careful to avoid infinite loops!"
+                "While Loop: Repeatedly executes while condition is true.\n"
+                "Tip: while loops continue until the condition becomes false. Be careful to avoid infinite loops!"
             ),
             NodeType.IF: lambda: (
-                f"Conditional: Executes different code branches based on condition.\n"
+                "Conditional: Executes different code branches based on condition.\n"
                 f"{'Has else branch' if attributes.get('has_else') else 'No else branch'}\n"
-                f"Tip: if statements control the program's execution flow."
+                "Tip: if statements control the program's execution flow."
             ),
             NodeType.CALL: lambda: (
                 f"Function Call: Calls the '{name}' function.\n"
                 f"Argument Count: {attributes.get('args_count', 0)}\n"
                 f"Keyword Arguments: {', '.join([k for k in attributes.get('kwargs', []) if k]) or 'none'}\n"
-                f"Tip: Function calls execute the code in the function body."
+                "Tip: Function calls execute the code in the function body."
             ),
             NodeType.ASSIGN: lambda: (
                 f"Assignment: Binds a value to a variable name.\n"
                 f"Variable: {name}\n"
-                f"Tip: Assignment creates a reference between a variable name and a value."
+                "Tip: Assignment creates a reference between a variable name and a value."
             ),
             NodeType.IMPORT: lambda: (
                 f"Import Statement: Imports an external module.\n"
                 f"Module: {name}\n"
-                f"Tip: import statements allow using functions and classes defined in other modules."
+                "Tip: import statements allow using functions and classes defined in other modules."
             ),
             NodeType.RETURN: lambda: (
-                f"Return Statement: Returns a value from a function.\n"
-                f"Tip: return statements end function execution and return a result to the caller."
+                "Return Statement: Returns a value from a function.\n"
+                "Tip: return statements end function execution and return a result to the caller."
             ),
             NodeType.LAMBDA: lambda: (
-                f"Lambda Expression: Anonymous function.\n"
-                f"Tip: lambda creates simple single-line functions, often used for callbacks and higher-order functions."
+                "Lambda Expression: Anonymous function.\n"
+                "Tip: lambda creates simple single-line functions, often used for callbacks and higher-order functions."
             ),
             NodeType.LIST: lambda: (
-                f"List: Python's ordered mutable sequence.\n"
-                f"Tip: Lists use square brackets [] and can contain elements of any type."
+                "List: Python's ordered mutable sequence.\n"
+                "Tip: Lists use square brackets [] and can contain elements of any type."
             ),
             NodeType.DICT: lambda: (
-                f"Dictionary: Python's key-value mapping.\n"
-                f"Tip: Dictionaries use curly braces {{}} and allow fast lookup by key."
+                "Dictionary: Python's key-value mapping.\n"
+                "Tip: Dictionaries use curly braces {} and allow fast lookup by key."
             ),
             NodeType.SET: lambda: (
-                f"Set: Unordered collection of unique elements.\n"
-                f"Tip: Sets are used for deduplication and set operations (union, intersection, difference)."
+                "Set: Unordered collection of unique elements.\n"
+                "Tip: Sets are used for deduplication and set operations (union, intersection, difference)."
             ),
             NodeType.TUPLE: lambda: (
-                f"Tuple: Immutable ordered sequence.\n"
-                f"Tip: Tuples use parentheses () and cannot be modified after creation."
+                "Tuple: Immutable ordered sequence.\n"
+                "Tip: Tuples use parentheses () and cannot be modified after creation."
             ),
             NodeType.TRY: lambda: (
-                f"Exception Handler: Catches and handles runtime errors.\n"
-                f"Tip: try/except is used to gracefully handle potential errors."
+                "Exception Handler: Catches and handles runtime errors.\n"
+                "Tip: try/except is used to gracefully handle potential errors."
             ),
             NodeType.WITH: lambda: (
-                f"Context Manager: Automatically manages resources.\n"
-                f"Tip: with statements ensure resources (like files) are properly closed, even if exceptions occur."
+                "Context Manager: Automatically manages resources.\n"
+                "Tip: with statements ensure resources (like files) are properly closed, even if exceptions occur."
             ),
             NodeType.YIELD: lambda: (
-                f"Generator: Yields values from a generator function.\n"
-                f"Tip: yield makes a function a generator, producing values one at a time to save memory."
+                "Generator: Yields values from a generator function.\n"
+                "Tip: yield makes a function a generator, producing values one at a time to save memory."
             ),
             NodeType.BINARY_OP: lambda: (
-                f"Binary Operation: Performs arithmetic or bitwise operations.\n"
+                "Binary Operation: Performs arithmetic or bitwise operations.\n"
                 f"Operator: {attributes.get('operator', '?')}\n"
-                f"Tip: Binary operators include +, -, *, /, //, %, **, etc."
+                "Tip: Binary operators include +, -, *, /, //, %, **, etc."
             ),
             NodeType.COMPARE: lambda: (
-                f"Comparison: Compares two values.\n"
+                "Comparison: Compares two values.\n"
                 f"Operators: {', '.join([o for o in attributes.get('operators', ['?']) if o])}\n"
-                f"Tip: Comparison operators include ==, !=, <, >, <=, >=, in, is, etc."
+                "Tip: Comparison operators include ==, !=, <, >, <=, >=, in, is, etc."
             ),
             NodeType.NAME: lambda: (
                 f"Variable Name: References or defines a variable.\n"
                 f"Name: {name}\n"
-                f"Tip: Variable names should be descriptive and follow naming conventions."
+                "Tip: Variable names should be descriptive and follow naming conventions."
             ),
             NodeType.MODULE: lambda: (
-                f"Module: Python code file.\n"
-                f"Tip: Modules are the basic unit of code organization and can contain functions, classes, and variables."
+                "Module: Python code file.\n"
+                "Tip: Modules are the basic unit of code organization and can contain functions, classes, and variables."
             ),
         }
         

@@ -1,8 +1,7 @@
 """
 Project Metrics Aggregator - Aggregate project-level metrics
 """
-from typing import Dict, List, Any, Optional
-from dataclasses import dataclass
+from typing import Dict, List, Any
 
 from .models import ProjectMetrics, FileAnalysisResult, ProjectScanResult
 from ..utils.logger import get_logger

@@ -1,7 +1,7 @@
 """
 Circular Dependency Detector - Detect circular dependencies
 """
-from typing import List, Dict, Set, Tuple, Optional
+from typing import List, Dict, Set
 from collections import defaultdict
 from dataclasses import dataclass
 

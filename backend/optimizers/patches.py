@@ -361,7 +361,7 @@ class PatchGenerator:
                 for other_name, other_info in string_vars_info.items():
                     if other_name != var_name:
                         other_info['first_line'] += 1
-                        other_info['lines'] = [l + 1 for l in other_info['lines']]
+                        other_info['lines'] = [line_num + 1 for line_num in other_info['lines']]
             
             # Find where to add join statement
             # Look for return, print, or end of function
@@ -759,7 +759,7 @@ class PatchGenerator:
                 
                 # Check if delete range is valid
                 if start_line + deleted_count > len(lines):
-                    logger.warning(f"Delete range exceeds code lines")
+                    logger.warning("Delete range exceeds code lines")
                     return None
                 
                 # Execute replacement
@@ -869,8 +869,6 @@ class PatchGenerator:
                         'context': [],
                         'deleted_lines': []
                     }
-                    old_line_num = old_start
-                    new_line_num = new_start
                 else:
                     current_hunk = None
                     

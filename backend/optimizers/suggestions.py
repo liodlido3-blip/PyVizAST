@@ -3,9 +3,8 @@ Suggestion Engine - Optimization suggestion generation engine
 Generates concrete refactoring suggestions based on analysis results
 """
 import ast
-import re
-from typing import List, Dict, Any, Optional
-from ..models.schemas import OptimizationSuggestion, CodeIssue, SeverityLevel
+from typing import List, Dict, Optional
+from ..models.schemas import OptimizationSuggestion, CodeIssue
 
 
 class SuggestionEngine:
@@ -200,9 +199,6 @@ class SuggestionEngine:
             'heapq.nlargest', 'heapq.nsmallest',
             'itertools.chain', 'itertools.islice',
         }
-        
-        # Multi-pass or multi-function functions (not suitable for generators)
-        MULTI_PASS_FUNCTIONS = {'len', 'copy', 'deepcopy'}
         
         class ListCompContextVisitor(ast.NodeVisitor):
             def __init__(self, engine, lines):
@@ -466,7 +462,6 @@ class SuggestionEngine:
     
     def _detect_context_manager_opportunities(self, tree: ast.AST, source_lines: List[str]):
         """Detect cases where context manager should be used"""
-        file_methods = {'read', 'write', 'close'}
         
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):

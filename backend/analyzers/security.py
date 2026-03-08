@@ -4,7 +4,7 @@ Detects SQL injection, unsafe deserialization, hardcoded secrets, etc.
 """
 import ast
 import re
-from typing import List, Dict, Any, Optional, Set
+from typing import List, Dict, Optional
 from ..models.schemas import CodeIssue, SeverityLevel
 
 
@@ -327,7 +327,7 @@ class SecurityScanner:
                     if isinstance(node.func, ast.Attribute) and node.func.attr in subprocess_functions:
                         for keyword in node.keywords:
                             if keyword.arg == 'shell':
-                                if isinstance(keyword.value, ast.Constant) and keyword.value.value == True:
+                                if isinstance(keyword.value, ast.Constant) and keyword.value.value is True:
                                     self.issues.append(CodeIssue(
                                         id=self._generate_issue_id("shell_true"),
                                         type="security",
@@ -436,7 +436,7 @@ class SecurityScanner:
                 if 'requests' in func_full_name or 'httpx' in func_full_name:
                     for keyword in node.keywords:
                         if keyword.arg == 'verify':
-                            if isinstance(keyword.value, ast.Constant) and keyword.value.value == False:
+                            if isinstance(keyword.value, ast.Constant) and keyword.value.value is False:
                                 self.issues.append(CodeIssue(
                                     id=self._generate_issue_id("ssl_verify"),
                                     type="security",
@@ -452,8 +452,8 @@ class SecurityScanner:
                             if isinstance(keyword.value, ast.Constant):
                                 # Check for enabled=False or disable=True cases
                                 is_disabled = (
-                                    (keyword.arg == 'enabled' and keyword.value.value == False) or
-                                    (keyword.arg == 'disable' and keyword.value.value == True)
+                                    (keyword.arg == 'enabled' and keyword.value.value is False) or
+                                    (keyword.arg == 'disable' and keyword.value.value is True)
                                 )
                                 if is_disabled:
                                     self.issues.append(CodeIssue(

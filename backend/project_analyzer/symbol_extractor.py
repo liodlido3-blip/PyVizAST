@@ -4,7 +4,7 @@ Symbol Extractor - Extract symbol definitions and usages from modules
 import ast
 from pathlib import Path
 from typing import Dict, List, Set, Optional, Tuple
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from collections import defaultdict
 
 from ..utils.logger import get_logger

@@ -1,7 +1,7 @@
 """
 Node Mapper - Maps AST nodes to visualization elements
 """
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
 from ..models.schemas import ASTNode, ASTGraph, NodeType
 
 

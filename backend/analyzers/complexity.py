@@ -51,7 +51,7 @@ class ComplexityAnalyzer:
         source_lines = code.splitlines()
         
         metrics = ComplexityMetrics(
-            lines_of_code=len([l for l in source_lines if l.strip()]),
+            lines_of_code=len([line for line in source_lines if line.strip()]),
         )
         
         # Calculate various complexity metrics
@@ -124,8 +124,6 @@ class ComplexityAnalyzer:
         Calculate cognitive complexity
         Considers nesting depth, logical operators, and recursion
         """
-        total_complexity = 0
-        
         # Use a visitor that tracks function context for recursion detection
         class CognitiveVisitor(ast.NodeVisitor):
             def __init__(self):
