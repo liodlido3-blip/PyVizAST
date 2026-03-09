@@ -192,6 +192,28 @@ Contributions are welcome. Please submit pull requests to the main repository.
 <summary>Version History</summary>
 
 <details>
+<summary>v0.6.0 (2026-03-09)</summary>
+
+**Enhanced Backend Code Relationship Analysis & Frontend Sync**
+
+**Backend Enhancements:**
+- Add class inheritance analysis (`base_classes`, `derived_classes`, `inheritance_depth`)
+- Add method relationship tracking (`methods`, `inherited_methods`, `overridden_methods`)
+- Add decorator relationships (`decorators`, `decorated_by`, `decorates`)
+- Enhance function call relationships (`calls_to`, `called_by`)
+- Add scope nesting tracking (`nested_scopes`, `enclosing_scope_id`, `scope_level`)
+- Add variable definition/use tracking (`variables_defined`, `variables_used`)
+- Add code pattern statistics (`branch_count`, `loop_count`, `exception_handlers`)
+- Add code relationship types (`CodeRelationship`)
+
+**Frontend Synchronization:**
+- `ASTVisualizer.js` displays new relationship information
+- `components.css` adds relationship label styles (inheritance, decorator, call, pattern, etc.)
+- Supports displaying inheritance relationships, decorators, call relationships, code patterns, etc.
+
+</details>
+
+<details>
 <summary>v0.5.1 (2026-03-08)</summary>
 
 **UI/UX Improvements:**
