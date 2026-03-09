@@ -298,6 +298,28 @@ code, pre {
   100% { opacity: 1; transform: scale(1); }
 }
 
+@keyframes slideInFromLeft {
+  from { 
+    opacity: 0; 
+    width: 0; 
+  }
+  to { 
+    opacity: 1; 
+    width: 3px; 
+  }
+}
+
+@keyframes growHeight {
+  from { 
+    opacity: 0; 
+    height: 0; 
+  }
+  to { 
+    opacity: 1; 
+    height: 20px; 
+  }
+}
+
 @keyframes spin {
   to { transform: rotate(360deg); }
 }

@@ -355,7 +355,7 @@
   height: 20px;
   background: var(--text-primary);
   border-radius: 0 3px 3px 0;
-  animation: scaleIn 0.25s ease-out;
+  animation: growHeight 0.25s ease-out forwards;
 }
 
 .tab-icon {
