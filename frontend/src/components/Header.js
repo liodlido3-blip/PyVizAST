@@ -13,8 +13,8 @@ const decrypt = (encrypted) => {
 };
 
 // Version info
-const APP_VERSION = '0.5.0';
-const APP_BUILD = '1302';
+const APP_VERSION = '0.6.0';
+const APP_BUILD = '1400';
 
 // Get actual encrypted values (these are pre-encrypted)
 const AUTHOR_DATA = {
