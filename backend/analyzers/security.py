@@ -391,9 +391,54 @@ class SecurityScanner:
                 
                 # Path with f-string or format
                 elif isinstance(node.func, ast.Attribute):
-                    if node.func.attr in ('format', 'join'):
-                        # Check if used on a path-like string
-                        pass  # Complex to analyze, skip for now
+                    if node.func.attr == 'format':
+                        # Check if format is called on a path-like string
+                        if isinstance(node.func.value, ast.Constant):
+                            path_template = str(node.func.value.value)
+                            path_indicators = ['/', '\\', '.txt', '.csv', '.json', '.xml', 
+                                              '.log', '.dat', '.bin', '.db', '.sqlite',
+                                              'path', 'file', 'dir', 'folder']
+                            if any(indicator in path_template.lower() for indicator in path_indicators):
+                                self.issues.append(CodeIssue(
+                                    id=self._generate_issue_id("path_format_string"),
+                                    type="security",
+                                    severity=SeverityLevel.WARNING,
+                                    message="Path constructed with format string may be vulnerable to path traversal",
+                                    lineno=node.lineno,
+                                    suggestion="Validate formatted path components and use os.path.realpath to resolve"
+                                ))
+                    elif node.func.attr == 'join':
+                        # str.join() with path separators
+                        if isinstance(node.func.value, ast.Constant):
+                            separator = str(node.func.value.value)
+                            if separator in ('/', '\\', os.sep):
+                                self.issues.append(CodeIssue(
+                                    id=self._generate_issue_id("path_join_separator"),
+                                    type="security",
+                                    severity=SeverityLevel.INFO,
+                                    message="Using str.join with path separators, consider os.path.join for cross-platform compatibility",
+                                    lineno=node.lineno,
+                                    suggestion="Use os.path.join() for more reliable path construction"
+                                ))
+                
+                # f-string path construction (JoinedStr)
+                elif isinstance(node, ast.JoinedStr):
+                    # Check if f-string contains path-like patterns
+                    for value in node.values:
+                        if isinstance(value, ast.Constant):
+                            const_str = str(value.value)
+                            path_indicators = ['/', '\\', '.txt', '.csv', '.json', '.xml',
+                                              '.log', '.dat', 'path', 'file']
+                            if any(indicator in const_str for indicator in path_indicators):
+                                self.issues.append(CodeIssue(
+                                    id=self._generate_issue_id("fstring_path"),
+                                    type="security",
+                                    severity=SeverityLevel.WARNING,
+                                    message="f-string path construction may be vulnerable to path traversal",
+                                    lineno=node.lineno,
+                                    suggestion="Validate path components before constructing paths"
+                                ))
+                                break
     
     def _check_weak_crypto(self, tree: ast.AST):
         """Check for weak encryption algorithms"""

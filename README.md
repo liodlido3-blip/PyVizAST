@@ -1,6 +1,6 @@
 # PyVizAST
 
-[![Version](https://img.shields.io/badge/Version-0.6.2-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Version](https://img.shields.io/badge/Version-0.6.3-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ChidcGithub/PyVizAST)
@@ -71,7 +71,7 @@ PyVizAST/
 
 ### Prerequisites
 - Python 3.8+
-- Node.js 16+ (optional, for frontend)
+- Node.js 18+ (optional, for frontend)
 
 ### Quick Start
 
@@ -119,15 +119,25 @@ Access the interactive API documentation at `http://localhost:8000/docs`
 
 ### Key Endpoints
 
-| Endpoint           | Method | Description               |
-|--------------------|--------|---------------------------|
-| `/api/analyze`     | POST   | Full code analysis        |
-| `/api/ast`         | POST   | Get AST graph structure   |
-| `/api/complexity`  | POST   | Complexity metrics        |
-| `/api/performance` | POST   | Performance hotspots      |
-| `/api/security`    | POST   | Security vulnerabilities  |
-| `/api/suggestions` | POST   | Optimization suggestions  |
-| `/api/patches`     | POST   | Generate auto-fix patches |
+| Endpoint                    | Method | Description                      |
+|-----------------------------|--------|----------------------------------|
+| `/api/analyze`              | POST   | Full code analysis               |
+| `/api/ast`                  | POST   | Get AST graph structure          |
+| `/api/complexity`           | POST   | Complexity metrics               |
+| `/api/performance`          | POST   | Performance hotspots             |
+| `/api/security`             | POST   | Security vulnerabilities         |
+| `/api/suggestions`          | POST   | Optimization suggestions         |
+| `/api/patches`              | POST   | Generate auto-fix patches        |
+| `/api/apply-patch`          | POST   | Apply a patch to code            |
+| `/api/health`               | GET    | Server health check              |
+| `/api/project/analyze`      | POST   | Full project analysis (ZIP)      |
+| `/api/progress/{task_id}`   | GET    | Get task progress                |
+| `/api/progress/{task_id}/stream` | GET | SSE progress stream           |
+| `/api/challenges`           | GET    | List code challenges             |
+| `/api/challenges/categories`| GET    | Get challenge categories         |
+| `/api/challenges/{id}`      | GET    | Get challenge details            |
+| `/api/challenges/submit`    | POST   | Submit challenge answer          |
+| `/api/learn/node/{node_id}` | POST   | Get AST node explanation         |
 
 ## Example Analysis
 
@@ -192,6 +202,36 @@ Contributions are welcome. Please submit pull requests to the main repository.
 <summary>Version History</summary>
 
 
+
+<details>
+
+<summary>v0.6.3 (2026-03-10)</summary>
+
+**Bug Fixes & Security Improvements**
+
+**Bug Fixes:**
+- Fixed CI installation failure in GitHub Actions workflow
+  - Changed from `pip install git+https://...` to local `pip install -r requirements.txt`
+  - Project doesn't have setup.py, so git install was failing
+
+**Security Improvements:**
+- Enhanced path traversal detection in security analyzer
+  - Added detection for path construction with format strings
+  - Added detection for str.join() with path separators
+  - Added detection for f-string path construction
+  - Improved os.path.join user input validation warnings
+
+**Documentation:**
+- Updated Node.js requirement to 18+ (matching CI configuration)
+
+**Files Modified:**
+- `.github/workflows/analyze.yml` - Fixed CI installation
+- `backend/analyzers/security.py` - Enhanced path traversal checks
+- `backend/main.py` - Version bump to 0.6.3
+- `frontend/package.json` - Version bump to 0.6.3
+- `README.md` - Version badge and changelog update
+
+</details>
 
 <details>
 
