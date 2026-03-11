@@ -62,5 +62,5 @@ htmlcov/
 logs/
 *.log
 
-# AI Memory
+# Memory
 memory.md

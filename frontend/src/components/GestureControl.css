@@ -1,0 +1,437 @@
+/* GestureControl.css - 手势控制组件样式 */
+
+.gesture-control {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.3s ease;
+}
+
+.gesture-control.compact {
+  bottom: 80px;
+  right: 20px;
+}
+
+/* 视频容器 */
+.gesture-video-container {
+  position: relative;
+  width: 200px;
+  height: 150px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: #1a1a1a;
+  transition: all 0.3s ease;
+}
+
+.gesture-control.expanded .gesture-video-container {
+  border-radius: 12px 12px 0 0;
+}
+
+.gesture-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* 镜像显示 */
+}
+
+/* 状态指示器 */
+.gesture-status-indicator {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  font-size: 11px;
+  color: #fff;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-message {
+  font-weight: 500;
+}
+
+/* 当前手势显示 */
+.current-gesture-display {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(74, 222, 128, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  font-size: 13px;
+  color: #000;
+  font-weight: 600;
+  animation: slideUp 0.2s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.gesture-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.gesture-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.gesture-action {
+  white-space: nowrap;
+}
+
+/* 展开/收起按钮 */
+.gesture-expand-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gesture-expand-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
+  transform: scale(1.1);
+}
+
+/* 手势指南 */
+.gesture-guide {
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 0 0 12px 12px;
+  padding: 12px;
+  width: 200px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.gesture-guide-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gesture-guide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gesture-guide-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.gesture-guide-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.gesture-guide-item.active {
+  background: rgba(74, 222, 128, 0.15);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.guide-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.guide-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.guide-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.guide-action {
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.guide-desc {
+  font-size: 10px;
+  color: #888;
+}
+
+/* Light theme */
+.gesture-control.light .gesture-video-container {
+  background: #f0f0f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.gesture-control.light .gesture-status-indicator {
+  background: rgba(255, 255, 255, 0.8);
+  color: #333;
+}
+
+.gesture-control.light .current-gesture-display {
+  background: rgba(34, 197, 94, 0.9);
+}
+
+.gesture-control.light .gesture-expand-btn {
+  background: rgba(255, 255, 255, 0.7);
+  color: #333;
+}
+
+.gesture-control.light .gesture-expand-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.gesture-control.light .gesture-guide {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.gesture-control.light .gesture-guide-title {
+  color: #666;
+}
+
+.gesture-control.light .gesture-guide-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.gesture-control.light .gesture-guide-item.active {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.gesture-control.light .guide-action {
+  color: #333;
+}
+
+.gesture-control.light .guide-desc {
+  color: #666;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .gesture-control {
+    bottom: 10px;
+    right: 10px;
+  }
+  
+  .gesture-video-container {
+    width: 150px;
+    height: 112px;
+  }
+  
+  .gesture-guide {
+    width: 150px;
+    padding: 8px;
+  }
+  
+  .gesture-guide-item {
+    padding: 6px 8px;
+  }
+  
+  .guide-icon {
+    font-size: 16px;
+  }
+  
+  .guide-action {
+    font-size: 11px;
+  }
+  
+  .guide-desc {
+    font-size: 9px;
+  }
+}
+
+/* 设置面板中的手势控制开关样式 */
+.gesture-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.gesture-toggle-label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.gesture-toggle-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+.gesture-toggle-desc {
+  font-size: 11px;
+  color: #888;
+}
+
+/* Toggle Switch */
+.gesture-toggle-switch {
+  position: relative;
+  width: 48px;
+  height: 26px;
+  background: #333;
+  border-radius: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.gesture-toggle-switch.active {
+  background: #4ade80;
+}
+
+.gesture-toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.gesture-toggle-switch.active::after {
+  left: 25px;
+}
+
+/* Light theme adjustments */
+.gesture-control.light .gesture-toggle-container {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.gesture-control.light .gesture-toggle-title {
+  color: #333;
+}
+
+.gesture-control.light .gesture-toggle-desc {
+  color: #666;
+}
+
+.gesture-control.light .gesture-toggle-switch {
+  background: #ccc;
+}
+
+.gesture-control.light .gesture-toggle-switch.active {
+  background: #22c55e;
+}
+
+/* 手势控制按钮在 Header 中 */
+.header-gesture-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #e0e0e0;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.header-gesture-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.header-gesture-btn.active {
+  background: rgba(74, 222, 128, 0.2);
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.header-gesture-btn.active .gesture-indicator {
+  background: #4ade80;
+  animation: pulse 1.5s infinite;
+}
+
+.gesture-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #666;
+  transition: all 0.2s ease;
+}
+
+/* Light theme header button */
+.light .header-gesture-btn {
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #333;
+}
+
+.light .header-gesture-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.light .header-gesture-btn.active {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: #22c55e;
+  color: #22c55e;
+}

@@ -1,9 +1,10 @@
 {
   "name": "pyvizast-frontend",
-  "version": "0.6.3",
+  "version": "0.7.0-beta",
   "author": "Chidc (github.com/chidcGithub)",
   "private": true,
   "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.32",
     "@monaco-editor/react": "^4.6.0",
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
@@ -25,7 +26,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix"
   },
   "eslintConfig": {
     "extends": [

@@ -1,10 +1,10 @@
 # PyVizAST
 
-[![Version](https://img.shields.io/badge/Version-0.6.3-blue.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Version](https://img.shields.io/badge/Version-0.7.0--beta-orange.svg)](https://github.com/ChidcGithub/PyVizAST)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-brightgreen.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](https://github.com/ChidcGithub/PyVizAST)
-[![Status](https://img.shields.io/badge/Status-stable-brightgreen.svg)](https://github.com/ChidcGithub/PyVizAST)
+[![Status](https://img.shields.io/badge/Status-beta-yellow.svg)](https://github.com/ChidcGithub/PyVizAST)
 
 A Python AST Visualizer & Static Analyzer that transforms code into interactive graphs. Detect complexity, performance bottlenecks, and code smells with actionable refactoring suggestions.
 
@@ -35,9 +35,7 @@ A Python AST Visualizer & Static Analyzer that transforms code into interactive 
 - **Challenge Mode**: Identify performance issues in provided code samples
 
 ### Easter Egg
-- Click the "PV" logo 5 times within 2 seconds to discover a hidden surprise
-- Features a physics-based confetti animation with 300 realistic paper particles
-- Particles spray from screen corners with natural flutter, bend, and fold effects
+- Just explore the project and you'll find it :)
 
 ## Architecture
 
@@ -201,7 +199,54 @@ Contributions are welcome. Please submit pull requests to the main repository.
 
 <summary>Version History</summary>
 
+<details>
+<summary>v0.7.0-beta (2026-03-11)</summary>
 
+**New Feature: Webcam Gesture Control**
+
+Hand gesture recognition for 2D/3D AST visualization control using MediaPipe.
+
+**Supported Gestures:**
+- **Thumb Up**: Zoom in
+- **Thumb Down**: Zoom out
+- **Closed Fist**: Pan mode (grab and drag)
+- **Open Palm**: Quick tap = select, Hold = reset view
+- **Pointing Up**: Select node
+- **Victory (V sign)**: Rotate mode
+- **Two Hands Pinch**: Pinch to zoom, move both hands to pan
+
+**Components:**
+- `GestureService.js`: Core gesture recognition service using MediaPipe GestureRecognizer
+- `GestureControl.js`: UI component with camera preview, status indicator, gesture guide
+- `GestureControl.css`: Styling for gesture control overlay
+
+**Features:**
+- Toggle button in header (default OFF)
+- Real-time camera preview with gesture overlay
+- Status indicator (loading/ready/running/error/stopped)
+- Visual gesture guide with action mappings
+- Support for both 2D (Cytoscape) and 3D (Three.js) visualizations
+
+**Dependencies:**
+- Added `@mediapipe/tasks-vision` for gesture recognition
+
+**Known Issues:**
+- Gesture recognition may be unstable in certain lighting conditions
+- Future improvements planned: stability filtering, confidence threshold adjustment, gesture cooldown
+
+**Files Added:**
+- `frontend/src/utils/GestureService.js`
+- `frontend/src/components/GestureControl.js`
+- `frontend/src/components/GestureControl.css`
+
+**Files Modified:**
+- `frontend/src/components/Header.js` - Added gesture toggle button
+- `frontend/src/App.js` - Added gesture state management
+- `frontend/src/components/ASTVisualizer.js` - Added gesture handling for 2D
+- `frontend/src/components/ASTVisualizer3D.js` - Added gesture handling for 3D
+- `frontend/package.json` - Added MediaPipe dependency
+
+</details>
 
 <details>
 

@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback, forwardRef, useImperativeHandle } from 'react';
 import logger from '../utils/logger';
+import { GestureAction } from '../utils/GestureService';
 
 // Performance constants
 const MAX_NODES_FULL = 300;
@@ -89,7 +90,7 @@ const ATTR_KEY_MAP = {
   'dims': 'Dimensions',
 };
 
-function ASTVisualizer({ graph, theme, onGoToLine }) {
+const ASTVisualizer = forwardRef(function ASTVisualizer({ graph, theme, onGoToLine, gestureEnabled = false }, ref) {
   const containerRef = useRef(null);
   const cyRef = useRef(null);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -100,6 +101,14 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
   const [signalParticles, setSignalParticles] = useState([]); // Particles for edge animation
   const zoomRef = useRef(1);
   const initialThemeRef = useRef(theme); // Store initial theme to avoid re-initializing
+  
+  // Gesture control state
+  const gestureStateRef = useRef({
+    isPanning: false,
+    lastPanPosition: null,
+    isRotating: false,
+    lastRotationAngle: null,
+  });
   
   // Track timers and animation frames for cleanup
   const timersRef = useRef(new Set());
@@ -132,6 +141,124 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
       }
     };
   }, []);
+  
+  // Gesture control handlers - exposed via ref
+  const handleGesture = useCallback((gestureData) => {
+    if (!cyRef.current || !gestureEnabled) return;
+    
+    const cy = cyRef.current;
+    const { action, position } = gestureData;
+    
+    switch (action) {
+      case GestureAction.ZOOM_IN:
+        cy.zoom(cy.zoom() * 1.05);
+        break;
+        
+      case GestureAction.ZOOM_OUT:
+        cy.zoom(cy.zoom() / 1.05);
+        break;
+        
+      case GestureAction.PAN:
+        // Pan based on hand position change
+        if (gestureStateRef.current.isPanning && gestureStateRef.current.lastPanPosition) {
+          const dx = (position.x - gestureStateRef.current.lastPanPosition.x) * 500;
+          const dy = (position.y - gestureStateRef.current.lastPanPosition.y) * 500;
+          cy.panBy({ x: -dx, y: -dy });
+        }
+        gestureStateRef.current.isPanning = true;
+        gestureStateRef.current.lastPanPosition = position;
+        break;
+        
+      case GestureAction.RESET:
+        cy.fit(undefined, 50);
+        gestureStateRef.current = {
+          isPanning: false,
+          lastPanPosition: null,
+          isRotating: false,
+          lastRotationAngle: null,
+        };
+        break;
+        
+      case GestureAction.SELECT:
+        // Select node at hand position
+        if (position) {
+          // Convert normalized position to screen coordinates
+          const containerRect = containerRef.current?.getBoundingClientRect();
+          if (containerRect) {
+            const screenX = containerRect.left + position.x * containerRect.width;
+            const screenY = containerRect.top + position.y * containerRect.height;
+            
+            // Find node at position
+            const nodesAtPoint = cy.elements('node').filter(node => {
+              const pos = node.renderedPosition();
+              const nodeWidth = node.width() / 2;
+              const nodeHeight = node.height() / 2;
+              const renderedX = containerRect.left + pos.x;
+              const renderedY = containerRect.top + pos.y;
+              
+              return Math.abs(screenX - renderedX) < nodeWidth &&
+                     Math.abs(screenY - renderedY) < nodeHeight;
+            });
+            
+            if (nodesAtPoint.length > 0) {
+              const node = nodesAtPoint[0];
+              node.select();
+              setSelectedNode({
+                id: node.data().id,
+                type: node.data().type,
+                name: node.data().name,
+                label: node.data().label,
+                lineno: node.data().lineno,
+                docstring: node.data().docstring,
+                sourceCode: node.data().source_code,
+                icon: node.data().icon,
+                description: node.data().description,
+                explanation: node.data().explanation,
+                attributes: node.data().attributes,
+              });
+            }
+          }
+        }
+        break;
+        
+      case GestureAction.NONE:
+      default:
+        // Reset gesture state
+        gestureStateRef.current.isPanning = false;
+        gestureStateRef.current.lastPanPosition = null;
+        break;
+    }
+  }, [gestureEnabled]);
+  
+  const handleTwoHands = useCallback((twoHandsData) => {
+    if (!cyRef.current || !gestureEnabled) return;
+    
+    const cy = cyRef.current;
+    const { pinchScale, panDelta } = twoHandsData;
+    
+    // Pinch to zoom
+    if (Math.abs(pinchScale) > 0.01) {
+      const zoomFactor = 1 + pinchScale * 2;
+      cy.zoom(cy.zoom() * zoomFactor);
+    }
+    
+    // Pan with two hands
+    if (panDelta && (Math.abs(panDelta.x) > 1 || Math.abs(panDelta.y) > 1)) {
+      cy.panBy({ x: -panDelta.x, y: -panDelta.y });
+    }
+  }, [gestureEnabled]);
+  
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    handleGesture,
+    handleTwoHands,
+    zoomIn: () => cyRef.current?.zoom(cyRef.current.zoom() * 1.4),
+    zoomOut: () => cyRef.current?.zoom(cyRef.current.zoom() / 1.4),
+    fit: () => cyRef.current?.fit(undefined, 50),
+    getZoom: () => cyRef.current?.zoom(),
+  }), [handleGesture, handleTwoHands]);
+  
+  // Clear debounce timer
   
   // Search nodes (with debounce)
   const handleSearch = useCallback((query) => {
@@ -1360,7 +1487,7 @@ function ASTVisualizer({ graph, theme, onGoToLine }) {
       </div>
     </div>
   );
-}
+});
 
 function getCytoscapeStyles(theme) {
   const isDark = theme === 'dark';

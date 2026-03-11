@@ -8,12 +8,14 @@ import ProjectAnalysisView from './components/ProjectAnalysisView';
 import ProjectVisualization from './components/ProjectVisualization';
 import LearnView from './components/LearnView';
 import ChallengeView from './components/ChallengeView';
+import GestureControl from './components/GestureControl';
 import { analyzeCode, checkServerHealth, getApiBaseUrl } from './api';
 import { setupGlobalErrorHandlers } from './utils/logger';
 import './App.css';
 import './components/components.css';
 import './components/AnalysisPanel.css';
 import './components/LearnChallenge.css';
+import './components/GestureControl.css';
 
 // Lazy load heavy components for code splitting
 const ASTVisualizer = lazy(() => import('./components/ASTVisualizer'));
@@ -264,6 +266,11 @@ function App() {
   // Editor ref for calling editor methods (e.g., jump to line)
   const editorRef = useRef(null);
   
+  // Gesture control state
+  const [gestureEnabled, setGestureEnabled] = useState(false);
+  const gestureControlRef = useRef(null);
+  const visualizerRef = useRef(null); // For receiving gesture commands
+  
   // Initialize global error handlers
   useEffect(() => {
     setupGlobalErrorHandlers();
@@ -483,6 +490,25 @@ function App() {
     setActiveTab('challenges');
   }, []);
 
+  // Gesture control toggle
+  const handleGestureToggle = useCallback(() => {
+    setGestureEnabled(prev => !prev);
+  }, []);
+
+  // Gesture callback - receives gesture data and forwards to visualizer
+  const handleGesture = useCallback((gestureData) => {
+    if (visualizerRef.current && visualizerRef.current.handleGesture) {
+      visualizerRef.current.handleGesture(gestureData);
+    }
+  }, []);
+
+  // Two hands gesture callback - for pinch zoom
+  const handleTwoHandsGesture = useCallback((twoHandsData) => {
+    if (visualizerRef.current && visualizerRef.current.handleTwoHands) {
+      visualizerRef.current.handleTwoHands(twoHandsData);
+    }
+  }, []);
+
   // Toast notification helper
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
@@ -570,6 +596,8 @@ function App() {
         onShare={handleShare}
         onExport={() => setShowExportDialog(true)}
         canExport={!!analysisResult}
+        gestureEnabled={gestureEnabled}
+        onGestureToggle={handleGestureToggle}
       />
       
       {/* Share Dialog */}
@@ -882,15 +910,19 @@ function App() {
                   <Suspense fallback={<ComponentLoader />}>
                     {viewMode === '3d' ? (
                       <ASTVisualizer3D 
+                        ref={visualizerRef}
                         graph={analysisResult.ast_graph}
                         theme={theme}
                         onGoToLine={handleGoToLine}
+                        gestureEnabled={gestureEnabled}
                       />
                     ) : (
                       <ASTVisualizer 
+                        ref={visualizerRef}
                         graph={analysisResult.ast_graph}
                         theme={theme}
                         onGoToLine={handleGoToLine}
+                        gestureEnabled={gestureEnabled}
                       />
                     )}
                   </Suspense>
@@ -928,6 +960,17 @@ function App() {
         </main>
         )}
       </div>
+      
+      {/* Gesture Control Overlay */}
+      <GestureControl
+        ref={gestureControlRef}
+        enabled={gestureEnabled}
+        onGesture={handleGesture}
+        onTwoHands={handleTwoHandsGesture}
+        theme={theme}
+        showGuide={true}
+        compact={false}
+      />
     </div>
   );
 }

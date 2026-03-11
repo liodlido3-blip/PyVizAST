@@ -3,6 +3,7 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, Text, Line, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 import logger from '../utils/logger';
+import { GestureAction } from '../utils/GestureService';
 
 // Performance constants
 const MAX_NODES_3D = 200;
@@ -810,10 +811,81 @@ const Scene = forwardRef(({ nodes, edges, positions, selectedNode, focusedNode, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [positions]);
   
-  // Expose resetCamera to parent component
+  // Zoom in camera
+  const zoomIn = useCallback((factor = 1.2) => {
+    if (!controlsRef.current) return;
+    
+    const controls = controlsRef.current;
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    
+    const distance = camera.position.distanceTo(controls.target);
+    const moveDistance = distance * (1 - 1/factor);
+    
+    camera.position.add(direction.multiplyScalar(moveDistance));
+  }, [camera]);
+  
+  // Zoom out camera
+  const zoomOut = useCallback((factor = 1.2) => {
+    if (!controlsRef.current) return;
+    
+    const controls = controlsRef.current;
+    const direction = new THREE.Vector3();
+    camera.getWorldDirection(direction);
+    
+    const distance = camera.position.distanceTo(controls.target);
+    const moveDistance = distance * (factor - 1);
+    
+    camera.position.sub(direction.multiplyScalar(moveDistance));
+  }, [camera]);
+  
+  // Pan camera
+  const pan = useCallback((dx, dy) => {
+    if (!controlsRef.current) return;
+    
+    const right = new THREE.Vector3();
+    const up = new THREE.Vector3(0, 1, 0);
+    
+    camera.getWorldDirection(right);
+    right.cross(up).normalize();
+    
+    const moveX = right.multiplyScalar(-dx);
+    const moveY = up.multiplyScalar(dy);
+    
+    camera.position.add(moveX).add(moveY);
+    controlsRef.current.target.add(moveX).add(moveY);
+  }, [camera]);
+  
+  // Rotate camera
+  const rotate = useCallback((dx, dy) => {
+    if (!controlsRef.current) return;
+    
+    const controls = controlsRef.current;
+    
+    // Rotate around target
+    const offset = camera.position.clone().sub(controls.target);
+    
+    // Horizontal rotation (around Y axis)
+    const spherical = new THREE.Spherical().setFromVector3(offset);
+    spherical.theta -= dx;
+    spherical.phi += dy;
+    
+    // Clamp vertical rotation
+    spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
+    
+    offset.setFromSpherical(spherical);
+    camera.position.copy(controls.target).add(offset);
+    camera.lookAt(controls.target);
+  }, [camera]);
+  
+  // Expose methods to parent component
   useImperativeHandle(ref, () => ({
-    resetCamera
-  }), [resetCamera]);
+    resetCamera,
+    zoomIn,
+    zoomOut,
+    pan,
+    rotate,
+  }), [resetCamera, zoomIn, zoomOut, pan, rotate]);
   
   return (
     <>
@@ -901,7 +973,7 @@ const Scene = forwardRef(({ nodes, edges, positions, selectedNode, focusedNode, 
 /**
  * Main 3D Visualizer component
  */
-function ASTVisualizer3D({ graph, theme, onGoToLine }) {
+const ASTVisualizer3D = forwardRef(function ASTVisualizer3D({ graph, theme, onGoToLine, gestureEnabled = false }, ref) {
   const [selectedNode, setSelectedNode] = useState(null);
   const [focusedNode, setFocusedNode] = useState(null);
   const [signalParticles, setSignalParticles] = useState([]); // Particles traveling along edges
@@ -910,6 +982,14 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
   const [isLayoutReady, setIsLayoutReady] = useState(false);
   const particleIdRef = useRef(0);
   const sceneRef = useRef(null); // Ref to access Scene methods
+  
+  // Gesture control state
+  const gestureStateRef = useRef({
+    isPanning: false,
+    lastPanPosition: null,
+    isRotating: false,
+    lastRotationAngle: null,
+  });
   
   // Track timers and animation frames for cleanup
   const timersRef = useRef(new Set());
@@ -942,6 +1022,114 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
       animationFrames.clear();
     };
   }, []);
+  
+  // Gesture control handlers - exposed via ref
+  const handleGesture = useCallback((gestureData) => {
+    if (!sceneRef.current || !gestureEnabled) return;
+    
+    const { action, position } = gestureData;
+    
+    switch (action) {
+      case GestureAction.ZOOM_IN:
+        // Zoom in camera
+        if (sceneRef.current.zoomIn) {
+          sceneRef.current.zoomIn();
+        }
+        break;
+        
+      case GestureAction.ZOOM_OUT:
+        // Zoom out camera
+        if (sceneRef.current.zoomOut) {
+          sceneRef.current.zoomOut();
+        }
+        break;
+        
+      case GestureAction.PAN:
+        // Pan based on hand position change
+        if (gestureStateRef.current.isPanning && gestureStateRef.current.lastPanPosition && position) {
+          const dx = (position.x - gestureStateRef.current.lastPanPosition.x) * 10;
+          const dy = (position.y - gestureStateRef.current.lastPanPosition.y) * 10;
+          if (sceneRef.current.pan) {
+            sceneRef.current.pan(dx, dy);
+          }
+        }
+        gestureStateRef.current.isPanning = true;
+        gestureStateRef.current.lastPanPosition = position;
+        break;
+        
+      case GestureAction.RESET:
+        // Reset camera
+        if (sceneRef.current.resetCamera) {
+          sceneRef.current.resetCamera();
+        }
+        gestureStateRef.current = {
+          isPanning: false,
+          lastPanPosition: null,
+          isRotating: false,
+          lastRotationAngle: null,
+        };
+        break;
+        
+      case GestureAction.ROTATE:
+        // Enable rotation mode - position controls rotation
+        if (position) {
+          const rotationSpeed = 0.02;
+          if (gestureStateRef.current.isRotating && gestureStateRef.current.lastPanPosition) {
+            const dx = (position.x - gestureStateRef.current.lastPanPosition.x) * rotationSpeed;
+            const dy = (position.y - gestureStateRef.current.lastPanPosition.y) * rotationSpeed;
+            if (sceneRef.current.rotate) {
+              sceneRef.current.rotate(dx, dy);
+            }
+          }
+          gestureStateRef.current.isRotating = true;
+          gestureStateRef.current.lastPanPosition = position;
+        }
+        break;
+        
+      case GestureAction.NONE:
+      default:
+        // Reset gesture state
+        gestureStateRef.current.isPanning = false;
+        gestureStateRef.current.lastPanPosition = null;
+        gestureStateRef.current.isRotating = false;
+        break;
+    }
+  }, [gestureEnabled]);
+  
+  const handleTwoHands = useCallback((twoHandsData) => {
+    if (!sceneRef.current || !gestureEnabled) return;
+    
+    const { pinchScale, panDelta } = twoHandsData;
+    
+    // Pinch to zoom
+    if (Math.abs(pinchScale) > 0.005) {
+      if (pinchScale > 0) {
+        if (sceneRef.current.zoomIn) {
+          sceneRef.current.zoomIn(Math.abs(pinchScale) * 5);
+        }
+      } else {
+        if (sceneRef.current.zoomOut) {
+          sceneRef.current.zoomOut(Math.abs(pinchScale) * 5);
+        }
+      }
+    }
+    
+    // Pan with two hands
+    if (panDelta && (Math.abs(panDelta.x) > 0.5 || Math.abs(panDelta.y) > 0.5)) {
+      if (sceneRef.current.pan) {
+        sceneRef.current.pan(panDelta.x * 0.01, panDelta.y * 0.01);
+      }
+    }
+  }, [gestureEnabled]);
+  
+  // Expose methods to parent via ref
+  useImperativeHandle(ref, () => ({
+    handleGesture,
+    handleTwoHands,
+    zoomIn: () => sceneRef.current?.zoomIn?.(),
+    zoomOut: () => sceneRef.current?.zoomOut?.(),
+    resetCamera: () => sceneRef.current?.resetCamera?.(),
+  }), [handleGesture, handleTwoHands]);
   
   // Search nodes
   const handleSearch = useCallback((query) => {
@@ -1692,6 +1880,6 @@ function ASTVisualizer3D({ graph, theme, onGoToLine }) {
       </div>
     </div>
   );
-}
+});
 
 export default ASTVisualizer3D;
